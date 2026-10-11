@@ -17,7 +17,8 @@
     "test:rules": "vitest run --config vitest.config.js",
     "pretest": "npm run build",
     "check:mini:templates": "node scripts/check-mini-templates.mjs",
-    "test:online:interactions": "node tests/online-interactions-browser.mjs"
+    "test:online:interactions": "node tests/online-interactions-browser.mjs",
+    "sync:mini:assets": "node scripts/sync-mini-assets.mjs"
   },
   "dependencies": {
     "@kobalab/majiang-core": "1.4.1",

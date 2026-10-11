@@ -1,4 +1,4 @@
-const { tile, meld } = require("./online");
+const { tile, meld, callArt } = require("./online");
 // Concealed hand strings contain multiple suits; they are not individual melds.
 function closedTiles(value) {
   return (String(value || "").match(/[mpsz][0-9]+/g) || []).flatMap((group) =>
@@ -115,7 +115,12 @@ function presentation(
     for (const c of candidates) {
       const player = seats.find((p) => p.seat === c.seat);
       if (player && age >= c.start && age < c.end)
-        drawDeclarations.push({ ...c, name: player.name, edge: player.edge });
+        drawDeclarations.push({
+          ...c,
+          name: player.name,
+          edge: player.edge,
+          art: callArt(c.text),
+        });
     }
   }
   const declarations = [...drawDeclarations];
@@ -128,6 +133,7 @@ function presentation(
           name: player.name,
           edge: player.edge,
           text: win.winMethod === "ron" ? "荣和" : "自摸",
+          art: callArt(win.winMethod === "ron" ? "荣和" : "自摸"),
         });
     }
   return {
@@ -135,6 +141,7 @@ function presentation(
     ...winning(s),
     stage,
     title,
+    titleArt: callArt(title),
     tableReveals,
     drawDeclarations,
     declarations,

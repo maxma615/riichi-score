@@ -18,8 +18,8 @@ test("原生联机牌面、合法动作、拔北与解散状态", () => {
     uuid(),
     /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/,
   );
-  assert.match(tile("s0_").src, /Sou5-Dora.svg$/);
-  assert.match(tile("z4").src, /Pei.svg$/);
+  assert.match(tile("s0_").src, /Sou5-Dora.png$/);
+  assert.match(tile("z4").src, /Pei.png$/);
   assert.equal(meld("p555+").length, 3);
   const room = {
     id: "r",

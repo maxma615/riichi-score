@@ -707,3 +707,7 @@
 .declaration-top { left: 50%; top: 105px; transform: translateX(-50%); }
 .declaration-left { left: 20px; top: 45%; }
 .declaration-right { right: 20px; top: 45%; }
+
+.draw-declaration image { width: 110px; height: 55px; }
+.announcement > view image { width: 140px; height: 70px; }
+.result-title image { width: 100px; height: 50px; vertical-align: middle; }

@@ -4,7 +4,6 @@ const {
   openingTileCount,
   ROUND_OPENING,
 } = require("./online-opening");
-const { apiBase } = require("./api");
 const winds = ["东", "南", "西", "北"],
   names = {
     z1: "东风",
@@ -38,6 +37,18 @@ const labels = {
   ack: "继续",
   nuki: "拔北",
 };
+function callArt(label) {
+  const name = {
+    立直: "Riichi",
+    自摸: "Tsumo",
+    荣和: "Ron",
+    吃: "Chi",
+    碰: "Pon",
+    杠: "Kan",
+    拔北: "Nuki",
+  }[label];
+  return name ? "/assets/calligraphy/" + name + ".png" : "";
+}
 function uuid() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const n = Math.floor(Math.random() * 16);
@@ -56,7 +67,7 @@ function tile(value) {
     name:
       names[key] ||
       (n === 0 ? "赤五" : n) + ({ m: "万", p: "筒", s: "索" }[key[0]] || "牌"),
-    src: apiBase + "/online/assets/tiles/regular/" + file + ".svg",
+    src: "/assets/tiles/" + file + ".png",
   };
 }
 function meld(value) {
@@ -283,4 +294,4 @@ function snapshot(
       : null,
   };
 }
-module.exports = { uuid, tile, meld, river, snapshot, feedback };
+module.exports = { uuid, tile, meld, river, snapshot, feedback, callArt };

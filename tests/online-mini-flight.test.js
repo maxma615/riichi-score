@@ -301,7 +301,7 @@ test("真实拔北飞到保留的北牌槽，多张北不猜来源，改为到�
     assert.equal(h.host.data.seats[0].north.length, 1);
     assert.equal(h.host.data.motionTarget, "north-0-0");
     assert.equal(Boolean(h.host.data.flight), name === "nuki");
-    if (name === "nuki") assert.match(h.host.data.flight.src, /Pei.svg$/);
+    if (name === "nuki") assert.match(h.host.data.flight.src, /Pei.png$/);
     h.finish();
     assert.equal(h.host.data.flight, null);
     assert.equal(h.host.data.motionTarget, "");

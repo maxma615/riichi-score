@@ -40,3 +40,16 @@
 已在ECS隔离Node24/Linux容器执行miniprogram-compiler@0.2.3所带wcc/wcsc；8个WXML、4个WXSS通过，编译后WXML生成函数可建立。检查找出并修正速查／记分模板里Mustache表达式的HTML转义比较符；模拟模板和页面适配器测试此前未能发现此问题。
 
 可用npm run check:mini:templates -- <该包bin/linux目录>重复，输出在.local/mini-template-check。wcc实际版本v0.5vv_20200413_syb_scopedata；这是旧版模板语法与生成函数检查，不是当前开发者工具完整打包、原生渲染、登录／扫码／真机／发布证明。AppID仍为touristappid，备案域名未配置，正式平台验收继续等待实际配置。
+
+
+## 原生本地牌面与书法资源（2026-10-12）
+
+原生牌面改用随包加载的本地PNG，移除每张牌对apiBase的图片请求依赖。scripts/sync-mini-assets.mjs从现有CC0 SVG牌面导出39张150×200资源，三种赤五与北牌均保留身份；白板的授权源本来就是空白面，由现有实体牌体提供象牙底色和厚度。网页SVG与服务器运行源码不变。
+
+声明及和牌标题加入7组480×240透明PNG，使用现有Ma Shan Zheng SIL OFL子集和网页版金色／描边；本地字库映射已核对“立直自摸荣和吃碰杠拔北”全部有字形，未用系统字体替代。native manifest记录每个源／输出SHA256、尺寸及字样，随包附CC0／OFL与来源说明。构建浏览器阻断外部请求，PNG共667525字节，当前100个原生文件含资源959397字节，处于项目自定1.5MiB预算内。
+
+125项Node＋107项规则回归通过。新增检查覆盖37个实际牌值、赤五／普通五差异、PNG解码与源指纹、本地路径、字体资源／透明边缘、声明／结果模型绑定及许可证。实际Chromium渲染的39牌／7字样联系图已目视核对，见.local/browser/native-assets-contact.png；这是本地资源渲染，不是微信真机。原模板模拟仍通过流局公开边界、北牌及完整结算；模拟器原生image不暴露src属性，只核对节点数量，路径由模型和文件检查验证。
+
+当前100个原生源／资源文件在官方旧版Linux编译器检查通过：8个WXML、4个WXSS无诊断，工厂函数建立成功。源SHA256为51190b71acd110f17617bd6409209e0cbe953b399f30292e5ceae2287458af05；wcc输出187010beb8789f2c482cc1eee8b46b967a827605742f5059910aa48f6a4c53a0，wcsc输出afc81450bba89596b0616218276c7f370631cef10cb22a4ab7ba6c363fa8062b。检查容器仍无网络、源只读、0.25CPU／128MiB，无真实数据挂载，两套生产容器及禁备份状态不变。当前微信开发者工具／真机及正式发布仍未验收。
+
+本地PNG策略用于可预测的打包加载；微信官方WeUI图标也有[data SVG实现](https://github.com/wechat-miniprogram/weui-miniprogram/blob/master/src/components/icon/icon.ts)，本轮没有以搜索或格式选择声称微信一概不支持SVG。API登录及联机仍需要服务器与正式微信配置。网页构建JS／CSS保持既有生产哈希，本轮没有重启业务服务。

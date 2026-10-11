@@ -1,7 +1,7 @@
 const { NativeFlights } = require("../../utils/online-flight");
 const { dropOnTable, touchPoint } = require("../../utils/online-gesture");
 const { api, error } = require("../../utils/api");
-const { uuid, snapshot, feedback } = require("../../utils/online");
+const { uuid, snapshot, feedback, callArt } = require("../../utils/online");
 const { presentation } = require("../../utils/online-settlement");
 const { presentationBoundaries } = require("../../utils/online-timing");
 const {
@@ -193,6 +193,7 @@ Page({
       this.setData({
         announcement: {
           ...announcement,
+          art: callArt(announcement.text),
           name:
             this.data.seats.find((p) => p.seat === announcement.seat)?.name ||
             "",

@@ -197,10 +197,10 @@
                 class="tile-small"
             /></view></button
         ></view>
-        <view wx:for="{{settlement.declarations}}" wx:key="seat" class="draw-declaration declaration-{{item.edge}}"><text>{{item.text}}</text><view>{{item.name}}</view></view>
+        <view wx:for="{{settlement.declarations}}" wx:key="seat" class="draw-declaration declaration-{{item.edge}}"><image wx:if="{{item.art}}" src="{{item.art}}" /><text wx:else>{{item.text}}</text><view>{{item.name}}</view></view>
         <view wx:if="{{announcement}}" class="announcement"
           ><text>{{announcement.name}}</text
-          ><view>{{announcement.text}}</view></view
+          ><view><image wx:if="{{announcement.art}}" src="{{announcement.art}}" /><text wx:else>{{announcement.text}}</text></view></view
         >
       </view>
       <view
@@ -220,7 +220,7 @@
             </button></block
           >
           <block wx:else>
-            <view class="result-title">{{settlement.title}}</view
+            <view class="result-title"><image wx:if="{{settlement.titleArt}}" src="{{settlement.titleArt}}" /><text wx:else>{{settlement.title}}</text></view
             ><view class="result-subtitle"
               >{{settlement.winner}} {{settlement.progress}}</view
             >

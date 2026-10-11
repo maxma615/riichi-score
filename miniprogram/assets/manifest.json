@@ -1,0 +1,428 @@
+{
+  "generator": "scripts/sync-mini-assets.mjs",
+  "renderer": "Chromium 153.0.8010.12",
+  "scope": "PNG exports of existing CC0 tile art and SIL OFL brush font; no WeChat device acceptance",
+  "files": [
+    {
+      "target": "tiles/Back.png",
+      "source": "public/online/assets/tiles/regular/Back.svg",
+      "sourceSha256": "73230b9874786e0514fdd469e6b8ad6adb6eaad549a3936e4942c67e2fa78879",
+      "sha256": "9c9b7bb179a3990e2d7474d71bcf786920d7d4207f84ab022b5d9f9a3eda327c",
+      "width": 150,
+      "height": 200,
+      "bytes": 1368
+    },
+    {
+      "target": "tiles/Blank.png",
+      "source": "public/online/assets/tiles/regular/Blank.svg",
+      "sourceSha256": "b8a1a2a102dfac266c49b32beba8835efe30f6528712a1b29b5974f7cfaae433",
+      "sha256": "960a18fc7562648ca03f61852daf36cfad5af0d4fbacf894503a776613e8faaf",
+      "width": 150,
+      "height": 200,
+      "bytes": 3431
+    },
+    {
+      "target": "tiles/Chun.png",
+      "source": "public/online/assets/tiles/regular/Chun.svg",
+      "sourceSha256": "7aecefcb257e5278cf3d4d0d9d03b16c3c6e3ba4080d54f60d424c3f35ffd5bb",
+      "sha256": "ea330ee63352bb8b2f66ff7f1225f69b3762af9213907c9e5bbef07efb9a2b8f",
+      "width": 150,
+      "height": 200,
+      "bytes": 4978
+    },
+    {
+      "target": "tiles/Haku.png",
+      "source": "public/online/assets/tiles/regular/Haku.svg",
+      "sourceSha256": "d6023d8cf3b810b74b2f7c14a4254dd7a65c57b9389e63f90aed8f6cd3607032",
+      "sha256": "44a10a00a481da7a52720d8e3229da0039a36f002b8c853321433bd29904fd65",
+      "width": 150,
+      "height": 200,
+      "bytes": 574
+    },
+    {
+      "target": "tiles/Hatsu.png",
+      "source": "public/online/assets/tiles/regular/Hatsu.svg",
+      "sourceSha256": "9197066680636f5d6b43e49b687103e7b347334f5ea838220edb41ec803e3ad9",
+      "sha256": "755b1ba2a526a66935712272d8699895420dac3c5619ead3efa7f5c457cc396e",
+      "width": 150,
+      "height": 200,
+      "bytes": 8718
+    },
+    {
+      "target": "tiles/Man1.png",
+      "source": "public/online/assets/tiles/regular/Man1.svg",
+      "sourceSha256": "9b8c52bef39c94b3fac5b1f2a4b6193cd7d8736f79d2c2ae764dd7342f7190b3",
+      "sha256": "606fba6fd0d36415b8b77e2b368a0ba328e3913074036293a537f81388208b1c",
+      "width": 150,
+      "height": 200,
+      "bytes": 7002
+    },
+    {
+      "target": "tiles/Man2.png",
+      "source": "public/online/assets/tiles/regular/Man2.svg",
+      "sourceSha256": "db430b747ebe8e3ad8bc152c6381a0a71c40f94da27be702a2a2aa8e8924cd10",
+      "sha256": "5d97b6494253bca74d6e6107f5662d9f3c7ca138d81729759be13079650b9297",
+      "width": 150,
+      "height": 200,
+      "bytes": 7464
+    },
+    {
+      "target": "tiles/Man3.png",
+      "source": "public/online/assets/tiles/regular/Man3.svg",
+      "sourceSha256": "6c8b4af104169189305f2c0eb465a0ac98a7d7c70dc7d40a70f840d780bbd92e",
+      "sha256": "ccbc7a5218ce5920920e545eea2877058b2815861db40dba72ddd7c673fbab3a",
+      "width": 150,
+      "height": 200,
+      "bytes": 7901
+    },
+    {
+      "target": "tiles/Man4.png",
+      "source": "public/online/assets/tiles/regular/Man4.svg",
+      "sourceSha256": "a65cde442a6b15e5f33a8dbe753f5d8a30ec1d07f917edc784186e0bdf3abb2e",
+      "sha256": "02b5f0d774a0f6aeb07514661afce204f5d6ee1a2bd87f33d580fb599bf7572a",
+      "width": 150,
+      "height": 200,
+      "bytes": 8383
+    },
+    {
+      "target": "tiles/Man5-Dora.png",
+      "source": "public/online/assets/tiles/regular/Man5-Dora.svg",
+      "sourceSha256": "8fbe07ba977dbaf7644b13514d89084a41fab9ad828a9b9d7be73066fb84a5be",
+      "sha256": "062a8ced84f86bccdc714bbdf48b7b2e1c378799657488f5aa0f9dfe668f9f16",
+      "width": 150,
+      "height": 200,
+      "bytes": 10316
+    },
+    {
+      "target": "tiles/Man5.png",
+      "source": "public/online/assets/tiles/regular/Man5.svg",
+      "sourceSha256": "88687841beb6eda143d2a973aaa9e2af9a8896472a9b0260d5c4d198a160bba5",
+      "sha256": "c668a6abbac8f24d82acc8f1e16e7312f46a3cae54b9c48dae5d22e626c44fc4",
+      "width": 150,
+      "height": 200,
+      "bytes": 8664
+    },
+    {
+      "target": "tiles/Man6.png",
+      "source": "public/online/assets/tiles/regular/Man6.svg",
+      "sourceSha256": "279df4110edaee428a00df4115df4de7f99829cc9e4f4b259e61036cae8fe0d3",
+      "sha256": "c8d1aae7d6df7087025c85da4d3b6c05fcc00f2247e0ee49ad12e4b4df9474c1",
+      "width": 150,
+      "height": 200,
+      "bytes": 8328
+    },
+    {
+      "target": "tiles/Man7.png",
+      "source": "public/online/assets/tiles/regular/Man7.svg",
+      "sourceSha256": "a5a1a19ef1156d4bc33d5ae0551806f683cf959b90b244f9fa90ae1bf6402485",
+      "sha256": "2c364963b3b74d450ba4947149b8c604db7ef9456c7d4f0d9ade122eebedc7be",
+      "width": 150,
+      "height": 200,
+      "bytes": 7795
+    },
+    {
+      "target": "tiles/Man8.png",
+      "source": "public/online/assets/tiles/regular/Man8.svg",
+      "sourceSha256": "28babd56acfb1f710c78a50e962edc48af5f739035fbf1f5f5ce62da9c196ec5",
+      "sha256": "c17ed1b2f1434ad296b75bdca8f0e4a18045800c28906df0a51ea29768a6d75d",
+      "width": 150,
+      "height": 200,
+      "bytes": 7737
+    },
+    {
+      "target": "tiles/Man9.png",
+      "source": "public/online/assets/tiles/regular/Man9.svg",
+      "sourceSha256": "0b31a26657af8ecfd330332068c22c69516e43ac31a8f3bdfeff19a994088c23",
+      "sha256": "128c2428288adf3ea4e0fcbc6644d3ae0e107648af3c95d9826b45164c8055c8",
+      "width": 150,
+      "height": 200,
+      "bytes": 8116
+    },
+    {
+      "target": "tiles/Nan.png",
+      "source": "public/online/assets/tiles/regular/Nan.svg",
+      "sourceSha256": "28a3fe9e6226016c09539150bd40c22af6e006ed1ae23ef8f7e8dccd7d891f9b",
+      "sha256": "0d056b7bda958fca167244bc83a3170439a420885ad44c8b36c79c892171e395",
+      "width": 150,
+      "height": 200,
+      "bytes": 8798
+    },
+    {
+      "target": "tiles/Pei.png",
+      "source": "public/online/assets/tiles/regular/Pei.svg",
+      "sourceSha256": "a8efd3f32aa46c70a04233d499097ab75ec221635bdf68e8ee2817cb0c45d824",
+      "sha256": "3629d6ad0af11949947563a4f346d43cd8f788c2be2b8e697d16af0d1e00e79e",
+      "width": 150,
+      "height": 200,
+      "bytes": 6630
+    },
+    {
+      "target": "tiles/Pin1.png",
+      "source": "public/online/assets/tiles/regular/Pin1.svg",
+      "sourceSha256": "477c6311f8c3e8456a8ca510a6b6ee4d146ecc4ef2d51cb801575e5b55122175",
+      "sha256": "13de324073b4b9df898432e281eac4b22806bf0dab57fa1bafc33442de2f9b0b",
+      "width": 150,
+      "height": 200,
+      "bytes": 21069
+    },
+    {
+      "target": "tiles/Pin2.png",
+      "source": "public/online/assets/tiles/regular/Pin2.svg",
+      "sourceSha256": "518a4f1831a7743a12898a81c14b91edad909f264dcd410ff7a074975ee0188a",
+      "sha256": "a307e8d8edda30c8cca46cb2d081b788ea14284f4f3122eee378b478826ec4f8",
+      "width": 150,
+      "height": 200,
+      "bytes": 13487
+    },
+    {
+      "target": "tiles/Pin3.png",
+      "source": "public/online/assets/tiles/regular/Pin3.svg",
+      "sourceSha256": "0d57651db6c2d96a99d65a44bdd21e5f550336580310edec029428494326759f",
+      "sha256": "5232674141d9212b5ec4395327348f8c4307a238eed0b7a52ee219437b127618",
+      "width": 150,
+      "height": 200,
+      "bytes": 10424
+    },
+    {
+      "target": "tiles/Pin4.png",
+      "source": "public/online/assets/tiles/regular/Pin4.svg",
+      "sourceSha256": "c9231df1f9a83b90ca3e7c333ca56a11bc323a9e765702714a273a58797aaef0",
+      "sha256": "806b6c9389fa03eec5c89fe629a02e6f9c1c08224fd28386d44641f8a04a7f52",
+      "width": 150,
+      "height": 200,
+      "bytes": 12707
+    },
+    {
+      "target": "tiles/Pin5-Dora.png",
+      "source": "public/online/assets/tiles/regular/Pin5-Dora.svg",
+      "sourceSha256": "39808d4a76fd303b55bf77bdffca8b57049dc4dbea67ca374a1399397544da21",
+      "sha256": "df785d49e960eace6310fa8f54d0bf6e5545b634ca84fca322e90f48661f53df",
+      "width": 150,
+      "height": 200,
+      "bytes": 16519
+    },
+    {
+      "target": "tiles/Pin5.png",
+      "source": "public/online/assets/tiles/regular/Pin5.svg",
+      "sourceSha256": "5574c14b911befee26b821147d54f6d92cafd66f272e1da5c12a63a0143bc213",
+      "sha256": "6658e71f2dfbf3a40de8fd9df649942879b521e915493423f761c487d3235a58",
+      "width": 150,
+      "height": 200,
+      "bytes": 15587
+    },
+    {
+      "target": "tiles/Pin6.png",
+      "source": "public/online/assets/tiles/regular/Pin6.svg",
+      "sourceSha256": "38605c2f30a762fada49d4d4ba1b2beb8a707469478ec173b800be06b95562ad",
+      "sha256": "e4979e5f4ee4a81edfe37606a2b8cf9dfaa550b71bc98470b0de563cf4c59563",
+      "width": 150,
+      "height": 200,
+      "bytes": 16112
+    },
+    {
+      "target": "tiles/Pin7.png",
+      "source": "public/online/assets/tiles/regular/Pin7.svg",
+      "sourceSha256": "97efa9eec79944518511a4f461f1468490a95ca13b3d952eff1ca02bb05b4589",
+      "sha256": "ceeb19106ae653f2767f2d9449b382e5ab45428f2612b6341e489adc3b1357c5",
+      "width": 150,
+      "height": 200,
+      "bytes": 18144
+    },
+    {
+      "target": "tiles/Pin8.png",
+      "source": "public/online/assets/tiles/regular/Pin8.svg",
+      "sourceSha256": "523b82c7c4a7cd8999780a7b3b5a7b6670eaf86eb1a8e9ad1317b43c6d8f81d8",
+      "sha256": "c3e0b494e53744aeed73aba4803a84d1cea56a67917cd669f9faae30595bef0b",
+      "width": 150,
+      "height": 200,
+      "bytes": 11244
+    },
+    {
+      "target": "tiles/Pin9.png",
+      "source": "public/online/assets/tiles/regular/Pin9.svg",
+      "sourceSha256": "ffd648051b26c2afd770120c9405d7eec550fdb7f7b42406feadb0969f277087",
+      "sha256": "351da65495c369e33730db68ac4ba8614ee799c97360afab0e8e4dcf659a78dc",
+      "width": 150,
+      "height": 200,
+      "bytes": 22558
+    },
+    {
+      "target": "tiles/Shaa.png",
+      "source": "public/online/assets/tiles/regular/Shaa.svg",
+      "sourceSha256": "10d4b6e7e8cbe8410f376c28b8892ecab5b03c1f8d89db93acf0da2302523577",
+      "sha256": "3089b8baba55a971816f3d748c4dc4d2b22311f4e4cedba748b3075c61c8a83f",
+      "width": 150,
+      "height": 200,
+      "bytes": 7198
+    },
+    {
+      "target": "tiles/Sou1.png",
+      "source": "public/online/assets/tiles/regular/Sou1.svg",
+      "sourceSha256": "2c50459c118560dbbe90f38006d636c1cf83c7e31128fed32e4df30f3c543d6c",
+      "sha256": "84871fab075d86836eb06914d73ace1ca5953423070b995730ae242430995ca8",
+      "width": 150,
+      "height": 200,
+      "bytes": 19136
+    },
+    {
+      "target": "tiles/Sou2.png",
+      "source": "public/online/assets/tiles/regular/Sou2.svg",
+      "sourceSha256": "fdc5a6860051ae60f815c4acfaa3ade2b2a067a3b7518b6096f8e9356a650e04",
+      "sha256": "d4c0ef6a92e7ade7c2c86051f605619e6df27d8b86ea04ff561f3a8e30fe4812",
+      "width": 150,
+      "height": 200,
+      "bytes": 5066
+    },
+    {
+      "target": "tiles/Sou3.png",
+      "source": "public/online/assets/tiles/regular/Sou3.svg",
+      "sourceSha256": "d0f26555368992a285f0ae3f3588d6229518a25fa212466627134f54cc6a3bac",
+      "sha256": "7bccec4c93b461fe356dcca7a5be2e1caff887ee7a372d9f021528a47f3eb543",
+      "width": 150,
+      "height": 200,
+      "bytes": 6932
+    },
+    {
+      "target": "tiles/Sou4.png",
+      "source": "public/online/assets/tiles/regular/Sou4.svg",
+      "sourceSha256": "c0861613ee9a6eda77f29a7e685068dd0619bc7aefcc6fcd8d7356782043a518",
+      "sha256": "123651121a26cbb76847be0d8ae5d24fe34012b02aee1d7106538e750717a61a",
+      "width": 150,
+      "height": 200,
+      "bytes": 8879
+    },
+    {
+      "target": "tiles/Sou5-Dora.png",
+      "source": "public/online/assets/tiles/regular/Sou5-Dora.svg",
+      "sourceSha256": "b39b163d23b4bbf14ecad232bee7fd09947913a136989b004e44203dfd39b023",
+      "sha256": "5d7714c8a0228b4b245b6e6884d4ed543f8c82fb6800bdc05f198f1d3784910e",
+      "width": 150,
+      "height": 200,
+      "bytes": 11900
+    },
+    {
+      "target": "tiles/Sou5.png",
+      "source": "public/online/assets/tiles/regular/Sou5.svg",
+      "sourceSha256": "cbd9b02c63976954d44b373966c886c457a5903262a2fb9ea958450d86746144",
+      "sha256": "309eec1c872462540d9963743d5bfe827b345f3b818b353c91df3c6f2adad9d4",
+      "width": 150,
+      "height": 200,
+      "bytes": 11088
+    },
+    {
+      "target": "tiles/Sou6.png",
+      "source": "public/online/assets/tiles/regular/Sou6.svg",
+      "sourceSha256": "cf6489ecb0ff073efd94d76b4281e91711e74e3b5eb14c641f8c5e71c2d335b5",
+      "sha256": "d99dd3f1303ec15681281d631093384c1c77cade58aa659c60cbb531076618ec",
+      "width": 150,
+      "height": 200,
+      "bytes": 12211
+    },
+    {
+      "target": "tiles/Sou7.png",
+      "source": "public/online/assets/tiles/regular/Sou7.svg",
+      "sourceSha256": "9afdfc3cef41b3012895d90c1fc34c7c33111171d2a3ea248fbb8ec441009426",
+      "sha256": "5b46bac9a76378ab130dd4987157effd3ba63ae5a9d58ebec1047e6ff0fcff28",
+      "width": 150,
+      "height": 200,
+      "bytes": 10584
+    },
+    {
+      "target": "tiles/Sou8.png",
+      "source": "public/online/assets/tiles/regular/Sou8.svg",
+      "sourceSha256": "dccec0736c9855c6ccc628238b49afb343f68797302f4129861cb3fc451f8d61",
+      "sha256": "88be2417b4218b288a3bb37279cffccabbb5484768d008d0a4bc5e1daf699812",
+      "width": 150,
+      "height": 200,
+      "bytes": 13631
+    },
+    {
+      "target": "tiles/Sou9.png",
+      "source": "public/online/assets/tiles/regular/Sou9.svg",
+      "sourceSha256": "5a3369477214b72ddc727130abd0a97126cbaf703eb5ad3226a5b1083dc6635b",
+      "sha256": "17d08982b849b8136c32496eb246f6b30e8bb7be427615806ee7ac28e51585cc",
+      "width": 150,
+      "height": 200,
+      "bytes": 13763
+    },
+    {
+      "target": "tiles/Ton.png",
+      "source": "public/online/assets/tiles/regular/Ton.svg",
+      "sourceSha256": "955eba50b3de787ffad2eaa09a1f7ecaae487bc0afef253fd29e4a93e7dd76df",
+      "sha256": "6593fe4b87ed68f0c13724fd1cea5032052d8c395b98ba4a05681fc18a13e7d3",
+      "width": 150,
+      "height": 200,
+      "bytes": 8226
+    },
+    {
+      "target": "calligraphy/Riichi.png",
+      "source": "public/online/assets/fonts/mahjong-brush.woff2",
+      "text": "立直",
+      "sourceSha256": "db99502478588158d805c1770627609b9a53c02eca93edad93ed9f53cdabb1a3",
+      "sha256": "8f72137f1a93eda98767017b471ba6344df7b2a7264c3f312bf7e5828affea91",
+      "width": 480,
+      "height": 240,
+      "bytes": 41384
+    },
+    {
+      "target": "calligraphy/Tsumo.png",
+      "source": "public/online/assets/fonts/mahjong-brush.woff2",
+      "text": "自摸",
+      "sourceSha256": "db99502478588158d805c1770627609b9a53c02eca93edad93ed9f53cdabb1a3",
+      "sha256": "2571654ae451e8d392a953d6b647b95f68256a57473900b1a3dc82606e4d2195",
+      "width": 480,
+      "height": 240,
+      "bytes": 51459
+    },
+    {
+      "target": "calligraphy/Ron.png",
+      "source": "public/online/assets/fonts/mahjong-brush.woff2",
+      "text": "荣和",
+      "sourceSha256": "db99502478588158d805c1770627609b9a53c02eca93edad93ed9f53cdabb1a3",
+      "sha256": "d955d47dffd78e7968b7f676d2fdff43acbd6ed8d2cb626c7330baa13d086b80",
+      "width": 480,
+      "height": 240,
+      "bytes": 47684
+    },
+    {
+      "target": "calligraphy/Chi.png",
+      "source": "public/online/assets/fonts/mahjong-brush.woff2",
+      "text": "吃",
+      "sourceSha256": "db99502478588158d805c1770627609b9a53c02eca93edad93ed9f53cdabb1a3",
+      "sha256": "d9b4411b1af7244fe9b72e8f6ef60b9a13ea81b79da393c199a9d48a84278899",
+      "width": 480,
+      "height": 240,
+      "bytes": 23356
+    },
+    {
+      "target": "calligraphy/Pon.png",
+      "source": "public/online/assets/fonts/mahjong-brush.woff2",
+      "text": "碰",
+      "sourceSha256": "db99502478588158d805c1770627609b9a53c02eca93edad93ed9f53cdabb1a3",
+      "sha256": "36395155c88efe9765cbac8b34af8b62353f56773d5150371ad3c514359e5770",
+      "width": 480,
+      "height": 240,
+      "bytes": 27562
+    },
+    {
+      "target": "calligraphy/Kan.png",
+      "source": "public/online/assets/fonts/mahjong-brush.woff2",
+      "text": "杠",
+      "sourceSha256": "db99502478588158d805c1770627609b9a53c02eca93edad93ed9f53cdabb1a3",
+      "sha256": "ac8f98661f869a0899a5d2cf5c3ce00032ba4d42b4e4e8177d2c55a09c0566e8",
+      "width": 480,
+      "height": 240,
+      "bytes": 23542
+    },
+    {
+      "target": "calligraphy/Nuki.png",
+      "source": "public/online/assets/fonts/mahjong-brush.woff2",
+      "text": "拔北",
+      "sourceSha256": "db99502478588158d805c1770627609b9a53c02eca93edad93ed9f53cdabb1a3",
+      "sha256": "2adf974a6f1ad8eb081531154a83bfad2d008d52e9fc7a99fd60ad2698e11d38",
+      "width": 480,
+      "height": 240,
+      "bytes": 49870
+    }
+  ]
+}
