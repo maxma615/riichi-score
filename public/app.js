@@ -101,6 +101,22 @@ function chips(key, items) {
 function result(p, options) {
   return `${p.label ? `<p>${p.label}</p>` : ""}<strong>${p.total.toLocaleString()}<small> 点</small></strong><p>${options.method === "ron" ? `放铳者支付 ${p.ron.toLocaleString()} 点` : options.dealer ? `每家支付 ${p.child.toLocaleString()} 点` : `庄家 ${p.parent.toLocaleString()} 点 · 闲家 ${p.child.toLocaleString()} 点`}</p>`;
 }
+function limitTable() {
+  const rows = [
+    [5, "5番", "满贯"],
+    [6, "6–7番", "跳满"],
+    [8, "8–10番", "倍满"],
+    [11, "11–12番", "三倍满"],
+    [13, "13番及以上", "累计役满"],
+  ];
+  const payment = (x) =>
+    quick.method === "ron"
+      ? x.ron.toLocaleString()
+      : quick.dealer
+        ? `${x.child.toLocaleString()} ALL`
+        : `${x.child.toLocaleString()} / ${x.parent.toLocaleString()}`;
+  return `<div class="card"><h2>5番及以上 · 满贯与役满</h2><p class="muted">达到满贯后，点数按番数档位计算，不再随符数变化。${quick.players === 3 ? "三麻自摸损；显示每家支付额。" : ""}</p><div class="scroll"><table><thead><tr><th>番数 / 役</th><th>名称</th><th>${quick.dealer ? "庄家" : "闲家"}支付点数</th></tr></thead><tbody>${rows.map(([han, title, label]) => `<tr><th>${title}</th><td>${label}</td><td>${payment(points({ ...quick, fu: 30, han, yakuman: 0 }))}</td></tr>`).join("")}${[1, 2, 3, 4, 5, 6].map((yakuman) => `<tr><th>${yakuman === 1 ? "役满" : `${yakuman}倍役满`}</th><td>役满役</td><td>${payment(points({ ...quick, yakuman }))}</td></tr>`).join("")}</tbody></table></div><p class="muted">自摸“闲家 / 庄家”；ALL 表示每家。含 ${quick.honba} 本场，不含供托；累计役满按本工具速查默认规则。</p></div>`;
+}
 function renderQuick() {
   let p, error;
   try {
@@ -109,7 +125,7 @@ function renderQuick() {
     error = e.message;
   }
   $("#quick").innerHTML =
-    `<div class="grid"><div class="card"><h2>符翻速查</h2><div class="result">${p ? result(p, quick) : `<p>${esc(error)}</p>`}</div><span class="muted">座位与和牌方式</span>${chips(
+    `<div class="grid"><div class="card"><h2>符番速查</h2><div class="result">${p ? result(p, quick) : `<p>${esc(error)}</p>`}</div><span class="muted">座位与和牌方式</span>${chips(
       "players",
       [
         [4, "四人"],
@@ -121,13 +137,13 @@ function renderQuick() {
     ])}${chips("method", [
       ["ron", "荣和"],
       ["tsumo", "自摸"],
-    ])}<span class="muted">翻数</span>${chips(
+    ])}<span class="muted">番数</span>${chips(
       "han",
-      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((n) => [n, `${n}翻`]),
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((n) => [n, `${n}番`]),
     )}<span class="muted">符数</span>${chips(
       "fu",
       FU.map((n) => [n, `${n}符`]),
-    )}<div class="grid"><label>本场<input id="quick-honba" type="number" min="0" max="100" value="${quick.honba}"></label><label>役满<select id="quick-yakuman"><option value="0">普通符翻</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${quick.yakuman === n ? "selected" : ""}>${n}倍役满</option>`).join("")}</select></label></div><p class="muted">结果含本场，不含立直供托。三麻采用自摸损；切上满贯关闭，累计役满开启。</p></div><div class="card"><h2>算符时看这里</h2><details open><summary>基本符与常见例外</summary><p>普通和牌以20符起算；门前荣和加10符，自摸加2符。最后向上取整到十符。平和自摸固定20符；七对子固定25符；副露平和形荣和至少30符。</p></details><details><summary>刻子与杠子</summary><p>明刻：中张2符、幺九字牌4符。暗刻：中张4符、幺九字牌8符。明杠：中张8符、幺九字牌16符。暗杠：中张16符、幺九字牌32符。荣和补成的刻子按明刻算符。</p></details><details><summary>雀头与等待</summary><p>三元牌、场风或自风雀头各加2符；连风雀头按约定确认2符或4符。嵌张、边张、单骑等待加2符，两面和双碰不加。输入已经确认的符翻；本工具不自动判役，宝牌不能单独构成役。</p></details><p class="muted">规则可在开桌时固定。包牌、流局满贯与错和罚分暂不支持，请勿用普通和牌替代。</p></div></div><div class="card"><h2>${quick.dealer ? "庄家" : "闲家"} · ${quick.method === "ron" ? "荣和支付" : "自摸支付"}速查表</h2><div class="scroll"><table><thead><tr><th>符 / 翻</th>${[1, 2, 3, 4].map((n) => `<th>${n}翻</th>`).join("")}</tr></thead><tbody>${FU.map(
+    )}<div class="grid"><label>本场<input id="quick-honba" type="number" min="0" max="100" value="${quick.honba}"></label><label>役满<select id="quick-yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${quick.yakuman === n ? "selected" : ""}>${n}倍役满</option>`).join("")}</select></label></div><p class="muted">结果含本场，不含立直供托。三麻采用自摸损；切上满贯关闭，累计役满开启。</p></div><div class="card"><h2>算符时看这里</h2><details open><summary>基本符与常见例外</summary><p>普通和牌以20符起算；门前荣和加10符，自摸加2符。最后向上取整到十符。平和自摸固定20符；七对子固定25符；副露平和形荣和至少30符。</p></details><details><summary>刻子与杠子</summary><p>明刻：中张2符、幺九字牌4符。暗刻：中张4符、幺九字牌8符。明杠：中张8符、幺九字牌16符。暗杠：中张16符、幺九字牌32符。荣和补成的刻子按明刻算符。</p></details><details><summary>雀头与等待</summary><p>三元牌、场风或自风雀头各加2符；连风雀头按约定确认2符或4符。嵌张、边张、单骑等待加2符，两面和双碰不加。输入已经确认的符番；本工具不自动判役，宝牌不能单独构成役。</p></details><p class="muted">规则可在开桌时固定。包牌、流局满贯与错和罚分暂不支持，请勿用普通和牌替代。</p></div></div><div class="card"><h2>${quick.dealer ? "庄家" : "闲家"} · ${quick.method === "ron" ? "荣和支付" : "自摸支付"}速查表</h2><div class="scroll"><table><thead><tr><th>符 / 番</th>${[1, 2, 3, 4].map((n) => `<th>${n}番</th>`).join("")}</tr></thead><tbody>${FU.map(
       (fu) =>
         `<tr><th>${fu}符</th>${[1, 2, 3, 4]
           .map((han) => {
@@ -141,7 +157,7 @@ function renderQuick() {
           .join("")}</tr>`,
     ).join(
       "",
-    )}</tbody></table></div><p class="muted">自摸“闲家 / 庄家”；ALL 表示每家。当前本场：${quick.honba}。</p></div>`;
+    )}</tbody></table></div><p class="muted">自摸“闲家 / 庄家”；ALL 表示每家。当前本场：${quick.honba}。</p></div>${limitTable()}`;
   $("#quick")
     .querySelectorAll("[data-key]")
     .forEach(
@@ -188,7 +204,7 @@ function renderRoom() {
   if (!room) {
     const join = new URLSearchParams(location.search).get("join");
     $("#room").innerHTML =
-      `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">不需要注册，填写昵称即可。成员用自己的手机扫码加入，或者由桌主填写线下玩家。</p><form id="entry"><div class="grid"><label>你的昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '<label>选择座位<select id="join-seat"><option value="1">初始南家</option><option value="2">初始西家</option><option value="3">初始北家（四人桌）</option></select></label>' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<label class="check"><input id="kiriage" type="checkbox">切上满贯（4翻30符 / 3翻60符）</label><label class="check"><input id="kazoe" type="checkbox" checked>累计役满（13翻起）</label>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
+      `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">不需要注册，填写昵称即可。成员用自己的手机扫码加入，或者由桌主填写线下玩家。</p><form id="entry"><div class="grid"><label>你的昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '<label>选择座位<select id="join-seat"><option value="1">初始南家</option><option value="2">初始西家</option><option value="3">初始北家（四人桌）</option></select></label>' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<label class="check"><input id="kiriage" type="checkbox">切上满贯（4番30符 / 3番60符）</label><label class="check"><input id="kazoe" type="checkbox" checked>累计役满（13番起）</label>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
     $("#entry").onsubmit = (e) => {
       e.preventDefault();
       task(async () => {
@@ -237,7 +253,7 @@ function renderRoom() {
   }
   const n = room.rules.players;
   $("#room").innerHTML =
-    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} <span class="muted">${room.honba} 本场</span></h2></div><button id="share">扫码入桌</button></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13翻起三倍满"}${room.isOwner ? " · 你是桌主" : " · 由桌主记分"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] && room.isOwner ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div>${room.isOwner ? `<div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div>` : ""}</div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
+    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} <span class="muted">${room.honba} 本场</span></h2></div><button id="share">扫码入桌</button></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}${room.isOwner ? " · 你是桌主" : " · 由桌主记分"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] && room.isOwner ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div>${room.isOwner ? `<div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div>` : ""}</div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
       room.history.length
         ? `<div class="scroll"><table><thead><tr><th>局 / 本场</th><th>结果</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${[
             ...room.history,
@@ -370,7 +386,7 @@ function openRecord() {
   };
 }
 function winnerInputs(s, check = false) {
-  return `<div class="winner divider" data-seat="${s}">${check ? `<label class="check"><input type="checkbox" name="winner" value="${s}">${esc(seatName(s))} 和牌</label>` : ""}<div class="grid"><label>翻数<input class="han" type="number" min="1" max="100" value="3"></label><label>符数<select class="fu">${FU.map((f) => `<option ${f === 30 ? "selected" : ""}>${f}</option>`).join("")}</select></label><label>役满<select class="yakuman"><option value="0">普通符翻</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}倍役满</option>`).join("")}</select></label></div></div>`;
+  return `<div class="winner divider" data-seat="${s}">${check ? `<label class="check"><input type="checkbox" name="winner" value="${s}">${esc(seatName(s))} 和牌</label>` : ""}<div class="grid"><label>番数<input class="han" type="number" min="1" max="100" value="3"></label><label>符数<select class="fu">${FU.map((f) => `<option ${f === 30 ? "selected" : ""}>${f}</option>`).join("")}</select></label><label>役满<select class="yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}倍役满</option>`).join("")}</select></label></div></div>`;
 }
 function recordFields() {
   const kind = $("#kind").value;

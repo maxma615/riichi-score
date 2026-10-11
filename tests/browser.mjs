@@ -38,9 +38,21 @@ for (const engine of [chromium, webkit])
         page.on("pageerror", (e) => errors.push(e.message));
         await page.goto(entry);
         await expect(
-          page.getByRole("heading", { name: "符翻速查", exact: true }),
+          page.getByRole("heading", { name: "符番速查", exact: true }),
         ).toBeVisible();
-        await page.getByRole("button", { name: "3翻", exact: true }).click();
+        await expect(
+          page.getByRole("heading", {
+            name: "5番及以上 · 满贯与役满",
+            exact: true,
+          }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole("row").filter({ hasText: "13番及以上" }),
+        ).toContainText("32,000");
+        await expect(
+          page.getByRole("row").filter({ hasText: "5番" }),
+        ).toContainText("8,000");
+        await page.getByRole("button", { name: "3番", exact: true }).click();
         await expect(page.locator(".result")).toContainText("3,900");
         await page.getByRole("button", { name: "自摸", exact: true }).click();
         await expect(page.locator(".result")).toContainText("庄家 2,000 点");

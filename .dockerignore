@@ -1,6 +1,7 @@
 node_modules
 .local
 .env
-.git
+.env.*
+!.env.example
 tests
 docs

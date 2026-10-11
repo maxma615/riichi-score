@@ -30,7 +30,7 @@ for (const [han, child, parent] of [
   [11, 24000, 36000],
   [13, 32000, 48000],
 ])
-  test(`${han}翻30符庄闲荣和`, () => {
+  test(`${han}番30符庄闲荣和`, () => {
     assert.equal(points({ han, fu: 30 }).ron, child);
     assert.equal(points({ han, fu: 30, dealer: true }).ron, parent);
   });

@@ -29,14 +29,14 @@ export function points({
     base = 8000 * yakuman;
     label = yakuman === 1 ? "役满" : `${yakuman}倍役满`;
   } else {
-    integer(han, 1, 100, "翻数");
+    integer(han, 1, 100, "番数");
     if (!FU.includes(fu)) throw new ValidationError("符数无效");
     if (
       (fu === 20 && (method === "ron" || han < 2)) ||
       (fu === 25 && (han < 2 || (method === "tsumo" && han < 3))) ||
       (fu === 110 && method === "tsumo" && han < 2)
     )
-      throw new ValidationError("这个符翻组合不能用于此和牌方式");
+      throw new ValidationError("这个符番组合不能用于此和牌方式");
     base =
       han >= 13 && kazoe
         ? 8000

@@ -1,0 +1,11 @@
+# 已有 Caddy 通过私有 Docker 网络访问；3200 仅绑定服务器回环。
+services:
+  score:
+    container_name: yougui-riichi-score
+    networks:
+      - default
+      - gateway
+networks:
+  gateway:
+    external: true
+    name: yougui_default

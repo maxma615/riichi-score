@@ -1,4 +1,5 @@
-FROM node:24-alpine
+ARG NODE_IMAGE=node:24-bookworm-slim
+FROM ${NODE_IMAGE}
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund && mkdir -p /data && chown node:node /data
