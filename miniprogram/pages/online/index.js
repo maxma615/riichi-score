@@ -1,6 +1,7 @@
 const { api, error } = require("../../utils/api");
 const { uuid, snapshot, feedback } = require("../../utils/online");
 const { presentation } = require("../../utils/online-settlement");
+const { presentationBoundaries } = require("../../utils/online-timing");
 Page({
   data: {
     room: null,
@@ -29,6 +30,7 @@ Page({
     this.revision = (this.revision || 0) + 1;
     clearInterval(this.timer);
     clearTimeout(this.feedbackTimer);
+    clearTimeout(this.resultTimer);
     this.drag = null;
     this.setData({ announcement: null });
   },
@@ -48,7 +50,24 @@ Page({
     const previous = this.data.game?.decisionId;
     const announcement = feedback(this.data.game, r.room?.game);
     const next = snapshot(r);
-    const result = presentation(next.game, next.seats);
+    const flow = next.game?.settlementFlow;
+    const key =
+      next.game && flow && !next.game.ranking
+        ? `${flow.id}:${flow.stage}:${flow.detailIndex}`
+        : "";
+    const time = Date.now(),
+      previousAnchor = this.resultAnchor;
+    const age =
+      previousAnchor?.key === key
+        ? Math.max(
+            flow?.elapsedMs || 0,
+            previousAnchor.age + Math.max(0, time - previousAnchor.time),
+            previousAnchor.lastAge || 0,
+          )
+        : flow?.elapsedMs || 0;
+    this.resultAnchor = key ? { key, time, age } : null;
+    if (previousAnchor?.key !== key) this.autoPhase = "";
+    const result = presentation(next.game, next.seats, age);
     this.setData({
       ...next,
       settlement: result,
@@ -59,6 +78,7 @@ Page({
         ? next.actions.filter((c) => c.type !== "ack")
         : next.actions,
     });
+    this.tickResult();
     if (!r.room?.game) {
       clearTimeout(this.feedbackTimer);
       this.setData({ announcement: null });
@@ -77,6 +97,41 @@ Page({
       }, 1500);
     }
     if (previous !== this.data.game?.decisionId) this.setData({ selected: -1 });
+  },
+  tickResult() {
+    clearTimeout(this.resultTimer);
+    const anchor = this.resultAnchor,
+      game = this.data.game;
+    if (!this.active || !anchor || !game?.settlement || game.ranking) return;
+    const age = Math.max(
+      anchor.lastAge || 0,
+      anchor.age + Math.max(0, Date.now() - anchor.time),
+    );
+    anchor.lastAge = age;
+    const result = presentation(game, this.data.seats, age);
+    this.setData({ settlement: result });
+    const key = anchor.key;
+    const due =
+      age >= result.autoAt && this.data.settlementAck && this.autoPhase !== key;
+    if (due && !this.data.busy) {
+      this.autoPhase = key;
+      this.continueSettlement();
+      return;
+    }
+    const boundaries = [
+      result.intro,
+      ...presentationBoundaries(game.settlementFlow, game.settlement).map(
+        (v) => v + result.intro,
+      ),
+    ];
+    const next = boundaries.find((v) => v > age);
+    if (next !== undefined || due)
+      this.resultTimer = setTimeout(
+        () => {
+          if (this.resultAnchor?.key === key) this.tickResult();
+        },
+        next === undefined ? 250 : Math.max(1, next - age),
+      );
   },
   choose(e) {
     if (!this.data.busy)
@@ -157,7 +212,10 @@ Page({
   },
   continueSettlement() {
     const c = this.data.settlementAck;
-    if (c) return this.respond({ currentTarget: { dataset: { id: c.id } } });
+    if (c && this.active && this.data.settlement?.ready && !this.data.busy) {
+      this.autoPhase = this.resultAnchor?.key || "";
+      return this.respond({ currentTarget: { dataset: { id: c.id } } });
+    }
   },
   discard(e) {
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];

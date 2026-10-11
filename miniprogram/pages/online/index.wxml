@@ -188,7 +188,10 @@
           ><view>{{announcement.text}}</view></view
         >
       </view>
-      <view wx:if="{{settlement || game.ranking}}" class="result-overlay">
+      <view
+        wx:if="{{(settlement && settlement.visible) || game.ranking}}"
+        class="result-overlay"
+      >
         <view class="result-panel">
           <block wx:if="{{game.ranking}}"
             ><view class="heading">最终排名</view
@@ -209,7 +212,7 @@
             <block wx:if="{{settlement.stage!=='scores'}}">
               <view
                 wx:if="{{settlement.kind==='win' || settlement.drawInfo.kind==='nagashi'}}"
-                class="result-points"
+                class="result-points {{settlement.pointsVisible?'is-visible':'is-pending'}}"
                 >{{settlement.kind==='win' ? settlement.hanLabel : '满贯'}}
                 {{settlement.fu ? '· '+settlement.fu+'符' : ''}}<text
                   >{{settlement.points}}点</text
@@ -260,7 +263,7 @@
               <view
                 wx:for="{{settlement.yaku}}"
                 wx:key="index"
-                class="line result-yaku"
+                class="line result-yaku {{item.visible?'is-visible':'is-pending'}}"
                 ><text>{{item.name}}</text><text>{{item.label}}</text></view
               >
               <view
@@ -323,9 +326,10 @@
                 wx:if="{{settlementAck}}"
                 class="primary"
                 bindtap="continueSettlement"
-                disabled="{{busy}}"
+                disabled="{{busy || !settlement.ready}}"
               >
-                继续</button
+                {{settlement.ready ? '继续 · '+settlement.countdown :
+                '正在展示'}}</button
               ><text wx:else>等待其他玩家</text></view
             >
           </block>

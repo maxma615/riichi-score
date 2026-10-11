@@ -77,6 +77,7 @@ test("原生分阶段收支使用多人荣和累计支付且只展示当前赢�
   const scores = presentation(
     { ...game, settlementFlow: { ...flow, stage: "scores" } },
     seats,
+    5000,
   );
   assert.equal(scores.title, "点数结算");
   assert.deepEqual(
@@ -236,4 +237,167 @@ test("原生结算继续按钮提交当前合法ack，新阶段和解散清掉�
   assert.equal(page.data.settlementAck, null);
   await page.continueSettlement();
   assert.equal(commands.length, 1);
+});
+
+test("原生结算先展示役种再显示点数，分数变化只用共同时间内核", () => {
+  const flow = {
+    id: "f",
+    stage: "detail",
+    detailIndex: 0,
+    detailCount: 1,
+    elapsedMs: 0,
+    oldScores: seats.map((p) => p.score),
+    delta: [3300, -3300, 0, 0],
+    newScores: [28300, 21700, 25000, 25000],
+    winDeclarations: [{ seat: 0, winMethod: "ron" }],
+  };
+  const game = { settlement: result, settlementFlow: flow };
+  const intro = presentation(game, seats, 1199);
+  assert.equal(intro.visible, false);
+  const first = presentation(game, seats, 1500);
+  assert.equal(first.visible, true);
+  assert.equal(first.yaku[0].visible, true);
+  assert.equal(first.pointsVisible, false);
+  assert.equal(first.ready, false);
+  const revealed = presentation(game, seats, 1680);
+  assert.equal(revealed.pointsVisible, true);
+  assert.equal(revealed.ready, false);
+  assert.equal(presentation(game, seats, 2280).ready, true);
+  assert.equal(presentation(game, seats, 2280).countdown, 3);
+  assert.equal(presentation(game, seats, 5280).countdown, 0);
+  const scores = { ...game, settlementFlow: { ...flow, stage: "scores" } };
+  assert.deepEqual(
+    presentation(scores, seats, 1199).changes.map((p) => p.after),
+    flow.oldScores,
+  );
+  assert.deepEqual(
+    presentation(scores, seats, 1200).changes.map((p) => p.after),
+    [25100, 24900, 25000, 25000],
+  );
+  assert.deepEqual(
+    presentation(scores, seats, 2160).changes.map((p) => p.after),
+    flow.newScores,
+  );
+  assert.equal(presentation(scores, seats, 4499).ready, false);
+  assert.equal(presentation(scores, seats, 4500).ready, true);
+});
+
+test("原生结算时钟不重放旧阶段，后台停止且自动确认失败后同nonce手动重试", async () => {
+  let p,
+    now = 0,
+    serial = 0,
+    fail = true;
+  const tasks = new Map(),
+    commands = [],
+    errors = [];
+  const req = createRequire(
+    new URL("../miniprogram/pages/online/index.js", import.meta.url),
+  );
+  class TestDate extends Date {
+    static now() {
+      return now;
+    }
+  }
+  vm.runInNewContext(
+    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    {
+      Page: (v) => (p = v),
+      Date: TestDate,
+      require: (s) =>
+        s === "../../utils/api"
+          ? {
+              error: (e) => errors.push(e.message),
+              api: async (path, method, body) => {
+                commands.push({ ...body });
+                if (fail) {
+                  fail = false;
+                  throw Error("synthetic lost ack response");
+                }
+                return { room: null };
+              },
+            }
+          : req(s),
+      setTimeout: (fn, delay) => {
+        const id = ++serial;
+        tasks.set(id, { fn, due: now + delay });
+        return id;
+      },
+      clearTimeout: (id) => tasks.delete(id),
+      clearInterval: () => {},
+    },
+  );
+  p.data = JSON.parse(JSON.stringify(p.data));
+  p.setData = (v) => Object.assign(p.data, v);
+  p.active = true;
+  const flow = {
+    id: "clock",
+    stage: "scores",
+    detailIndex: 0,
+    detailCount: 1,
+    elapsedMs: 0,
+    oldScores: seats.map((p) => p.score),
+    delta: result.delta,
+    newScores: [30200, 19800, 25000, 25000],
+  };
+  const room = {
+    id: "r",
+    variant: "yonma",
+    mySeat: 0,
+    members: seats.map((p) => ({
+      seat: p.seat,
+      userId: String(p.seat),
+      displayName: p.name,
+    })),
+    game: {
+      decisionId: "a",
+      players: seats.map((p) => ({ ...p, discards: [], melds: [] })),
+      hand: [],
+      choices: [{ type: "ack", id: "old" }],
+      settlement: result,
+      settlementFlow: flow,
+    },
+  };
+  p.accept({ room });
+  assert.equal(p.data.settlement.ready, false);
+  await p.continueSettlement();
+  assert.equal(commands.length, 0);
+  const stale = [...tasks.values()][0].fn;
+  now = 1500;
+  p.tickResult();
+  const score = p.data.settlement.changes[0].after;
+  now = 1000;
+  p.tickResult();
+  assert.equal(p.data.settlement.changes[0].after, score);
+  p.onHide();
+  assert.equal(tasks.size, 0);
+  now = 8000;
+  stale();
+  assert.equal(commands.length, 0);
+  p.active = true;
+  p.accept({
+    room: {
+      ...room,
+      game: {
+        ...room.game,
+        decisionId: "b",
+        choices: [{ type: "ack", id: "current" }],
+        settlementFlow: { ...flow, id: "new", elapsedMs: 0 },
+      },
+    },
+  });
+  stale();
+  assert.equal(commands.length, 0);
+  now = 15500;
+  p.tickResult();
+  await new Promise(setImmediate);
+  assert.equal(commands.length, 1);
+  assert.equal(commands[0].choiceId, "current");
+  assert.equal(errors.length, 1);
+  p.tickResult();
+  assert.equal(commands.length, 1);
+  await p.continueSettlement();
+  assert.equal(commands.length, 2);
+  assert.equal(commands[0].nonce, commands[1].nonce);
+  assert.equal(p.data.settlement, null);
+  assert.equal(tasks.size, 0);
 });

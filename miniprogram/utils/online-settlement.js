@@ -25,7 +25,18 @@ function winning(settlement) {
   }
   return { hand, exposed, winningTile: null };
 }
-function presentation(game, seats) {
+const {
+  confirmationAt,
+  detailValueAt,
+  drawSummaryAt,
+  displayedScores,
+  AUTO_CONFIRM_MS,
+} = require("./online-timing");
+function presentation(
+  game,
+  seats,
+  rawAge = game?.settlementFlow?.elapsedMs || 0,
+) {
   const s = game?.settlement;
   if (!s || game.ranking) return null;
   const flow = game.settlementFlow,
@@ -46,11 +57,27 @@ function presentation(game, seats) {
   );
   const mainYakuman = String(s.han ?? "").match(/\*+/)?.[0].length || 0;
   const totalYakuman = Math.max(yakuman, mainYakuman);
+  const intro =
+    flow?.stage === "detail" &&
+    flow.detailIndex === 0 &&
+    s.kind === "win" &&
+    flow.winDeclarations?.length
+      ? 1200
+      : 0;
+  const age = Math.max(0, rawAge - intro);
+  const readyAt = flow ? confirmationAt(flow, s) : 0;
+  const scores = flow ? displayedScores(flow, age, false) : [];
   return {
     ...s,
     ...winning(s),
     stage,
     title,
+    visible: rawAge >= intro && (stage !== "draw" || age >= drawSummaryAt(s)),
+    ready: age >= readyAt,
+    countdown: Math.max(0, Math.ceil((readyAt + AUTO_CONFIRM_MS - age) / 1000)),
+    autoAt: readyAt + AUTO_CONFIRM_MS + intro,
+    intro,
+    pointsVisible: stage !== "detail" || age >= detailValueAt(s),
     phaseKey: flow
       ? `${flow.id}:${stage}:${flow.detailIndex}`
       : game.decisionId,
@@ -62,7 +89,11 @@ function presentation(game, seats) {
       stage === "detail" && flow.detailCount > 1
         ? `第${flow.detailIndex + 1}位 · 共${flow.detailCount}位`
         : "",
-    yaku: (s.yaku || []).map((y) => ({ ...y, label: hanLabel(y.han) })),
+    yaku: (s.yaku || []).map((y, i) => ({
+      ...y,
+      label: hanLabel(y.han),
+      visible: stage !== "detail" || age >= 300 + Math.min(i, 14) * 180,
+    })),
     dora: (game.doraIndicators || []).map(tile),
     ura: (s.uraIndicators || []).map(tile),
     changes: seats.map((p) => ({
@@ -70,7 +101,7 @@ function presentation(game, seats) {
       name: p.name,
       before: flow?.oldScores[p.seat] ?? p.score,
       value: flow?.delta[p.seat] ?? s.delta[p.seat] ?? 0,
-      after: flow?.newScores[p.seat] ?? p.score + (s.delta[p.seat] || 0),
+      after: scores[p.seat] ?? p.score + (s.delta[p.seat] || 0),
     })),
     drawPlayers: seats.map((p) => {
       const reveal = s.drawInfo?.revealedHands.find((v) => v.seat === p.seat);

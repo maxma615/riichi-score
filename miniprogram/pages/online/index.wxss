@@ -579,3 +579,18 @@
   color: #6d6e63;
   padding: 8px 0;
 }
+
+.result-points,
+.result-yaku {
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out;
+}
+.result-panel .is-pending {
+  opacity: 0;
+  transform: translateY(5px);
+}
+.result-panel .is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
