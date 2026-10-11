@@ -41,6 +41,7 @@ git clone https://github.com/maxma615/riichi-score.git
 cd riichi-score
 npm ci --cache .local/npm-cache
 cp .env.example .env
+npm run build
 npm start
 ```
 
@@ -48,7 +49,7 @@ npm start
 
 手机扫码需要所有人的设备都能访问 `APP_ORIGIN`。本机回环地址无法给另一台手机访问。局域网测试可设 `HOST=0.0.0.0`、`APP_ORIGIN=http://本机局域网IP:3200`；公网使用可信 HTTPS。`APP_BASE_PATH=/riichi` 可以部署到既有网站的独立路径，反向代理应保留路径。
 
-身份由当前浏览器的 HttpOnly Cookie 保存90天；昵称不是经过验证的微信身份，清除 Cookie 或更换设备不会自动恢复桌主身份。邀请码允许加入空座位，不授予桌主权限；收藏链接、保留浏览器会话后可回到原桌。正式微信小程序需要另外接入微信登录。
+身份由当前浏览器的 HttpOnly Cookie 保存90天；昵称不是经过验证的微信身份，清除 Cookie 或更换设备不会自动恢复桌主身份。邀请码允许加入空座位，不授予桌主权限；收藏链接、保留浏览器会话后可回到原桌。服务端微信登录已经接入，实际微信身份登录仍需配置AppID、AppSecret与备案域名。
 
 ## 容器部署
 
@@ -57,12 +58,12 @@ npm start
 docker compose up -d --build
 ```
 
-容器只在本机3200端口监听，前置 HTTPS 代理自行配置；`score_data` 是独立卷。默认限制0.25 CPU和128 MiB内存。已经在上海 ECS 验证容器限制、健康和 Node 24/Linux 的 50 项测试；不要对真实资料自动生成或下载备份。小程序需要备案域名、合法 HTTPS request 域名、AppID、微信服务端登录和小程序码，网页二维码不能冒充小程序码。
+容器只在本机3200端口监听，前置 HTTPS 代理自行配置；`score_data` 是独立卷。默认限制0.25 CPU和256 MiB内存。已经在上海 ECS 验证容器限制、健康与独立卷；测试记录见docs/acceptance.md，不要对真实资料自动生成或下载备份。小程序需要备案域名、合法 HTTPS request 域名、AppID、微信服务端登录和小程序码，网页二维码不能冒充小程序码。
 
 ## 检查
 
 ```sh
-npm test
+npm test # 自动先构建联机服务和前端，再运行服务与规则检查
 npx playwright install chromium webkit
 npm run test:browser
 ```
