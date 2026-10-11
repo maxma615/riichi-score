@@ -1,5 +1,6 @@
 const { api, error } = require("../../utils/api");
 const { uuid, snapshot, feedback } = require("../../utils/online");
+const { presentation } = require("../../utils/online-settlement");
 Page({
   data: {
     room: null,
@@ -46,7 +47,18 @@ Page({
   accept(r) {
     const previous = this.data.game?.decisionId;
     const announcement = feedback(this.data.game, r.room?.game);
-    this.setData(snapshot(r));
+    const next = snapshot(r);
+    const result = presentation(next.game, next.seats);
+    this.setData({
+      ...next,
+      settlement: result,
+      settlementAck: result
+        ? next.actions.find((c) => c.type === "ack") || null
+        : null,
+      actions: result
+        ? next.actions.filter((c) => c.type !== "ack")
+        : next.actions,
+    });
     if (!r.room?.game) {
       clearTimeout(this.feedbackTimer);
       this.setData({ announcement: null });
@@ -132,15 +144,20 @@ Page({
     return this.send({ action: "rematch" });
   },
   respond(e) {
-    const choice = this.data.actions.find(
-      (c) => c.id === e.currentTarget.dataset.id,
-    );
+    const choices = this.data.settlementAck
+      ? [...this.data.actions, this.data.settlementAck]
+      : this.data.actions;
+    const choice = choices.find((c) => c.id === e.currentTarget.dataset.id);
     if (choice)
       return this.send({
         action: "respond",
         decisionId: this.data.game.decisionId,
         choiceId: choice.id,
       });
+  },
+  continueSettlement() {
+    const c = this.data.settlementAck;
+    if (c) return this.respond({ currentTarget: { dataset: { id: c.id } } });
   },
   discard(e) {
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];

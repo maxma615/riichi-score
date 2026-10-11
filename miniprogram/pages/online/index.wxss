@@ -441,3 +441,141 @@
   transform-origin: top left;
   transform: translateX(22px) rotate(90deg);
 }
+
+.result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  background: #0c1919b8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+}
+.result-panel {
+  width: 100%;
+  max-width: 600px;
+  max-height: calc(100vh - 28px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid #bda97d;
+  border-radius: 8px;
+  background: #ede6d7;
+  color: #292d2b;
+  animation: result-in 0.2s ease-out;
+}
+.result-title {
+  font-family: serif;
+  font-size: 28px;
+  color: #903c2d;
+  text-align: center;
+}
+.result-subtitle {
+  font-size: 13px;
+  text-align: center;
+  margin-top: 6px;
+}
+.result-points {
+  font-size: 16px;
+  text-align: center;
+  margin: 12px 0;
+}
+.result-points text {
+  display: block;
+  font-size: 28px;
+  margin-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.winning-rack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: end;
+  margin: 10px 0;
+}
+.winning-rack .tile-small {
+  width: 20px;
+  height: 29px;
+}
+.winning-rack .meld {
+  margin-left: 5px;
+}
+.winning-tile {
+  margin-left: 8px;
+  box-shadow:
+    0 3px 0 #b8b49d,
+    0 0 0 1px #993e31;
+}
+.result-indicators {
+  display: flex;
+  gap: 20px;
+  font-size: 11px;
+}
+.result-indicators > view > view {
+  display: flex;
+  gap: 3px;
+  margin-top: 5px;
+}
+.result-panel .line {
+  font-size: 14px;
+  padding: 10px 0;
+}
+.result-footer {
+  position: sticky;
+  bottom: -18px;
+  background: #ede6d7;
+  padding: 6px 0;
+  text-align: center;
+}
+.result-footer button {
+  min-height: 44px;
+  margin: 5px 0;
+  font-size: 15px;
+}
+.result-footer > text {
+  font-size: 12px;
+  color: #69695e;
+}
+.balance {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 14px 0;
+  border-bottom: 1px solid #bcb5a560;
+  font-size: 14px;
+  align-items: center;
+}
+.balance-before {
+  color: #6d6e63;
+}
+.balance-after {
+  font-weight: bold;
+  font-size: 18px;
+}
+.balance .positive {
+  color: #386450;
+}
+.balance .negative {
+  color: #993e31;
+}
+@keyframes result-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.winning-rack .meld .tile-small {
+  width: 17px;
+  height: 25px;
+}
+.balance-heading {
+  font-size: 11px;
+  color: #6d6e63;
+  padding: 8px 0;
+}
