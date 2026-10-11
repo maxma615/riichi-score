@@ -539,10 +539,13 @@ function renderFu() {
   const choices = (key, values) =>
     `<div class="choice-row">${values.map(([v, label]) => `<button data-fu-key="${key}" data-fu-value='${JSON.stringify(v)}' class="${fuForm[key] === v ? "selected" : ""}" aria-pressed="${fuForm[key] === v}">${label}</button>`).join("")}</div>`;
   $("#fu").innerHTML =
-    `<div class="grid"><div class="card"><h2>选择牌型</h2>${choices("method", [
-      ["ron", "荣和"],
-      ["tsumo", "自摸 +2符"],
-    ])}${choices("closed", [
+    `<div class="fu-summary fu-result" aria-live="polite">${r ? `<div><strong>${r.fu}符</strong><p>${r.raw}符 · ${fuForm.special === "normal" ? "向上取整" : "固定符数"}</p></div><button id="use-fu" class="primary">用这个符数查点</button>` : esc(error)}</div><div class="grid"><div class="card"><h2>选择牌型</h2>${choices(
+      "method",
+      [
+        ["ron", "荣和"],
+        ["tsumo", "自摸 +2符"],
+      ],
+    )}${choices("closed", [
       [true, fuForm.method === "ron" ? "门前清荣和 +10符" : "门前清"],
       [false, "副露"],
     ])}${choices("special", [
@@ -579,7 +582,7 @@ function renderFu() {
               "",
             )}<button id="add-meld" ${fuForm.melds.length === 4 ? "disabled" : ""}>添加刻子 / 杠子</button>`
         : ""
-    }</div><div class="card"><h2>符数明细</h2>${r ? `${r.items.map((x) => `<div class="line"><span>${x.label}</span><strong>+${x.value}符</strong></div>`).join("")}<div class="result fu-result"><p>${r.raw}符 · ${fuForm.special === "normal" ? "向上取整" : "固定符数"}</p><strong>${r.fu}符</strong></div><button id="use-fu" class="primary">用这个符数查点</button>` : esc(error)}</div></div>`;
+    }</div><div class="card"><h2>符数明细</h2>${r ? `${r.items.map((x) => `<div class="line"><span>${x.label}</span><strong>+${x.value}符</strong></div>`).join("")}` : esc(error)}</div></div>`;
   $("#fu")
     .querySelectorAll("[data-fu-key]")
     .forEach(

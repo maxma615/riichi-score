@@ -1176,3 +1176,244 @@ body {
     width: 36px;
   }
 }
+
+/* 手机信息密度：统一卡片、表单、牌桌与统计页；保留 44px 触控高度。 */
+body {
+  font-size: 14px;
+}
+header {
+  min-height: 54px;
+}
+.card {
+  padding: 18px;
+  margin-bottom: 12px;
+}
+.card h2,
+.modal-head h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+  letter-spacing: 1px;
+}
+h3 {
+  font-size: 15px;
+  margin: 16px 0 8px;
+}
+.grid {
+  gap: 12px;
+}
+.row {
+  gap: 8px;
+}
+button {
+  min-height: 44px;
+  padding: 9px 12px;
+  font-size: 14px;
+}
+input,
+select {
+  min-height: 44px;
+  padding: 10px;
+}
+label {
+  gap: 5px;
+}
+.choice-row {
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+.choice-row button {
+  min-height: 44px;
+  padding: 8px 10px;
+}
+.line {
+  padding: 9px 0;
+}
+.result {
+  padding: 14px;
+  margin-top: 12px;
+}
+.result strong {
+  font-size: 32px;
+}
+.seat {
+  padding: 10px;
+}
+.seat strong {
+  font-size: 26px;
+}
+.round-status {
+  padding: 12px 14px;
+  margin: 10px 0 12px;
+  gap: 18px;
+}
+.honba-number {
+  font-size: 34px;
+}
+.repeat-label {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.record-status {
+  padding: 10px 12px;
+  margin: 6px 0 12px;
+}
+.record-status b {
+  font-size: 20px;
+}
+.record-label {
+  margin: 10px 0 6px;
+}
+.record-counter {
+  margin-bottom: 10px;
+}
+.fu-choices {
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+.fu-choices button {
+  min-height: 44px;
+}
+.next-round {
+  padding: 10px;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+#add-meld {
+  margin-top: 8px;
+}
+#quick .lookup-card {
+  padding: 16px;
+}
+.lookup-heading {
+  margin-bottom: 12px;
+}
+.lookup-heading h2 {
+  font-size: 20px;
+}
+.quick-context {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  gap: 10px;
+}
+.context-label {
+  margin-bottom: 5px;
+}
+#quick .lookup-result {
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+#quick .lookup-result strong {
+  font-size: 30px;
+  margin: 3px 0;
+}
+.lookup-switches {
+  gap: 10px;
+}
+.limit-heading {
+  margin: 16px 0 8px;
+}
+.fu-summary {
+  position: sticky;
+  top: 8px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  margin: 0 0 12px;
+  box-shadow: 0 4px 16px #0003;
+}
+.fu-summary strong {
+  font-size: 30px;
+  line-height: 1.1;
+}
+.fu-summary p {
+  font-size: 12px;
+  margin: 4px 0 0;
+  color: #eee6d8;
+}
+.fu-summary button {
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  header,
+  main,
+  footer {
+    width: calc(100% - 24px);
+  }
+  header {
+    height: 52px;
+    padding: 8px 0;
+  }
+  .card {
+    padding: 14px;
+  }
+  #quick .lookup-card {
+    padding: 14px 10px;
+  }
+  input,
+  select {
+    font-size: 16px;
+  }
+  .bottom-nav button {
+    min-height: 54px;
+    gap: 3px;
+  }
+  .bottom-nav button span:first-child {
+    font-size: 20px;
+    padding: 2px 8px;
+  }
+  body {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  }
+  .fu-summary {
+    position: fixed;
+    top: auto;
+    bottom: calc(75px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    right: 12px;
+    margin: 0;
+    padding: 10px 12px;
+  }
+  #fu {
+    padding-bottom: 90px;
+  }
+  dialog {
+    padding: 14px;
+  }
+  td,
+  th {
+    padding: 9px 6px;
+  }
+}
+.card {
+  margin: 12px 0;
+}
+#notice:empty {
+  display: none;
+}
+#notice:not(:empty) {
+  padding-top: 10px;
+}
+.actions {
+  margin: 12px 0;
+  gap: 6px;
+}
+.divider {
+  margin: 12px 0;
+  padding-top: 12px;
+}
+.seat strong {
+  margin: 8px 0 4px;
+}
+.round-status > strong {
+  font-size: 34px;
+}
+.round-status b {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+footer {
+  padding: 22px 0;
+}

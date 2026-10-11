@@ -1,0 +1,33 @@
+/* 原生 tabBar 在页面视口之外，结果栏贴页面底部，无需叠加导航高度。 */
+.fu-page {
+  padding-bottom: 160rpx;
+}
+.fu-summary {
+  position: fixed;
+  bottom: 0;
+  left: 20rpx;
+  right: 20rpx;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  background: #293632;
+  color: #f5eddb;
+  padding: 16rpx 20rpx;
+  border-radius: 4rpx;
+  box-shadow: 0 -6rpx 24rpx #0003;
+}
+.fu-summary .score {
+  font-size: 52rpx;
+  line-height: 1.1;
+}
+.fu-summary .small {
+  color: #eee6d8;
+  margin-top: 6rpx;
+}
+.fu-summary button {
+  margin: 0;
+  font-size: 26rpx;
+  padding: 0 18rpx;
+}

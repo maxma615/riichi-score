@@ -94,6 +94,17 @@ for (const engine of [chromium, webkit])
           .click();
         await page.getByRole("button", { name: "算符", exact: true }).click();
         await expect(page.locator(".fu-result")).toContainText("30符");
+        const assertFuVisible = async () => {
+          const result = await page.locator(".fu-result").boundingBox();
+          const nav = await bottomNav.boundingBox();
+          assert.ok(
+            result.y >= 0 && result.y + result.height <= nav.y,
+            JSON.stringify({ tag, result, nav }),
+          );
+          const action = await page.locator("#use-fu").boundingBox();
+          assert.ok(action.height >= 44);
+        };
+        await assertFuVisible();
         await expect(page.locator("#fu")).toContainText("门前清荣和");
         await expect(
           page.getByRole("heading", { name: "听牌形", exact: true }),
@@ -108,6 +119,17 @@ for (const engine of [chromium, webkit])
         await page.locator('[data-meld="0"]').selectOption("closedKan");
         await page.locator('[data-terminal="0"]').check();
         await expect(page.locator(".fu-result")).toContainText("60符");
+        await page.locator("#add-meld").scrollIntoViewIfNeeded();
+        await assertFuVisible();
+        await page.screenshot({
+          path: path.join(out, `${tag}-compact-fu.png`),
+        });
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+        );
         await page.getByRole("button", { name: "门前清", exact: true }).click();
         await page
           .getByRole("button", { name: "平和自摸 20符", exact: true })

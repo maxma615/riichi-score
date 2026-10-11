@@ -242,3 +242,55 @@
 .quick-context .switch-pair button {
   min-height: 84rpx;
 }
+
+.quick-page {
+  padding: 20rpx;
+}
+.lookup-card {
+  padding: 20rpx 16rpx;
+}
+.lookup-heading {
+  margin-bottom: 18rpx;
+}
+.lookup-heading .heading {
+  font-size: 34rpx;
+}
+.switches {
+  gap: 16rpx;
+}
+.result {
+  padding: 18rpx 20rpx;
+  margin: 18rpx 0;
+}
+.score {
+  font-size: 58rpx;
+  margin: 4rpx 0;
+}
+.quick-context {
+  gap: 16rpx;
+  margin-bottom: 18rpx;
+  padding-bottom: 18rpx;
+}
+.context-label {
+  margin-bottom: 8rpx;
+}
+.matrix-head > view {
+  padding: 10rpx 0;
+}
+.point-cell {
+  min-height: 84rpx;
+  padding: 8rpx 2rpx;
+}
+.limit-heading {
+  margin: 28rpx 0 12rpx;
+}
+.limit-row {
+  min-height: 84rpx;
+}
+.table-caption {
+  margin: 16rpx 0 10rpx;
+}
+.more-toggle {
+  margin-top: 16rpx;
+  padding: 12rpx 0;
+}
