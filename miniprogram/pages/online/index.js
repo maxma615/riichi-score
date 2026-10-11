@@ -48,6 +48,7 @@ Page({
     this.flights?.cancel(true);
     this.touchCancel();
     this.active = false;
+    if (this.resultAnchor) this.resultAnchor.baselineAge = Infinity;
     this.setData({ riichiMode: false });
     this.revision = (this.revision || 0) + 1;
     clearInterval(this.timer);
@@ -128,7 +129,10 @@ Page({
       ? Math.max(this.openingRun.age, Date.now() - this.openingRun.time)
       : null;
     const previous = this.data.game?.decisionId;
-    const announcement = feedback(this.data.game, r.room?.game);
+    const announcement =
+      r.room?.game?.settlementFlow && r.room.game.settlement
+        ? null
+        : feedback(this.data.game, r.room?.game);
     const sameDecision =
       this.data.room?.id === r.room?.id &&
       previous === r.room?.game?.decisionId;
@@ -153,9 +157,13 @@ Page({
             previousAnchor.lastAge || 0,
           )
         : flow?.elapsedMs || 0;
-    this.resultAnchor = key ? { key, time, age } : null;
+    const baselineAge =
+      previousAnchor?.key === key
+        ? (previousAnchor.baselineAge ?? previousAnchor.age)
+        : age;
+    this.resultAnchor = key ? { key, time, age, baselineAge } : null;
     if (previousAnchor?.key !== key) this.autoPhase = "";
-    const result = presentation(next.game, next.seats, age);
+    const result = presentation(next.game, next.seats, age, baselineAge);
     this.setData(
       {
         ...next,
@@ -174,7 +182,10 @@ Page({
     );
     this.tickResult();
     this.tickOpening();
-    if (!r.room?.game) {
+    if (
+      !r.room?.game ||
+      (r.room.game.settlementFlow && r.room.game.settlement)
+    ) {
       clearTimeout(this.feedbackTimer);
       this.setData({ announcement: null });
     } else if (announcement) {
@@ -264,7 +275,12 @@ Page({
       anchor.age + Math.max(0, Date.now() - anchor.time),
     );
     anchor.lastAge = age;
-    const result = presentation(game, this.data.seats, age);
+    const result = presentation(
+      game,
+      this.data.seats,
+      age,
+      anchor.baselineAge ?? anchor.age,
+    );
     this.setData({ settlement: result });
     const key = anchor.key;
     const due =

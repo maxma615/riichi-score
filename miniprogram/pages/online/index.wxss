@@ -687,3 +687,23 @@
 .meld-tile image { background: transparent; box-shadow: none; }
 .meld-tile.back { background: linear-gradient(#efc677, #c69943); }
 .meld-tile.added { right: auto; z-index: 2; }
+
+.revealed-rack { display: flex; gap: 1px; align-items: flex-end; }
+.revealed-tile {
+  width: 17px; height: 25px; flex-shrink: 0;
+  background: linear-gradient(110deg, #fffdf0, #e7e2cd);
+  border-radius: 3px; box-shadow: 0 3px 0 #aaa68b, 1px 4px 3px #07171199;
+}
+.revealed-tile image { width: 100%; height: 100%; }
+.is-turning .revealed-tile { animation: reveal-face 300ms ease-out; }
+@keyframes reveal-face {
+  from { opacity: 0; transform: rotateY(90deg); }
+  to { opacity: 1; transform: rotateY(0); }
+}
+.draw-declaration { position: absolute; z-index: 8; text-align: center; pointer-events: none; color: #f1d395; text-shadow: 0 2px 5px #051511; }
+.draw-declaration > text { font-family: serif; font-size: 30px; }
+.draw-declaration > view { font-size: 11px; color: #eee6d8; }
+.declaration-bottom { left: 50%; bottom: 135px; transform: translateX(-50%); }
+.declaration-top { left: 50%; top: 105px; transform: translateX(-50%); }
+.declaration-left { left: 20px; top: 45%; }
+.declaration-right { right: 20px; top: 45%; }

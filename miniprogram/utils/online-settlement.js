@@ -38,6 +38,8 @@ const {
   confirmationAt,
   detailValueAt,
   drawSummaryAt,
+  drawRevealAt,
+  abortBaseAt,
   displayedScores,
   AUTO_CONFIRM_MS,
 } = require("./online-timing");
@@ -45,6 +47,7 @@ function presentation(
   game,
   seats,
   rawAge = game?.settlementFlow?.elapsedMs || 0,
+  baselineAge = 0,
 ) {
   const s = game?.settlement;
   if (!s || game.ranking) return null;
@@ -76,11 +79,65 @@ function presentation(
   const age = Math.max(0, rawAge - intro);
   const readyAt = flow ? confirmationAt(flow, s) : 0;
   const scores = flow ? displayedScores(flow, age, false) : [];
+  const tableReveals = {};
+  if (s.drawInfo && (stage !== "draw" || age >= drawRevealAt(s))) {
+    for (const revealed of s.drawInfo.revealedHands || []) {
+      if (!seats.some((p) => p.seat === revealed.seat)) continue;
+      tableReveals[revealed.seat] = {
+        key: `${flow?.id || game.decisionId}:${revealed.seat}`,
+        hand: closedTiles(revealed.hand.split(",")[0]),
+        animate:
+          stage === "draw" &&
+          baselineAge < drawRevealAt(s) &&
+          age < drawRevealAt(s) + 300,
+      };
+    }
+  }
+  const drawDeclarations = [];
+  const metadata = s.drawInfo?.abortPresentation;
+  if (stage === "draw" && s.drawInfo?.kind === "abort" && metadata) {
+    const candidates = [];
+    if (metadata.riichiSeat !== undefined)
+      candidates.push({
+        seat: metadata.riichiSeat,
+        text: "立直",
+        start: 300,
+        end: 1000,
+      });
+    if (s.name === "三家和")
+      for (const seat of metadata.ronSeats || [])
+        candidates.push({
+          seat,
+          text: "荣和",
+          start: abortBaseAt(s) + 300,
+          end: abortBaseAt(s) + 1200,
+        });
+    for (const c of candidates) {
+      const player = seats.find((p) => p.seat === c.seat);
+      if (player && age >= c.start && age < c.end)
+        drawDeclarations.push({ ...c, name: player.name, edge: player.edge });
+    }
+  }
+  const declarations = [...drawDeclarations];
+  if (intro && rawAge < intro)
+    for (const win of flow.winDeclarations || []) {
+      const player = seats.find((p) => p.seat === win.seat);
+      if (player && ["ron", "tsumo"].includes(win.winMethod))
+        declarations.push({
+          seat: win.seat,
+          name: player.name,
+          edge: player.edge,
+          text: win.winMethod === "ron" ? "荣和" : "自摸",
+        });
+    }
   return {
     ...s,
     ...winning(s),
     stage,
     title,
+    tableReveals,
+    drawDeclarations,
+    declarations,
     visible: rawAge >= intro && (stage !== "draw" || age >= drawSummaryAt(s)),
     ready: age >= readyAt,
     countdown: Math.max(0, Math.ceil((readyAt + AUTO_CONFIRM_MS - age) / 1000)),

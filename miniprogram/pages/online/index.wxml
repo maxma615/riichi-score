@@ -110,7 +110,9 @@
           <view
             wx:if="{{!player.self}}"
             class="drag-exclusion opponent opponent-{{player.edge}}"
-            ><view class="backs"
+            ><view wx:if="{{settlement.tableReveals[player.seat]}}" class="revealed-rack {{settlement.tableReveals[player.seat].animate?'is-turning':''}}">
+              <view wx:for="{{settlement.tableReveals[player.seat].hand}}" wx:key="index" class="revealed-tile"><image src="{{item.src}}" /></view>
+            </view><view wx:else class="backs"
               ><view
                 wx:for="{{player.hidden}}"
                 wx:key="*this"
@@ -195,6 +197,7 @@
                 class="tile-small"
             /></view></button
         ></view>
+        <view wx:for="{{settlement.declarations}}" wx:key="seat" class="draw-declaration declaration-{{item.edge}}"><text>{{item.text}}</text><view>{{item.name}}</view></view>
         <view wx:if="{{announcement}}" class="announcement"
           ><text>{{announcement.name}}</text
           ><view>{{announcement.text}}</view></view

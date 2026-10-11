@@ -370,6 +370,7 @@ test("原生结算时钟不重放旧阶段，后台停止且自动确认失败�
   assert.equal(p.data.settlement.changes[0].after, score);
   p.onHide();
   assert.equal(tasks.size, 0);
+  assert.equal(p.resultAnchor.baselineAge, Infinity);
   now = 8000;
   stale();
   assert.equal(commands.length, 0);
@@ -400,4 +401,210 @@ test("原生结算时钟不重放旧阶段，后台停止且自动确认失败�
   assert.equal(commands[0].nonce, commands[1].nonce);
   assert.equal(p.data.settlement, null);
   assert.equal(tasks.size, 0);
+});
+
+test("流局先按公开时点翻牌，再显示汇总；未公开手牌不被补出且换局清空", () => {
+  const positioned = seats.map((p, i) => ({
+    ...p,
+    edge: ["bottom", "right", "top", "left"][i],
+  }));
+  const draw = {
+    kind: "draw",
+    name: "荒牌流局",
+    yaku: [],
+    delta: [-1000, 3000, -1000, -1000],
+    tenpaiSeats: [1],
+    uraIndicators: [],
+    drawInfo: {
+      kind: "exhaustive",
+      revealedHands: [
+        { seat: 1, hand: "m123p123s123z1112", waits: ["z2"] },
+        { seat: 99, hand: "m111", waits: [] },
+      ],
+      nagashiResults: [],
+    },
+  };
+  const game = {
+    decisionId: "draw",
+    settlement: draw,
+    settlementFlow: {
+      id: "draw-flow",
+      stage: "draw",
+      detailIndex: 0,
+      detailCount: 1,
+      oldScores: [25000, 25000, 25000, 25000],
+      newScores: [24000, 28000, 24000, 24000],
+      delta: draw.delta,
+    },
+  };
+  const early = presentation(game, positioned, 999);
+  assert.deepEqual(early.tableReveals, {});
+  assert.equal(early.visible, false);
+  const turning = presentation(game, positioned, 1000);
+  assert.equal(turning.visible, false);
+  assert.deepEqual(Object.keys(turning.tableReveals), ["1"]);
+  assert.equal(turning.tableReveals[1].hand.length, 13);
+  assert.equal(turning.tableReveals[1].animate, true);
+  assert.equal(
+    presentation(game, positioned, 1100, 1100).tableReveals[1].animate,
+    false,
+  );
+  assert.equal(
+    presentation(game, positioned, 1100, Infinity).tableReveals[1].animate,
+    false,
+  );
+  assert.equal(
+    presentation(game, positioned, 1000, 999).tableReveals[1].animate,
+    true,
+  );
+  assert.equal(turning.drawPlayers.find((p) => p.seat === 2).hand.length, 0);
+  const settled = presentation(game, positioned, 1300);
+  assert.equal(settled.tableReveals[1].animate, false);
+  assert.equal(settled.tableReveals[1].key, turning.tableReveals[1].key);
+  assert.equal(presentation(game, positioned, 2000).visible, true);
+  const scores = presentation(
+    { ...game, settlementFlow: { ...game.settlementFlow, stage: "scores" } },
+    positioned,
+    0,
+  );
+  assert.equal(scores.tableReveals[1].animate, false);
+  assert.equal(scores.tableReveals[1].hand.length, 13);
+  assert.equal(presentation({ decisionId: "new-hand" }, positioned, 0), null);
+  assert.equal(presentation({ ...game, ranking: [] }, positioned, 1000), null);
+});
+
+test("途中流局声明按原时间内核和实际座位展示，不猜四家立直或三家荣和的演员", () => {
+  const positioned = seats.map((p, i) => ({
+    ...p,
+    edge: ["bottom", "right", "top", "left"][i],
+  }));
+  const make = (name, meta) => ({
+    settlement: {
+      kind: "draw",
+      name,
+      yaku: [],
+      delta: [0, 0, 0, 0],
+      tenpaiSeats: [],
+      uraIndicators: [],
+      drawInfo: {
+        kind: "abort",
+        abortPresentation: meta,
+        revealedHands: [{ seat: 1, hand: "p123456789s123z2", waits: [] }],
+        nagashiResults: [],
+      },
+    },
+    settlementFlow: {
+      id: name,
+      stage: "draw",
+      detailIndex: 0,
+      detailCount: 1,
+      oldScores: [25000, 25000, 25000, 25000],
+      newScores: [25000, 25000, 25000, 25000],
+      delta: [0, 0, 0, 0],
+    },
+  });
+  const riichi = make("四家立直", { riichiSeat: 3, ronSeats: [] });
+  assert.equal(
+    presentation(riichi, positioned, 299).drawDeclarations.length,
+    0,
+  );
+  assert.deepEqual(
+    presentation(riichi, positioned, 300).drawDeclarations.map((p) => [
+      p.seat,
+      p.text,
+      p.edge,
+    ]),
+    [[3, "立直", "left"]],
+  );
+  assert.equal(
+    presentation(riichi, positioned, 999).tableReveals[1],
+    undefined,
+  );
+  assert.equal(
+    presentation(riichi, positioned, 1000).drawDeclarations.length,
+    0,
+  );
+  assert.equal(
+    presentation(riichi, positioned, 1000).tableReveals[1].animate,
+    true,
+  );
+  const triple = make("三家和", { ronSeats: [1, 2, 3, 99] });
+  assert.equal(
+    presentation(triple, positioned, 799).drawDeclarations.length,
+    0,
+  );
+  assert.deepEqual(
+    presentation(triple, positioned, 800).drawDeclarations.map((p) => p.seat),
+    [1, 2, 3],
+  );
+  assert.equal(
+    presentation(triple, positioned, 1700).drawDeclarations.length,
+    0,
+  );
+  assert.equal(
+    presentation(triple, positioned, 1999).tableReveals[1],
+    undefined,
+  );
+  assert.equal(
+    presentation(triple, positioned, 2000).tableReveals[1].animate,
+    true,
+  );
+  assert.equal(presentation(triple, positioned, 3000).visible, true);
+  assert.equal(presentation(triple, positioned, 3999).ready, false);
+  assert.equal(presentation(triple, positioned, 4000).ready, true);
+  assert.equal(
+    presentation(make("三家和", undefined), positioned, 800).drawDeclarations
+      .length,
+    0,
+  );
+});
+
+test("多人荣和开场同时标明真实赢家，详情阶段不重演声明", () => {
+  const positioned = seats.map((p, i) => ({
+    ...p,
+    edge: ["bottom", "right", "top", "left"][i],
+  }));
+  const flow = {
+    id: "double",
+    stage: "detail",
+    detailIndex: 0,
+    detailCount: 2,
+    oldScores: [25000, 25000, 25000, 25000],
+    newScores: [19800, 27600, 27600, 25000],
+    delta: [-5200, 2600, 2600, 0],
+    winDeclarations: [
+      { seat: 1, winMethod: "ron" },
+      { seat: 2, winMethod: "ron" },
+    ],
+  };
+  const game = { settlement: result, settlementFlow: flow };
+  assert.deepEqual(
+    presentation(game, positioned, 0).declarations.map((d) => [
+      d.seat,
+      d.text,
+      d.edge,
+    ]),
+    [
+      [1, "荣和", "right"],
+      [2, "荣和", "top"],
+    ],
+  );
+  assert.equal(presentation(game, positioned, 1199).declarations.length, 2);
+  assert.equal(presentation(game, positioned, 1200).declarations.length, 0);
+  assert.equal(
+    presentation(
+      { ...game, settlementFlow: { ...flow, detailIndex: 1 } },
+      positioned,
+      0,
+    ).declarations.length,
+    0,
+  );
+  assert.equal(
+    presentation(
+      { ...game, settlementFlow: { ...flow, stage: "scores" } },
+      positioned,
+      0,
+    ).declarations.length,
+    0,
+  );
 });
