@@ -5,7 +5,13 @@ import vm from "node:vm";
 import { readFileSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { createApp } from "../src/server.js";
 const require = createRequire(import.meta.url),
-  { snapshot, tile, meld, uuid } = require("../miniprogram/utils/online.js");
+  {
+    snapshot,
+    tile,
+    meld,
+    uuid,
+    feedback,
+  } = require("../miniprogram/utils/online.js");
 test("原生联机牌面、合法动作、拔北与解散状态", () => {
   assert.match(
     uuid(),
@@ -55,6 +61,18 @@ test("原生联机牌面、合法动作、拔北与解散状态", () => {
   assert.equal(data.hand[1].choiceId, "");
   assert.equal(data.hand[2].choiceId, "drawn");
   assert.equal(data.seats[0].nuki, 2);
+  assert.equal(data.seats[0].north.length, 2);
+  assert.ok(data.seats[0].north.every((t) => t.key === "z4"));
+  assert.deepEqual(
+    data.seats.map((p) => p.edge),
+    ["bottom", "right", "left"],
+  );
+  assert.deepEqual(
+    snapshot({ room: { ...room, variant: "yonma", mySeat: 2 } }).seats.map(
+      (p) => p.edge,
+    ),
+    ["top", "left", "bottom", "right"],
+  );
   assert.equal(data.seats[1].hidden.length, 13);
   assert.equal(data.actions.length, 2);
   assert.equal(data.actions[1].tiles.length, 3);
@@ -118,6 +136,8 @@ test("原生小程序真实独立HTTP开桌、重试同nonce、人机准备及�
       wx: { showModal: (o) => o.success({ confirm: true }) },
       setInterval: () => 1,
       clearInterval: () => {},
+      setTimeout: () => 2,
+      clearTimeout: () => {},
     },
   );
   p.data = JSON.parse(JSON.stringify(p.data));
@@ -150,4 +170,83 @@ test("原生小程序真实独立HTTP开桌、重试同nonce、人机准备及�
     await new Promise((r) => server.close(r));
     rmSync(dataDir, { recursive: true, force: true });
   }
+});
+
+test("原生鸣牌展示区分暗杠、加杠与赤牌碰，反馈不跨局重放", () => {
+  assert.deepEqual(
+    meld("p5555").map((t) => t.back),
+    [true, false, false, true],
+  );
+  const added = meld("p505+5");
+  assert.equal(added.length, 4);
+  assert.equal(added[2].called, true);
+  assert.equal(added[3].added, true);
+  assert.ok(added.every((t) => !t.back));
+  const base = {
+    handId: 1,
+    gameInstanceId: "g",
+    players: [{ seat: 1, melds: [], nuki: 0, riichi: false }],
+  };
+  for (const [update, text] of [
+    [{ nuki: 1 }, "拔北"],
+    [{ riichi: true }, "立直"],
+    [{ melds: ["p505+"] }, "碰"],
+    [{ melds: ["s1-23"] }, "吃"],
+    [{ melds: ["p5555"] }, "杠"],
+  ]) {
+    const next = { ...base, players: [{ ...base.players[0], ...update }] };
+    assert.deepEqual(feedback(base, next), { seat: 1, text });
+    assert.equal(feedback(next, next), null);
+    assert.equal(feedback(base, { ...next, handId: 2 }), null);
+  }
+  assert.equal(feedback(null, base), null);
+  const won = {
+    ...base,
+    settlementFlow: { winDeclarations: [{ seat: 1, winMethod: "tsumo" }] },
+  };
+  assert.deepEqual(feedback(base, won), { seat: 1, text: "自摸" });
+  assert.equal(feedback(won, won), null);
+});
+
+test("原生拖牌取消、过期选择和忙碌中不提交切牌", async () => {
+  let p;
+  const sent = [];
+  vm.runInNewContext(
+    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    {
+      Page: (v) => (p = v),
+      require: (s) =>
+        s === "../../utils/api" ? {} : { uuid, snapshot, feedback },
+    },
+  );
+  p.data = {
+    hand: [{ id: 0, choiceId: "cut", decisionId: "d" }],
+    game: { decisionId: "d" },
+    busy: false,
+  };
+  p.setData = (v) => Object.assign(p.data, v);
+  p.send = async (v) => sent.push(v);
+  const start = () =>
+    p.touchStart({
+      currentTarget: { dataset: { index: 0 } },
+      touches: [{ clientY: 200 }],
+    });
+  const end = () => p.touchEnd({ changedTouches: [{ clientY: 100 }] });
+  start();
+  p.touchCancel();
+  await end();
+  start();
+  p.data.game.decisionId = "new";
+  await end();
+  p.data.game.decisionId = "d";
+  start();
+  p.data.busy = true;
+  await end();
+  assert.equal(sent.length, 0);
+  p.data.busy = false;
+  start();
+  await end();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].choiceId, "cut");
+  assert.equal(sent[0].decisionId, "d");
 });

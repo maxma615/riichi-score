@@ -1,5 +1,5 @@
 const { api, error } = require("../../utils/api");
-const { uuid, snapshot } = require("../../utils/online");
+const { uuid, snapshot, feedback } = require("../../utils/online");
 Page({
   data: {
     room: null,
@@ -13,6 +13,7 @@ Page({
     hand: [],
     actions: [],
     selected: -1,
+    announcement: null,
   },
   onShow() {
     this.active = true;
@@ -26,6 +27,9 @@ Page({
     this.active = false;
     this.revision = (this.revision || 0) + 1;
     clearInterval(this.timer);
+    clearTimeout(this.feedbackTimer);
+    this.drag = null;
+    this.setData({ announcement: null });
   },
   onUnload() {
     this.onHide();
@@ -41,7 +45,25 @@ Page({
   },
   accept(r) {
     const previous = this.data.game?.decisionId;
+    const announcement = feedback(this.data.game, r.room?.game);
     this.setData(snapshot(r));
+    if (!r.room?.game) {
+      clearTimeout(this.feedbackTimer);
+      this.setData({ announcement: null });
+    } else if (announcement) {
+      clearTimeout(this.feedbackTimer);
+      this.setData({
+        announcement: {
+          ...announcement,
+          name:
+            this.data.seats.find((p) => p.seat === announcement.seat)?.name ||
+            "",
+        },
+      });
+      this.feedbackTimer = setTimeout(() => {
+        if (this.active) this.setData({ announcement: null });
+      }, 1500);
+    }
     if (previous !== this.data.game?.decisionId) this.setData({ selected: -1 });
   },
   choose(e) {
@@ -133,13 +155,18 @@ Page({
   },
   touchStart(e) {
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];
-    this.drag = t?.choiceId ? { tile: t, y: e.touches[0].clientY } : null;
+    this.drag =
+      t?.choiceId && !this.data.busy && e.touches?.length === 1
+        ? { tile: t, y: e.touches[0].clientY }
+        : null;
   },
   touchEnd(e) {
     const d = this.drag;
     this.drag = null;
     if (
       d &&
+      !this.data.busy &&
+      e.changedTouches?.length === 1 &&
       e.changedTouches[0].clientY < d.y - 40 &&
       d.tile.decisionId === this.data.game?.decisionId
     ) {
@@ -150,6 +177,9 @@ Page({
         choiceId: d.tile.choiceId,
       });
     }
+  },
+  touchCancel() {
+    this.drag = null;
   },
   onShareAppMessage() {
     return {

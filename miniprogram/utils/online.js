@@ -54,10 +54,68 @@ function tile(value) {
   };
 }
 function meld(value) {
-  const out = [];
-  for (const m of String(value || "").matchAll(/([mpsz])([0-9]+)/g))
-    for (const n of m[2]) out.push(tile(m[1] + n));
-  return out;
+  const raw = String(value || ""),
+    out = [];
+  let suit = "",
+    called = -1;
+  for (const c of raw) {
+    if ("mpsz".includes(c)) suit = c;
+    else if (/^[0-9]$/.test(c) && suit) out.push(tile(suit + c));
+    else if ("-+=".includes(c)) called = out.length - 1;
+  }
+  const concealed = out.length === 4 && called < 0;
+  return out.map((t, i) => ({
+    ...t,
+    back: concealed && (i === 0 || i === 3),
+    called: i === called,
+    added: out.length === 4 && called >= 0 && called < 3 && i === 3,
+  }));
+}
+// Only compare public events within the same hand; a reconnect is not a new call.
+function feedback(before, after) {
+  if (
+    !before ||
+    !after ||
+    before.handId !== after.handId ||
+    before.gameInstanceId !== after.gameInstanceId
+  )
+    return null;
+  const declarations = after.settlementFlow?.winDeclarations || [];
+  const oldDeclarations = before.settlementFlow?.winDeclarations || [];
+  const win = declarations.find(
+    (d) =>
+      !oldDeclarations.some(
+        (old) => old.seat === d.seat && old.winMethod === d.winMethod,
+      ),
+  );
+  if (win)
+    return {
+      seat: win.seat,
+      text: win.winMethod === "tsumo" ? "自摸" : "荣和",
+    };
+  for (const p of after.players || []) {
+    const old = before.players.find((v) => v.seat === p.seat);
+    if (!old) continue;
+    if ((p.nuki || 0) > (old.nuki || 0)) return { seat: p.seat, text: "拔北" };
+    if (p.riichi && !old.riichi) return { seat: p.seat, text: "立直" };
+    const changed = p.melds.find((m, i) => m !== old.melds[i]);
+    if (changed) {
+      const tiles = meld(changed);
+      return {
+        seat: p.seat,
+        text:
+          tiles.length === 4
+            ? "杠"
+            : tiles.every(
+                  (t) =>
+                    t.key.replace("0", "5") === tiles[0].key.replace("0", "5"),
+                )
+              ? "碰"
+              : "吃",
+      };
+    }
+  }
+  return null;
 }
 function snapshot(response) {
   const room = response.room;
@@ -92,6 +150,11 @@ function snapshot(response) {
       river: (p?.discards || []).map(tile),
       melds: (p?.melds || []).map(meld),
       position: (seat - room.mySeat + capacity) % capacity,
+      edge: ["bottom", "right", ...(capacity === 4 ? ["top"] : []), "left"][
+        (seat - room.mySeat + capacity) % capacity
+      ],
+      north: Array.from({ length: p?.nuki || 0 }, () => tile("z4")),
+      active: game?.turnSeat === seat,
     };
   });
   const choices = game?.choices || [],
@@ -117,6 +180,7 @@ function snapshot(response) {
         id: i,
         choiceId: choice?.id || "",
         decisionId: game.decisionId,
+        drawn,
       };
     });
   return {
@@ -148,4 +212,4 @@ function snapshot(response) {
       : null,
   };
 }
-module.exports = { uuid, tile, meld, snapshot };
+module.exports = { uuid, tile, meld, snapshot, feedback };
