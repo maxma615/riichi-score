@@ -84,7 +84,7 @@
     >
     <block wx:if="{{game}}">
       <view class="table">
-        <view wx:if="{{doraVisible}}" class="dora-tray"
+        <view wx:if="{{doraVisible}}" class="dora-tray drag-exclusion"
           ><text>宝牌指示牌</text
           ><view
             ><image
@@ -93,14 +93,14 @@
               src="{{item.src}}"
               class="tile-small" /></view
         ></view>
-        <view class="table-center"
+        <view class="table-center drag-exclusion"
           ><view class="round">{{round}}</view
           ><view class="remaining">余 {{game.remainingTiles}}</view
           ><view>本场 {{game.honba}} · 供托 {{game.riichiSticks}}</view></view
         >
         <block wx:for="{{seats}}" wx:for-item="player" wx:key="seat">
           <view
-            class="player-label label-{{player.edge}} {{player.active?'active':''}}"
+            class="drag-exclusion player-label label-{{player.edge}} {{player.active?'active':''}}"
             ><text class="wind">{{player.wind}}</text
             ><view
               ><text>{{player.name}}</text
@@ -109,7 +109,7 @@
           >
           <view
             wx:if="{{!player.self}}"
-            class="opponent opponent-{{player.edge}}"
+            class="drag-exclusion opponent opponent-{{player.edge}}"
             ><view class="backs"
               ><view
                 wx:for="{{player.hidden}}"
@@ -128,7 +128,7 @@
                 class="river-slot {{item.sideways?'sideways':''}}"
                 ><image src="{{item.src}}" class="tile-small" /></view></view
           ></view>
-          <view class="exposed exposed-{{player.edge}}">
+          <view class="drag-exclusion exposed exposed-{{player.edge}}">
             <view class="melds"
               ><view
                 wx:for="{{player.melds}}"
@@ -154,13 +154,14 @@
             /></view>
           </view>
         </block>
-        <view class="hand"
+        <view class="hand drag-exclusion"
           ><view
             wx:for="{{hand}}"
             wx:key="physicalKey"
             data-index="{{index}}"
             bindtap="discard"
             bindtouchstart="touchStart"
+            catchtouchmove="touchMove"
             catchtouchend="touchEnd"
             bindtouchcancel="touchCancel"
             class="tile {{!item.dealVisible?'deal-pending':openingHolding?'dealt':''}} {{riichiMode && !item.choiceId?'locked':''}} {{selected===item.id?'raised':''}} {{item.choiceId?'playable':''}} {{item.drawn?'drawn':''}}"
@@ -170,13 +171,14 @@
           ><button
             wx:if="{{canRiichi}}"
             bindtap="toggleRiichi"
-            class="{{riichiMode?'riichi-active':''}}"
+            class="drag-exclusion {{riichiMode?'riichi-active':''}}"
             disabled="{{busy || openingHolding}}"
           >
             {{riichiMode?'取消立直':'立直'}}</button
           ><button
             wx:for="{{actions}}"
             wx:key="id"
+            class="drag-exclusion"
             data-id="{{item.id}}"
             bindtap="respond"
             disabled="{{busy || openingHolding}}"
@@ -197,7 +199,7 @@
       </view>
       <view
         wx:if="{{(settlement && settlement.visible) || game.ranking}}"
-        class="result-overlay"
+        class="result-overlay drag-exclusion"
       >
         <view class="result-panel">
           <block wx:if="{{game.ranking}}"

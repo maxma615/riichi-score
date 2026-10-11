@@ -217,7 +217,7 @@ test("原生拖牌取消、过期选择和忙碌中不提交切牌", async () =>
     {
       Page: (v) => (p = v),
       require: (s) =>
-        s === "../../utils/api" ? {} : { uuid, snapshot, feedback },
+        s === "../../utils/api" ? {} : require("../miniprogram/utils/" + s.split("/").pop() + ".js"),
     },
   );
   p.data = {
@@ -227,12 +227,14 @@ test("原生拖牌取消、过期选择和忙碌中不提交切牌", async () =>
   };
   p.setData = (v) => Object.assign(p.data, v);
   p.send = async (v) => sent.push(v);
+  p.active = true;
+  p.dropGeometry = async () => ({ table: { left: 0, right: 400, top: 0, bottom: 180 }, excluded: [] });
   const start = () =>
     p.touchStart({
       currentTarget: { dataset: { index: 0 } },
-      touches: [{ clientY: 200 }],
+      touches: [{ clientX: 100, clientY: 200 }],
     });
-  const end = () => p.touchEnd({ changedTouches: [{ clientY: 100 }] });
+  const end = () => p.touchEnd({ changedTouches: [{ clientX: 100, clientY: 100 }] });
   start();
   p.touchCancel();
   await end();
@@ -388,12 +390,12 @@ test("原生立直可取消，轮询保持选择模式，换决策与解散清�
   assert.equal(p.data.selected, -1);
   p.touchStart({
     currentTarget: { dataset: { index: 1 } },
-    touches: [{ clientY: 200 }],
+    touches: [{ clientX: 100, clientY: 200 }],
   });
   p.toggleRiichi();
   assert.equal(p.drag, null);
   assert.equal(p.data.riichiMode, false);
-  await p.touchEnd({ changedTouches: [{ clientY: 100 }] });
+  await p.touchEnd({ changedTouches: [{ clientX: 100, clientY: 100 }] });
   assert.equal(sent.length, 0);
   p.toggleRiichi();
   p.accept({ room });

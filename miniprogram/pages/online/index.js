@@ -1,3 +1,4 @@
+const { dropOnTable, touchPoint } = require("../../utils/online-gesture");
 const { api, error } = require("../../utils/api");
 const { uuid, snapshot, feedback } = require("../../utils/online");
 const { presentation } = require("../../utils/online-settlement");
@@ -37,6 +38,7 @@ Page({
     }, 2000);
   },
   onHide() {
+    this.touchCancel();
     this.active = false;
     this.setData({ riichiMode: false });
     this.revision = (this.revision || 0) + 1;
@@ -49,7 +51,11 @@ Page({
     this.setData({ announcement: null, selected: -1, riichiMode: false });
   },
   onResize() {
+    this.touchCancel();
     this.cancelOpening();
+  },
+  onPageScroll() {
+    this.touchCancel();
   },
   onUnload() {
     this.onHide();
@@ -153,8 +159,8 @@ Page({
         if (this.active) this.setData({ announcement: null });
       }, 1500);
     }
-    if (previous !== this.data.game?.decisionId) {
-      this.drag = null;
+    if (!sameDecision) {
+      this.touchCancel();
       this.setData({ selected: -1 });
     }
   },
@@ -264,6 +270,7 @@ Page({
     if (!this.pending || this.pending.key !== key)
       this.pending = { key, body: { ...body, nonce: uuid() } };
     const revision = (this.revision = (this.revision || 0) + 1);
+    this.touchCancel();
     this.setData({ busy: true });
     try {
       const r = await api("/api/online", "POST", this.pending.body);
@@ -338,7 +345,7 @@ Page({
       !this.data.canRiichi
     )
       return;
-    this.drag = null;
+    this.touchCancel();
     const next = snapshot(
       { room: this.data.room, serviceRunning: this.data.serviceRunning },
       !this.data.riichiMode,
@@ -350,6 +357,8 @@ Page({
     });
   },
   discard(e) {
+    if (!this.active || Date.now() < (this.ignoreTapUntil || 0)) return;
+    this.touchCancel();
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];
     if (!t?.choiceId || this.data.busy || this.data.openingHolding) return;
     if (this.data.selected === t.id)
@@ -361,35 +370,70 @@ Page({
     this.setData({ selected: t.id });
   },
   touchStart(e) {
+    this.touchCancel();
+    this.ignoreTapUntil = 0;
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];
-    this.drag =
-      t?.choiceId &&
-      !this.data.busy &&
-      !this.data.openingHolding &&
-      e.touches?.length === 1
-        ? { tile: t, y: e.touches[0].clientY }
-        : null;
-  },
-  touchEnd(e) {
-    const d = this.drag;
-    this.drag = null;
-    if (
-      d &&
-      !this.data.busy &&
-      !this.data.openingHolding &&
-      e.changedTouches?.length === 1 &&
-      e.changedTouches[0].clientY < d.y - 40 &&
-      d.tile.decisionId === this.data.game?.decisionId
-    ) {
-      this.setData({ selected: -1 });
-      return this.send({
-        action: "respond",
-        decisionId: d.tile.decisionId,
-        choiceId: d.tile.choiceId,
-      });
+    const point = e.touches?.length === 1 && touchPoint(e.touches[0]);
+    if (this.active && t?.choiceId && !this.data.busy &&
+        !this.data.openingHolding && point) {
+      this.drag = {
+        tile: { ...t }, start: point, finger: e.touches[0].identifier,
+        roomId: this.data.room?.id, epoch: this.gestureEpoch,
+      };
     }
   },
+  touchMove(e) {
+    const d = this.drag;
+    const finger = e.touches?.length === 1 && e.touches[0];
+    const point = finger && touchPoint(finger);
+    if (!d || !point || finger.identifier !== d.finger) {
+      this.touchCancel();
+      return;
+    }
+    if (Math.hypot(point.x - d.start.x, point.y - d.start.y) >= 12) {
+      d.moved = true;
+      this.ignoreTapUntil = Date.now() + 250;
+    }
+  },
+  async touchEnd(e) {
+    const d = this.drag;
+    this.drag = null;
+    const finger = e.changedTouches?.length === 1 && e.changedTouches[0];
+    const point = finger && touchPoint(finger);
+    if (d && (d.moved || (point && Math.hypot(
+        point.x - d.start.x, point.y - d.start.y) >= 12)))
+      this.ignoreTapUntil = Date.now() + 250;
+    if (!d || !point || e.touches?.length || finger.identifier !== d.finger ||
+        d.start.y - point.y < 40 || !this.currentDrag(d)) return;
+    // Query the current viewport geometry at release; never reuse pre-scroll bounds.
+    const geometry = await this.dropGeometry();
+    if (!this.currentDrag(d) || !dropOnTable(point, geometry)) return;
+    this.setData({ selected: -1 });
+    return this.send({
+      action: "respond", decisionId: d.tile.decisionId,
+      choiceId: d.tile.choiceId,
+    });
+  },
+  currentDrag(d) {
+    return this.active && !this.data.busy && !this.data.openingHolding &&
+      d.epoch === this.gestureEpoch && d.roomId === this.data.room?.id &&
+      d.tile.decisionId === this.data.game?.decisionId &&
+      this.data.hand.some(t => t.id === d.tile.id &&
+        t.physicalKey === d.tile.physicalKey &&
+        t.choiceId === d.tile.choiceId && t.decisionId === d.tile.decisionId);
+  },
+  dropGeometry() {
+    return new Promise(resolve => {
+      try {
+        const q = wx.createSelectorQuery().in(this);
+        q.select(".table").boundingClientRect();
+        q.selectAll(".drag-exclusion").boundingClientRect();
+        q.exec(rects => resolve(rects ? { table: rects[0], excluded: rects[1] } : null));
+      } catch (_) { resolve(null); }
+    });
+  },
   touchCancel() {
+    this.gestureEpoch = (this.gestureEpoch || 0) + 1;
     this.drag = null;
   },
   onShareAppMessage() {
