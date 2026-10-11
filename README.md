@@ -4,7 +4,7 @@
 
 **手机直接访问：[日麻记分](https://8.133.186.15/riichi/)**。无需情侣空间账号，填写昵称后开桌，通过“扫码入桌”邀请朋友。
 
-这是独立运行的应用，有自己的进程、端口、SQLite 数据库和成员身份；**不需要启动情侣空间，不读取情侣空间账号或资料**。源码暂与有归放在同一仓库，部署可以完全分开。现有联机与电脑牌桌正在按[迁移计划](docs/migration-plan.md)迁入此独立应用，目前尚未完成。
+这是独立运行的应用，有自己的进程、端口、SQLite 数据库和成员身份；**不需要启动情侣空间，不读取情侣空间账号或资料**。源码独立仓库：[maxma615/riichi-score](https://github.com/maxma615/riichi-score)。有归保留自己的源码与部署。现有联机与电脑牌桌正在按[迁移计划](docs/migration-plan.md)迁入此独立应用，目前尚未完成。
 
 ## 中国风界面
 
@@ -34,10 +34,11 @@
 
 ## 独立启动
 
-需要 Node.js 24+。从有归仓库根目录进入本目录：
+需要 Node.js 24+。单独克隆并启动，无需有归仓库：
 
 ```sh
-cd mahjong-room
+git clone https://github.com/maxma615/riichi-score.git
+cd riichi-score
 npm ci --cache .local/npm-cache
 cp .env.example .env
 npm start

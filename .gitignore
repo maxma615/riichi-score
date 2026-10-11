@@ -1,4 +1,11 @@
 node_modules/
 .local/
 .env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+miniprogram/project.private.config.json
+.DS_Store
 *.log

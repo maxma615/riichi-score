@@ -4,7 +4,7 @@
 
 ## 导入
 
-1. 安装微信开发者工具，导入 `mahjong-room/miniprogram`。`project.config.json` 的touristappid只用于本地源码导入，替换成实际AppID才可微信登录、预览与上传。
+1. 安装微信开发者工具，导入 `miniprogram`。`project.config.json` 的touristappid只用于本地源码导入，替换成实际AppID才可微信登录、预览与上传。
 2. 修改 `config.js` 的apiBase为备案HTTPS域名下的独立接口，例如 `https://域名/riichi`。现有IP仅供网页访问，不能作为正式小程序合法域名。
 3. 配置小程序request合法域名与头像download域名；头像由 `chooseAvatar` 主动选择，昵称由 `type=nickname` 填写。完成平台要求的隐私声明和备案。
 4. 服务器独立服务的受保护.env配置 `WECHAT_APP_ID`、`WECHAT_APP_SECRET`、`WECHAT_ENV_VERSION=trial`，然后重建该服务环境。AppSecret不可放到客户端、公开仓库或聊天。
