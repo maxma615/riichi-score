@@ -1,0 +1,45 @@
+/* Tint only actual player faces. HUD indicators and concealed backs stay unchanged. */
+.mahjong-table :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face]::after {
+  content: var(--matching-face-overlay, none);
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgb(157 211 249);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.mahjong-table[data-matching-tile="m1"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="m1"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="m2"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="m2"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="m3"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="m3"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="m4"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="m4"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="m5"] :is(.mahjong-table__surface, .mahjong-hand) :is([data-tile-face="m5"], [data-tile-face="m0"]) { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="m6"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="m6"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="m7"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="m7"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="m8"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="m8"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="m9"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="m9"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p1"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="p1"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p2"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="p2"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p3"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="p3"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p4"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="p4"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p5"] :is(.mahjong-table__surface, .mahjong-hand) :is([data-tile-face="p5"], [data-tile-face="p0"]) { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p6"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="p6"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p7"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="p7"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p8"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="p8"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="p9"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="p9"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s1"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="s1"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s2"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="s2"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s3"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="s3"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s4"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="s4"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s5"] :is(.mahjong-table__surface, .mahjong-hand) :is([data-tile-face="s5"], [data-tile-face="s0"]) { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s6"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="s6"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s7"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="s7"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s8"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="s8"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="s9"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="s9"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="z1"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="z1"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="z2"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="z2"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="z3"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="z3"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="z4"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="z4"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="z5"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="z5"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="z6"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="z6"] { --matching-face-overlay: ""; }
+.mahjong-table[data-matching-tile="z7"] :is(.mahjong-table__surface, .mahjong-hand) [data-tile-face="z7"] { --matching-face-overlay: ""; }

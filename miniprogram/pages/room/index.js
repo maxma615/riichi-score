@@ -3,6 +3,7 @@ const { parseInvite } = require("../../utils/invite");
 const { roundStatus } = require("../../utils/settlement-view");
 const winds = ["东", "南", "西", "北"];
 Page({
+  online() { wx.navigateTo({url:"/pages/online/index"}); },
   data: {
     room: null,
     rooms: [],

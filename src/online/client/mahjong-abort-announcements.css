@@ -1,0 +1,18 @@
+/* Original typography, placed by native seat. Every indicator is transient;
+   it never intercepts the table's pointer or keyboard interactions. */
+.mahjong-game .mahjong-abort-announcements { position: absolute; inset: 0; z-index: 11; pointer-events: none; }
+.mahjong-game .mahjong-abort-declaration { position: absolute; width: min(17cqw, 180px); text-align: center; color: #ffe8ba; }
+.mahjong-game .mahjong-abort-declaration.is-south { left: 50%; top: 68%; transform: translate(-50%,-50%); }
+.mahjong-game .mahjong-abort-declaration.is-east { left: 77%; top: 46%; transform: translate(-50%,-50%); }
+.mahjong-game .mahjong-abort-declaration.is-north { left: 50%; top: 25%; transform: translate(-50%,-50%); }
+.mahjong-game .mahjong-abort-declaration.is-west { left: 23%; top: 46%; transform: translate(-50%,-50%); }
+.mahjong-game .mahjong-abort-declaration b { display: block; font: 900 clamp(30px,min(7cqw,13cqh),84px)/1 var(--font-display),serif; -webkit-text-stroke: 3px #472510; paint-order: stroke fill; text-shadow: 0 3px 0 #161216,0 0 16px #ffb86c80; transform-origin: center; animation: mahjong-abort-declaration-enter 200ms cubic-bezier(.6,0,.9,.35) both; animation-delay: var(--abort-animation-age,0ms); }
+.mahjong-game .mahjong-abort-declaration small { display: block; margin-top: 6px; padding: 2px 6px; border-radius: 3px; background: #0a1522dc; color: #f3eee0; font-size: clamp(11px,1.3cqw,15px); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mahjong-game .mahjong-abort-declaration.is-riichi { color: #ffd3c6; }
+.mahjong-game .mahjong-settlement-panel.is-abort { animation: mahjong-abort-cause-enter 500ms linear both; animation-delay: var(--abort-cause-age,0ms); }
+@keyframes mahjong-abort-declaration-enter { from { opacity: 0; transform: scale(3); } to { opacity: 1; transform: scale(1); } }
+@keyframes mahjong-abort-cause-enter { from { opacity: 0; } to { opacity: 1; } }
+.mahjong-game .mahjong-abort-announcements.is-reduced-motion b { animation: none; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+ .mahjong-game .mahjong-abort-declaration b,.mahjong-game .mahjong-settlement-panel.is-abort { animation: none; }
+}

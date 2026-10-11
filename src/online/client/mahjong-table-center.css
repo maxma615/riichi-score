@@ -1,0 +1,168 @@
+/* Keep the existing center footprint and 44% anchor; this only changes the face. */
+.mahjong-page .mahjong-game .mahjong-table__center {
+  border: 1px solid #9bbec6;
+  border-radius: 7px;
+  color: #e5f0ef;
+  background:
+    linear-gradient(142deg, rgb(111 153 164 / 26%), transparent 43%),
+    linear-gradient(155deg, #294a59, #203d4b 58%, #173341);
+  box-shadow:
+    0 1px 0 #b1ccd0,
+    0 0 0 3px #193541,
+    0 0 0 4px #64858b,
+    0 0 0 7px #162f3b,
+    0 10px 20px #06111dd4,
+    inset 0 1px 0 #ecffff36,
+    inset 0 -5px 12px #0b202b8c;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__center::before {
+  inset: 5px;
+  border: 1px solid #b9d6d75c;
+  border-radius: 3px;
+}
+
+.mahjong-page .mahjong-game .mahjong-center-brand { display: none; }
+
+.mahjong-page .mahjong-game .mahjong-table__center > strong {
+  z-index: 1;
+  color: #b4eff0;
+  font: 700 min(2cqw, 3cqh, 18px)/1.1 var(--font-body), sans-serif;
+  text-shadow: 0 1px 7px #54d7e044;
+  white-space: nowrap;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__wall {
+  z-index: 1;
+  color: #d8eeee;
+  font-size: clamp(9px, min(1.3cqw, 2cqh), 13px);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__wall b {
+  color: #ffffff;
+  font-size: inherit;
+  font-weight: 700;
+}
+
+.mahjong-page .mahjong-game .mahjong-center-seat {
+  position: absolute;
+  z-index: 2;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid #9bbec68c;
+  border-radius: 4px;
+  padding: 2px 3px;
+  color: #e3eff0;
+  background: #173441ed;
+  box-shadow: 0 2px 4px #0a1b2490;
+  font-size: min(1.1cqw, 1.9cqh, 11px);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.mahjong-page .mahjong-game .mahjong-center-seat__wind {
+  width: clamp(14px, min(2cqw, 3.2cqh), 22px);
+  height: clamp(14px, min(2cqw, 3.2cqh), 22px);
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #8eafb5;
+  border-radius: 3px;
+  color: #e2f1ef;
+  background: linear-gradient(145deg, #466575, #294653);
+  font: 600 min(1.4cqw, 2.3cqh, 14px)/1 var(--font-body), sans-serif;
+}
+
+.mahjong-page .mahjong-game .mahjong-center-seat > b {
+  color: #f0f4ec;
+  font-size: clamp(9px, min(1.35cqw, 2.4cqh), 12px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.mahjong-page .mahjong-game .mahjong-center-seat--0 {
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.mahjong-page .mahjong-game .mahjong-center-seat--1 {
+  top: 50%;
+  right: -7px;
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+.mahjong-page .mahjong-game:not(.is-sanma) .mahjong-center-seat--2 {
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+}
+
+.mahjong-page .mahjong-game .mahjong-center-seat--3,
+.mahjong-page .mahjong-game.is-sanma .mahjong-center-seat--2 {
+  top: 50%;
+  left: -7px;
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.mahjong-page .mahjong-game .mahjong-center-seat.is-active {
+  border-color: #b3f4ed;
+  color: #f0ffff;
+  background: #24616a;
+  box-shadow: 0 0 8px #84e8dd54, 0 2px 4px #0a1b2490;
+}
+
+.mahjong-page .mahjong-game .mahjong-center-seat.is-active .mahjong-center-seat__wind {
+  border-color: #c8ffff;
+  color: #f0ffff;
+  background: #317984;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__counters {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border-top: 1px solid #96b3b44f;
+  padding-top: 4px;
+  color: #e2e9df;
+  font-size: clamp(9px, min(1.05cqw, 1.8cqh), 11px);
+  font-variant-numeric: tabular-nums;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__counter small {
+  color: #c8dddb;
+  font-size: inherit;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__counter b {
+  color: #f8f5e9;
+  font-size: inherit;
+  font-weight: 700;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__stick {
+  position: relative;
+  width: 13px;
+  height: 4px;
+  flex: 0 0 auto;
+  border: 1px solid #e8e1ce;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #bb4c51 0 23%, #f1eee0 23% 77%, #bb4c51 77%);
+  box-shadow: 0 1px 1px #06111d99;
+}

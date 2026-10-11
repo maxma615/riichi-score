@@ -1,0 +1,34 @@
+/* The footprint and shared 3D camera stay stable while each batch arrives. */
+.mahjong-game [data-deal-visible="false"] { visibility: hidden; pointer-events:none; }
+.mahjong-game [data-deal-wave]:not([data-deal-visible="false"]) { animation: mahjong-deal-arrive 200ms linear both; }
+.mahjong-game[data-round-opening]:not([data-opening-sorted]) .mahjong-drawn-wrap > .is-drawn { margin-left: 0; }
+/* Reference newtile local height .5 / normal pitch 2.55. Our hand pitch is
+   its tile width plus the existing two-pixel gap; layout remains stationary. */
+@keyframes mahjong-deal-arrive {
+  from { opacity:0; translate:0 calc((var(--hand-w,39px) + 2px) * -.196078431373); }
+  to { opacity:1; translate:0 0; }
+}
+/* Material alpha belongs to each surface. Keep both cuboid ancestors opaque
+   so the browser does not flatten their shared 3D geometry. */
+.mahjong-game .mahjong-standing-tile[data-deal-wave]:not([data-deal-visible="false"]) { animation-name:mahjong-deal-rise; }
+.mahjong-game[data-round-opening]:not([data-opening-sorted]) .mahjong-player__hidden > .is-drawn { margin-inline-start:0; }
+@keyframes mahjong-deal-rise {
+  from { translate:0 0 calc((var(--standing-w) + 1px) * .196078431373); }
+  to { translate:0 0 0; }
+}
+.mahjong-game .mahjong-standing-tile[data-deal-wave]:not([data-deal-visible="false"]) .mahjong-standing-tile__face {
+  animation:mahjong-deal-material 200ms linear both;
+}
+@keyframes mahjong-deal-material { from {opacity:0;} to {opacity:1;} }
+@media(prefers-reduced-motion:reduce) {
+  .mahjong-game [data-deal-wave]:not([data-deal-visible="false"]),
+  .mahjong-game .mahjong-standing-tile[data-deal-wave]:not([data-deal-visible="false"]),
+  .mahjong-game .mahjong-standing-tile[data-deal-wave]:not([data-deal-visible="false"]) .mahjong-standing-tile__face { animation:none; }
+}
+
+/* Stable wrappers retain each physical button when all fourteen are reordered. */
+.mahjong-rack-slot { display:contents; }
+.mahjong-rack-slot.mahjong-drawn-wrap { display:inline-flex; }
+/* Reference separated offset .8 for normal pitch 2.55; the local pitch is
+   tile width plus the rack's two-pixel gap. Applies only to a real live opening. */
+.mahjong-game[data-opening-full-sort] .mahjong-hand .is-drawn { margin-left:calc((var(--hand-w,39px) + 2px) * .313725490196); }

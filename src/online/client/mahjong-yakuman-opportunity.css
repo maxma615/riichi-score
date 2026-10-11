@@ -1,0 +1,38 @@
+/* Original licensed-font presentation; independent of the table camera. */
+.mahjong-game .mahjong-yakuman-opportunity {
+  position: absolute;
+  z-index: 35;
+  top: 39%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: baseline;
+  gap: .18em;
+  padding: .15em .65em .3em;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  font-family: "Yougui Mahjong Brush", serif;
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: clamp(30px, 9cqh, 64px);
+  line-height: 1.15;
+  letter-spacing: -.04em;
+  color: #fff1ca;
+  -webkit-text-stroke: 1px #3b2518;
+  paint-order: stroke fill;
+  text-shadow: 2px 3px 0 #081624, 0 0 20px #e5a45499;
+  background: radial-gradient(ellipse, #152736df 0%, #15273680 48%, transparent 72%);
+  animation: mahjong-yakuman-reveal 3s both;
+}
+.mahjong-game .mahjong-yakuman-opportunity b { font-weight: 400; }
+.mahjong-game .mahjong-yakuman-opportunity span { font-size: .66em; }
+.mahjong-game .mahjong-yakuman-opportunity.is-certain { color: #ffe1a0; text-shadow: 2px 3px 0 #081624, 0 0 24px #ffb54fcc; }
+@keyframes mahjong-yakuman-reveal {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.88); }
+  10%, 84% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mahjong-game .mahjong-yakuman-opportunity { animation: none; }
+}

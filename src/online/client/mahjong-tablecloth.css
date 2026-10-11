@@ -1,0 +1,36 @@
+[data-tablecloth="midnight"] { --cloth-core: #294558; --cloth-edge: #182b3c; --cloth-rail: #283540; --cloth-accent: #98bccc; }
+[data-tablecloth="plum"] { --cloth-core: #49394d; --cloth-edge: #2b2433; --cloth-rail: #322d3a; --cloth-accent: #c7a2bd; }
+[data-tablecloth="graphite"] { --cloth-core: #3c4248; --cloth-edge: #232a30; --cloth-rail: #2c3339; --cloth-accent: #b6bfc4; }
+.mahjong-page .mahjong-game[data-tablecloth] .mahjong-table__surface {
+  background: radial-gradient(ellipse at 50% 44%, rgb(255 255 255 / 5%), transparent 50%), radial-gradient(ellipse at 50% 43%, var(--cloth-core), var(--cloth-edge));
+  border-color: var(--cloth-rail);
+}
+.mahjong-page .mahjong-game[data-tablecloth] .mahjong-table__grain {
+  background-image: url('./assets/mahjong-tablecloth-weave-v1.webp');
+  background-size: 384px 384px;
+  mix-blend-mode: luminosity;
+  opacity: .26;
+}
+.mahjong-tablecloth-picker { width: min(720px, calc(92 * var(--mahjong-vw, 1vw))); max-height: calc(92 * var(--mahjong-dvh, 1dvh)); padding: 24px; overflow: auto; }
+.mahjong-tablecloth-picker header { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+.mahjong-tablecloth-picker h2 { margin: 4px 0 16px; }
+.mahjong-tablecloth-picker header button { min-width: 44px; min-height: 44px; }
+.mahjong-tablecloth-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.mahjong-tablecloth-options > button { position: relative; padding: 8px 8px 14px; text-align: left; color: #e4e1db; border: 1px solid #ffffff24; border-radius: 12px; background: #ffffff04; cursor: pointer; }
+.mahjong-tablecloth-options > button[aria-pressed="true"] { border-color: var(--cloth-accent); box-shadow: inset 0 0 0 1px var(--cloth-accent); }
+.mahjong-tablecloth-options > button:focus-visible { outline: 2px solid #e8d4a4; outline-offset: 3px; }
+.mahjong-tablecloth-swatch { display: block; height: clamp(54px, calc(15 * var(--mahjong-vh, 1vh)), 130px); border: 5px solid var(--cloth-rail); border-radius: 8px; background: url('./assets/mahjong-tablecloth-weave-v1.webp') center / 192px 192px, var(--cloth-core); background-blend-mode: luminosity; box-shadow: inset 0 0 18px #0006; }
+.mahjong-tablecloth-options strong, .mahjong-tablecloth-options small { display: block; margin: 10px 4px 0; }
+.mahjong-tablecloth-options small { margin-top: 4px; color: #aaa8af; font-size: 12px; }
+.mahjong-tablecloth-selected { display: block; margin: 12px 4px 0; color: var(--cloth-accent); font-size: 12px; }
+.mahjong-tablecloth-picker footer button { min-height: 44px; min-width: 96px; font-size: 16px; color: #17212a; background: #c8d4dc; }
+.mahjong-tablecloth-picker footer { display: flex; justify-content: end; margin-top: 18px; }
+@media (max-height: 460px), (max-width: 460px) and (orientation: portrait) and (pointer: coarse) {
+  .mahjong-tablecloth-picker { padding: 14px 20px; }
+  .mahjong-tablecloth-picker h2 { margin-bottom: 8px; font-size: 24px; }
+  .mahjong-tablecloth-options > button { padding-bottom: 8px; }
+  .mahjong-tablecloth-selected { margin-top: 6px; }
+  .mahjong-tablecloth-picker footer { margin-top: 10px; }
+}
+
+.mahjong-page .mahjong-game .mahjong-screen-button[aria-label="更换桌布"] { width: 44px; height: 44px; min-height: 44px; }

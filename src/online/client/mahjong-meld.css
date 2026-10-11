@@ -1,0 +1,275 @@
+/* Shared public-meld geometry. Rotated faces keep their existing horizontal
+   footprints; the physical body is layered only in the tabletop scene below. */
+.mahjong-meld--public {
+  --meld-tile-w: 14px;
+  --meld-tile-h: 20px;
+  display: flex;
+  align-items: end;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mahjong-meld--public .mahjong-meld__tiles {
+  display: flex;
+  align-items: end;
+  gap: 1px;
+  min-height: var(--meld-tile-h);
+}
+
+.mahjong-meld--public .mahjong-meld__slot {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--meld-tile-w);
+  height: var(--meld-tile-h);
+}
+
+.mahjong-meld--public .mahjong-meld__slot.is-sideways {
+  width: var(--meld-tile-h);
+  height: var(--meld-tile-w);
+}
+
+.mahjong-meld--public .mahjong-meld__volume {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: var(--meld-tile-w);
+  height: var(--meld-tile-h);
+  transform: translate(-50%, -50%);
+}
+
+.mahjong-meld--public .mahjong-meld__slot.is-sideways > .mahjong-meld__volume {
+  transform: translate(-50%, -50%) rotateZ(270deg);
+}
+
+.mahjong-meld--public .mahjong-meld__cap {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mahjong-meld--public .mahjong-meld__face.mahjong-tile {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  flex: none;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 1px;
+  border-radius: 2px;
+}
+
+.mahjong-meld--public .mahjong-meld__back {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--meld-tile-w);
+  height: var(--meld-tile-h);
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  box-shadow: none;
+}
+
+.mahjong-meld--public .mahjong-meld__back-cap {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1px solid #a85831;
+  border-radius: 2px;
+  background: #cf7339;
+}
+
+.mahjong-meld--public .mahjong-meld__side,
+.mahjong-meld--public .mahjong-meld__contact {
+  display: none;
+}
+
+.mahjong-meld--public .mahjong-meld__stack {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--meld-tile-h);
+  height: calc(2 * var(--meld-tile-w) - 2px);
+}
+
+.mahjong-meld--public .mahjong-meld__stack > .mahjong-meld__slot {
+  position: absolute;
+  left: 0;
+  width: var(--meld-tile-h);
+  height: var(--meld-tile-w);
+}
+
+.mahjong-meld--public .mahjong-meld__stack > [data-layer="called"] {
+  bottom: 0;
+  z-index: 1;
+}
+
+.mahjong-meld--public .mahjong-meld__stack > [data-layer="added"] {
+  bottom: calc(var(--meld-tile-w) - 2px);
+  z-index: 2;
+}
+
+.mahjong-meld.mahjong-meld--public > small {
+  display: none;
+}
+
+/* Each tile rests on the same table-local Z plane as the rack feet. Its cap
+   rises by the established 0.4 tile-height convention, under one shared camera. */
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld--public {
+  --meld-depth: calc(var(--meld-tile-h) * .4);
+  overflow: visible;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-player__melds,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-hand-public-melds,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__tiles,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__stack,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__slot,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__back,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__volume,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__cap {
+  overflow: visible;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__volume {
+  margin: 0;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld--public .mahjong-meld__back {
+  position: relative;
+  width: var(--meld-tile-w);
+  height: var(--meld-tile-h);
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__cap {
+  transform: translateZ(var(--meld-depth));
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__face.mahjong-tile {
+  box-shadow: inset 1px 1px 0 #fff, inset -2px -1px 2px #b6b7a647,
+    0 1px 2px #07101c60;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__cap--back {
+  border: 0;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__back-cap {
+  border-color: #a85831;
+  background: #cf7339;
+  box-shadow: inset 0 1px 0 #f6ba6d80, 0 1px 2px #07101c60;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+  border: 1px solid #c4bdab;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  pointer-events: none;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side--top {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--meld-depth);
+  transform-origin: center top;
+  transform: rotateX(90deg);
+  background: linear-gradient(90deg, #c5bead, #e7e0cd 48%, #bcb5a3);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side--bottom {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--meld-depth);
+  transform-origin: center bottom;
+  transform: rotateX(-90deg);
+  background: linear-gradient(90deg, #aaa391, #c6bfac 48%, #9c9584);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side--left {
+  top: 0;
+  left: 0;
+  width: var(--meld-depth);
+  height: 100%;
+  transform-origin: left center;
+  transform: rotateY(-90deg);
+  background: linear-gradient(180deg, #d8d1bd, #b6af9c);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side--right {
+  top: 0;
+  right: 0;
+  width: var(--meld-depth);
+  height: 100%;
+  transform-origin: right center;
+  transform: rotateY(90deg);
+  background: linear-gradient(180deg, #c5beab, #a9a28f);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__contact {
+  position: absolute;
+  inset: -1px;
+  display: block;
+  z-index: -1;
+  background: rgb(5 13 19 / 22%);
+  box-shadow: 0 1px 3px rgb(5 13 19 / 32%);
+  transform: translateZ(-.15px);
+  pointer-events: none;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side--top,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side--bottom {
+  border-color: #a9a28f;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side--left,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__side--right {
+  border-color: #aaa391;
+}
+
+.mahjong-game .mahjong-player__melds .mahjong-meld--public {
+  --meld-tile-w: min(1.5cqw, 3.3cqh, 22px);
+  --meld-tile-h: min(2.1cqw, 4.6cqh, 31px);
+}
+
+.mahjong-game .mahjong-hand-public-melds .mahjong-meld--public {
+  --meld-tile-w: min(3cqw, 7cqh, 35px);
+  --meld-tile-h: min(4.2cqw, 9.8cqh, 49px);
+  gap: 2px;
+}
+
+.mahjong-public-melds .mahjong-meld.mahjong-meld--public {
+  --meld-tile-w: 39px;
+  --meld-tile-h: 56px;
+  display: grid;
+  justify-items: start;
+  align-items: end;
+  gap: 7px;
+}
+
+.mahjong-public-melds .mahjong-meld--public > .mahjong-meld__tiles {
+  display: flex;
+}
+
+.mahjong-public-melds .mahjong-meld.mahjong-meld--public > small {
+  display: block;
+  font-size: 12px;
+}

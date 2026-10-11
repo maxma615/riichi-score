@@ -6,7 +6,8 @@
     "pages/record/index",
     "pages/me/index",
     "pages/profile/index",
-    "pages/yaku/index"
+    "pages/yaku/index",
+    "pages/online/index"
   ],
   "window": {
     "navigationBarTitleText": "日麻记分",

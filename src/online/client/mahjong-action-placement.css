@@ -1,0 +1,22 @@
+.mahjong-game {
+  --action-safe-left: env(safe-area-inset-left, 0px);
+  --action-safe-right: env(safe-area-inset-right, 0px);
+  --action-safe-top: env(safe-area-inset-top, 0px);
+  --action-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mahjong-game .mahjong-action-dock[data-action-layout="measured"] { pointer-events: none; }
+.mahjong-game .mahjong-action-dock[data-action-layout="measured"] > button { pointer-events: auto; }
+/* Narrow phones retain full-sized preview faces and 44px targets. Reduce
+   surrounding whitespace so every combination can fit beside the hand. */
+@media (max-width: 740px) and (orientation: landscape) {
+  .mahjong-page .mahjong-game .mahjong-action-dock .mahjong-button {
+    padding-inline: 4px;
+    gap: 4px;
+  }
+  .mahjong-page .mahjong-game .mahjong-action-dock .mahjong-call-previews {
+    gap: 3px;
+  }
+}
+/* Keep the return action usable with a mouse too; coarse-pointer rules retain
+   their existing 44px minimum. */
+.mahjong-game .mahjong-action-dock__cancel { min-width: 34px; min-height: 34px; }

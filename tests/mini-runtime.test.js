@@ -126,10 +126,10 @@ test("扫码scene解析与每个原生页面可加载", () => {
   ])
     assert.equal(parseInvite(input), code);
   assert.equal(parseInvite("garbage"), "");
-  for (const name of ["quick", "fu", "room", "record", "me", "profile", "yaku"])
+  for (const name of ["quick", "fu", "room", "record", "me", "profile", "yaku", "online"])
     assert.ok(page(name, {}).data);
   const config = JSON.parse(readFileSync("miniprogram/app.json"));
-  assert.equal(config.pages.length, 7);
+  assert.equal(config.pages.length, 8);
 });
 
 test("小程序交叉格点击、禁用组合、限界档位与算符回填清除役满", () => {

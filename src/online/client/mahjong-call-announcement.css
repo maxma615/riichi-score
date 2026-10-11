@@ -1,0 +1,125 @@
+/* Original artwork in an angular, prominent call cut-in. The server-confirmed
+   feedback owns its lifetime; CSS never delays a legal table interaction. */
+.mahjong-game .mahjong-table-feedback.mahjong-call-announcement {
+  --call-accent: #86e6f2;
+  position: absolute;
+  z-index: 11;
+  top: 2%;
+  left: 50%;
+  display: block;
+  width: min(46cqw, 540px);
+  height: min(32cqh, 250px);
+  min-height: 0;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--call-accent);
+  transform: translateX(-50%);
+  text-align: left;
+  pointer-events: none;
+  animation: mahjong-call-sweep 900ms cubic-bezier(.18,.76,.24,1) both;
+}
+
+.mahjong-game .mahjong-call-announcement::before {
+  content: "";
+  position: absolute;
+  inset: 13% 0 0;
+  background: linear-gradient(135deg, transparent 9%, #081924e8 10% 66%, #13394be8 67%, transparent 94%);
+  clip-path: polygon(19% 0, 100% 0, 80% 77%, 0 100%);
+  border-bottom: 3px solid var(--call-accent);
+  filter: drop-shadow(0 7px 8px #020b13a0);
+}
+
+.mahjong-game .mahjong-call-announcement::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 10%;
+  bottom: 19%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--call-accent), transparent);
+  transform: rotate(-14deg);
+  opacity: .7;
+}
+
+.mahjong-game .mahjong-call-announcement__portrait {
+  position: absolute;
+  top: 0;
+  bottom: 8%;
+  left: 40%;
+  width: min(29.44cqh, 230px);
+  background-image: url('./assets/mahjong-seat-portraits-v1.webp');
+  background-size: 200% 200%;
+  background-position: 0 0;
+  clip-path: polygon(18% 0, 100% 0, 82% 100%, 0 100%);
+  mask-image: linear-gradient(90deg, transparent, #000 23% 82%, transparent);
+  filter: saturate(.8) contrast(1.08);
+}
+
+.mahjong-game .mahjong-call-announcement__portrait[data-avatar="1"] { background-position: 100% 0; }
+.mahjong-game .mahjong-call-announcement__portrait[data-avatar="2"] { background-position: 0 100%; }
+.mahjong-game .mahjong-call-announcement__portrait[data-avatar="3"] { background-position: 100% 100%; }
+
+.mahjong-game .mahjong-call-announcement__label {
+  position: absolute;
+  z-index: 2;
+  left: 9%;
+  bottom: 21%;
+  font-family: var(--font-display), serif;
+  font-size: clamp(36px, min(7cqw, 13cqh), 90px);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  -webkit-text-stroke: 5px #102b39;
+  paint-order: stroke fill;
+  text-shadow: 2px 3px 0 #04131c, 0 0 15px #4da9ca70;
+}
+
+.mahjong-game .mahjong-call-announcement__actor {
+  position: absolute;
+  z-index: 2;
+  left: 11%;
+  bottom: 5%;
+  display: block;
+  max-width: 70%;
+  overflow: hidden;
+  color: #e6eef2;
+  font-size: clamp(10px, min(1.7cqw, 3.2cqh), 16px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: .1em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mahjong-game .mahjong-call-announcement.is-riichi { --call-accent: #ffc0b3; }
+.mahjong-game .mahjong-call-announcement.is-nuki { --call-accent: #b8e8dc; }
+.mahjong-game .mahjong-call-announcement.is-win { --call-accent: #ffe2a0; }
+
+.mahjong-game .mahjong-call-announcement__accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes mahjong-call-sweep {
+  0% { opacity: 0; transform: translate(-42%, -7%) scale(.91); }
+  14%, 77% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-57%, 3%) scale(.99); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mahjong-game .mahjong-table-feedback.mahjong-call-announcement {
+    animation: none;
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}

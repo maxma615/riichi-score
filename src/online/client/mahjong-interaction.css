@@ -1,0 +1,68 @@
+.mahjong-game button.mahjong-tile.is-playable {
+  touch-action: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.mahjong-game button.mahjong-tile.is-playable.is-selected {
+  z-index: 7;
+  transform: translateY(-31%);
+  outline: 2px solid #f0c46d;
+  outline-offset: 2px;
+  box-shadow: 0 5px 0 #c7bf9d, 0 8px 18px #0009;
+}
+
+.mahjong-game button.mahjong-tile.is-playable.is-dragging {
+  z-index: 30;
+  pointer-events: none;
+  cursor: grabbing;
+  transform: translate3d(var(--mahjong-drag-x, 0), var(--mahjong-drag-y, 0), 0) translateY(-12px) rotate(-3deg);
+  transition: none;
+  outline: 2px solid #f0c46d;
+  box-shadow: 0 8px 20px #000b;
+}
+
+.mahjong-game .mahjong-table.is-discard-target .mahjong-table__center {
+  outline: 2px solid #88dfde;
+  outline-offset: 5px;
+  filter: brightness(1.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mahjong-game button.mahjong-tile.is-playable.is-selected,
+  .mahjong-game button.mahjong-tile.is-playable.is-dragging,
+  .mahjong-game .mahjong-table.is-discard-target .mahjong-table__center {
+    transition: none;
+  }
+}
+
+/* Preferences are separate from the engine's contextual operation dock. */
+.mahjong-automatic{position:relative;z-index:24;font-size:12px;color:#f2e6ca}
+.mahjong-automatic summary{cursor:pointer;min-height:44px;padding:12px 14px;border:1px solid #a28a554d;border-radius:6px;background:#101c29ee;list-style:none}
+.mahjong-automatic[open] summary{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.mahjong-automatic [role="group"]{position:absolute;right:0;top:100%;display:grid;min-width:142px;background:#101c29f5;border:1px solid #a28a554d;border-top:0;border-radius:0 0 6px 6px;padding:4px}
+.mahjong-automatic button{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:44px;border:0;border-radius:4px;background:transparent;color:inherit;padding:8px 12px;cursor:pointer;font:inherit}
+.mahjong-automatic button span{color:#8998a5}
+.mahjong-automatic button[aria-pressed="true"]{background:#ac8b3633;color:#ffe7a2}
+.mahjong-automatic button[aria-pressed="true"] span{color:#ffe7a2}
+@media(max-height:500px), (max-width: 500px) and (orientation: portrait) and (pointer: coarse){.mahjong-automatic summary{padding:10px 8px;font-size:11px}}
+
+
+/* Meld alternatives expand on the table, without a modal backdrop. */
+.mahjong-game > .mahjong-call-dialog {
+ position: absolute; z-index: 10; left: 50%; right: auto; transform: translateX(-50%);
+ bottom: calc(calc(18 * var(--mahjong-dvh, 1dvh)) + 10px); width: max-content; max-width: calc(100% - 24px);
+ max-height: min(calc(50 * var(--mahjong-dvh, 1dvh)), 280px); overflow: auto; margin: 0; padding: 8px 12px 12px;
+ border: 1px solid #b9a175; border-radius: 5px; color: #f5e9cf;
+ background: linear-gradient(135deg, #20333cf2, #111e2af5);
+ box-shadow: 0 4px 16px #07111988;
+}
+.mahjong-call-dialog__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.mahjong-call-dialog__header h2 { margin: 0; font: 20px "Yougui Mahjong Brush", serif; }
+.mahjong-call-dialog__back { min-width: 44px; min-height: 44px; border: 0; padding: 5px 8px; background: transparent; color: #e7d2a7; cursor: pointer; }
+.mahjong-call-dialog > .mahjong-call-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 2px; max-height: none; overflow: visible; }
+.mahjong-game > .mahjong-call-dialog .mahjong-call-options > button { min-height: 58px; gap: 8px; padding: 5px 8px; }
+.mahjong-game:not(.is-finished):has(> .mahjong-call-dialog) > .mahjong-action-dock { visibility: hidden; pointer-events: none; }
+.mahjong-call-dialog button:focus-visible { outline: 2px solid #ffe0a0; outline-offset: 2px; }
+
+.mahjong-game .mahjong-table__surface { touch-action: manipulation; }

@@ -1,0 +1,281 @@
+/* The rack keeps its previous two-dimensional envelope; the cuboid rises from
+   its bottom edge so its physical depth does not change row spacing. */
+.mahjong-game .mahjong-player__hidden > i.mahjong-standing-tile {
+  --standing-w: min(2.6cqw, 5.4cqh, 37px);
+  --standing-h: min(3.64cqw, 7.5cqh, 52px);
+  --standing-d: calc(var(--standing-h) * .4);
+  position: relative;
+  display: block;
+  flex: 0 0 var(--standing-w);
+  box-sizing: border-box;
+  width: var(--standing-w);
+  height: var(--standing-h);
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transform-style: preserve-3d;
+}
+
+.mahjong-game .mahjong-table__position--west .mahjong-player__hidden > i.mahjong-standing-tile,
+.mahjong-game .mahjong-table__position--east .mahjong-player__hidden > i.mahjong-standing-tile {
+  --standing-w: min(1.85cqw, 3.8cqh, 27px);
+  --standing-h: min(2.59cqw, 5.3cqh, 38px);
+}
+
+.mahjong-game .mahjong-table__surface > .mahjong-table__position {
+  display: contents;
+}
+
+.mahjong-game .mahjong-table__surface .mahjong-player {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.mahjong-game .mahjong-table__surface .mahjong-opponent-rack,
+.mahjong-game .mahjong-table__surface .mahjong-player__melds,
+.mahjong-game .mahjong-table__surface .mahjong-nuki-tray,
+.mahjong-game .mahjong-table__surface .mahjong-hand-public-melds {
+  pointer-events: auto;
+}
+
+.mahjong-game .mahjong-player,
+.mahjong-game .mahjong-table__surface,
+.mahjong-game .mahjong-opponent-rack,
+.mahjong-game .mahjong-player__hidden,
+.mahjong-game .mahjong-player__hidden > i.mahjong-standing-tile,
+.mahjong-game .mahjong-standing-tile__body {
+  transform-style: preserve-3d;
+}
+
+.mahjong-game .mahjong-player__hidden > i.mahjong-standing-tile > .mahjong-standing-tile__body {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: block;
+  width: var(--standing-w);
+  height: var(--standing-d);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  transform-style: preserve-3d;
+}
+
+.mahjong-standing-tile__face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  border: 1px solid #d0c6ad;
+  border-radius: 1px;
+  backface-visibility: hidden;
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+
+.mahjong-game .mahjong-player__hidden > i.mahjong-standing-tile .mahjong-standing-tile__face {
+  margin: 0;
+  padding: 0;
+}
+
+.mahjong-standing-tile__face--back {
+  width: var(--standing-w);
+  height: var(--standing-h);
+  transform: rotateX(90deg);
+}
+
+/* Every concealed, flying and publicly face-down tile uses the same original
+   back material. Changing its location must not change its tile set. */
+.mahjong-standing-tile__face--back,
+.mahjong-discard-flight__back,
+.mahjong-page .mahjong-indicator-back,
+.mahjong-page .mahjong-meld--public .mahjong-meld__back,
+.mahjong-public-melds .mahjong-meld--public .mahjong-meld__back {
+  border-color: #a85831;
+  background: #cf7339;
+}
+
+.mahjong-standing-tile__face--front {
+  width: var(--standing-w);
+  height: var(--standing-h);
+  background: #f3efdf;
+  transform: translateY(var(--standing-d)) translateZ(var(--standing-h)) rotateX(-90deg);
+}
+
+.mahjong-standing-tile__face--top {
+  width: var(--standing-w);
+  height: var(--standing-d);
+  background: #f6f2e5;
+  transform: translateZ(var(--standing-h));
+}
+
+.mahjong-standing-tile__face--left {
+  width: var(--standing-d);
+  height: var(--standing-h);
+  background: #eee9d9;
+  transform: translateZ(var(--standing-h)) rotateZ(90deg) rotateX(-90deg);
+}
+
+.mahjong-standing-tile__face--right {
+  width: var(--standing-d);
+  height: var(--standing-h);
+  background: #e9e4d3;
+  transform: translateX(var(--standing-w)) translateY(var(--standing-d)) translateZ(var(--standing-h)) rotateZ(-90deg) rotateX(-90deg);
+}
+
+.mahjong-standing-tile__face--bottom {
+  width: var(--standing-w);
+  height: var(--standing-d);
+  background: #e9e4d3;
+  transform: translateY(var(--standing-d)) rotateX(180deg);
+}
+
+/* Public tiles and the center console sit above the felt so hit testing does
+   not choose the surface over visible content in the shared 3D scene. */
+.mahjong-game .mahjong-table__surface .mahjong-table__center,
+.mahjong-game .mahjong-table__surface .mahjong-river,
+.mahjong-game .mahjong-table__surface .mahjong-player__melds,
+.mahjong-game .mahjong-table__surface .mahjong-nuki-tray,
+.mahjong-game .mahjong-table__surface .mahjong-hand-public-melds {
+  translate: 0 0 1px;
+}
+
+/* Keep contextual buttons inward from the side rack, above the viewer's hand. */
+.mahjong-page .mahjong-game:not(.is-finished) .mahjong-action-dock {
+  right: max(14%, var(--mahjong-safe-right, env(safe-area-inset-right)));
+  /* Clear the 31% selected lift, including the second row used by riichi
+     cancellation. The table occupies the viewport, so these sizes match its
+     container-relative hand width without flattening the 3D surface. */
+  bottom: max(calc(calc(14 * var(--mahjong-dvh, 1dvh)) + 10px), calc(max(calc(2 * var(--mahjong-dvh, 1dvh)), var(--mahjong-safe-bottom, env(safe-area-inset-bottom))) + 6px + min(calc(4.8 * var(--mahjong-dvw, 1dvw)), calc(13 * var(--mahjong-dvh, 1dvh)), 64px) * 1.46 * 1.31 + 8px));
+}
+
+/* Public melds, including kakan's second row, occupy the near right rail.
+   Reserve a separate action lane only while those physical tiles are present. */
+.mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds) .mahjong-action-dock {
+  bottom: max(calc(calc(30 * var(--mahjong-dvh, 1dvh)) + 10px), calc(max(calc(2 * var(--mahjong-dvh, 1dvh)), var(--mahjong-safe-bottom, env(safe-area-inset-bottom))) + 6px + min(calc(4.8 * var(--mahjong-dvw, 1dvw)), calc(13 * var(--mahjong-dvh, 1dvh)), 64px) * 1.46 * 1.31 + 8px));
+}
+
+/* A legal response can offer ron, three chi alternatives, pon, kan and pass.
+   Put the chi preview in the clear upper HUD gap instead of growing a stack
+   across the rivers; keep the remaining actions in one near-side row. */
+.mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds):has(.mahjong-action-dock [data-choice-type="pass"]) .mahjong-action-dock {
+  right: max(22%, var(--mahjong-safe-right, env(safe-area-inset-right)));
+  bottom: max(calc(calc(23 * var(--mahjong-dvh, 1dvh)) + 10px), calc(max(calc(2 * var(--mahjong-dvh, 1dvh)), var(--mahjong-safe-bottom, env(safe-area-inset-bottom))) + 6px + min(calc(4.8 * var(--mahjong-dvw, 1dvw)), calc(13 * var(--mahjong-dvh, 1dvh)), 64px) * 1.46 * 1.31 + 8px));
+  max-width: 64%;
+  flex-wrap: nowrap;
+  pointer-events: none;
+}
+.mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds):has(.mahjong-action-dock [data-choice-type="pass"]) .mahjong-action-dock > button {
+  pointer-events: auto;
+}
+.mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds) .mahjong-action-dock > [data-choice-type="chi"] {
+  position: fixed;
+  top: max(calc(var(--mahjong-hud-action-top, 4px) + 8px), var(--mahjong-safe-top, env(safe-area-inset-top)));
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(calc(100 * var(--mahjong-dvw, 1dvw)) - 300px);
+}
+.mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds) .mahjong-action-dock > [data-choice-type="chi"] .mahjong-call-previews {
+  flex-wrap: nowrap;
+}
+
+/* On short landscape tables, keep the full river clear between two response
+   clusters. All tile previews stay in their buttons, with unchanged targets. */
+@media (max-height: 600px) and (orientation: landscape), (max-width: 600px) and (orientation: portrait) and (pointer: coarse) {
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds):has(.mahjong-action-dock [data-choice-type="pass"]) .mahjong-action-dock {
+    left: max(19%, var(--mahjong-safe-left, env(safe-area-inset-left)));
+    right: max(20%, var(--mahjong-safe-right, env(safe-area-inset-right)));
+    max-width: none;
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr) max-content;
+    grid-template-rows: auto auto;
+    gap: 5px;
+  }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds):has(.mahjong-action-dock [data-choice-type="pass"]) .mahjong-action-dock > [data-choice-type="ron"] { grid-area: 2 / 1; }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds):has(.mahjong-action-dock [data-choice-type="pass"]) .mahjong-action-dock > [data-choice-type="pass"] { grid-area: 2 / 2; }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds):has(.mahjong-action-dock [data-choice-type="pass"]) .mahjong-action-dock > [data-choice-type="pon"] { grid-area: 1 / 1 / 2 / 3; justify-self: start; }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-hand-public-melds):has(.mahjong-action-dock [data-choice-type="pass"]) .mahjong-action-dock > [data-choice-type="kan"] { grid-area: 2 / 4; justify-self: end; transform: translateY(-16px); }
+}
+
+/* A kan adds a physical tile to the side row. Reserve a standing tile's full
+   height and a small gap below the indicators on short landscape tables. */
+@media (max-height: 600px) and (orientation: landscape), (max-width: 600px) and (orientation: portrait) and (pointer: coarse) {
+  .mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-opponent-rack {
+    top: calc(50% + min(2.59cqw, 5.3cqh, 38px) + 4px);
+  }
+
+  .mahjong-page .mahjong-game .mahjong-table__own .mahjong-player__head {
+    width: clamp(48px, 7.2cqw, 84px);
+  }
+}
+
+
+/* Open-hand draw controls also need to clear the side rack on tall tables. */
+.mahjong-page .mahjong-game.is-sanma:not(.is-finished):has(.mahjong-hand-public-melds):not(:has(.mahjong-action-dock [data-choice-type="pass"])) .mahjong-action-dock {
+  right: max(22%, var(--mahjong-safe-right, env(safe-area-inset-right)));
+}
+
+/* Short-table draw controls sit inside the opponent's near foot. Response
+   layouts and the separate public-meld lane retain their own anchors. */
+@media (max-height: 600px) and (orientation: landscape), (max-width: 600px) and (orientation: portrait) and (pointer: coarse) {
+  .mahjong-page .mahjong-game:not(.is-finished):not(:has(.mahjong-hand-public-melds)):not(:has(.mahjong-action-dock [data-choice-type="pass"])) .mahjong-action-dock {
+    right: max(20%, var(--mahjong-safe-right, env(safe-area-inset-right)));
+  }
+}
+
+/* A drawn North quartet can offer riichi, extraction and closed kan together.
+   Keep those choices in the near-side gaps, clear of both opponents' racks. */
+@media (max-height: 600px) and (orientation: landscape), (max-width: 600px) and (orientation: portrait) and (pointer: coarse) {
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-action-dock [data-choice-type="nuki"]):has(.mahjong-action-dock [data-choice-type="kan"]) .mahjong-action-dock {
+    left: max(19%, var(--mahjong-safe-left, env(safe-area-inset-left)));
+    right: max(20%, var(--mahjong-safe-right, env(safe-area-inset-right)));
+    bottom: max(calc(calc(23 * var(--mahjong-dvh, 1dvh)) + 10px), calc(max(calc(2 * var(--mahjong-dvh, 1dvh)), var(--mahjong-safe-bottom, env(safe-area-inset-bottom))) + 6px + min(calc(4.8 * var(--mahjong-dvw, 1dvw)), calc(13 * var(--mahjong-dvh, 1dvh)), 64px) * 1.46 * 1.31 + 8px));
+    max-width: none;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    grid-template-rows: auto auto;
+    gap: 5px;
+    pointer-events: none;
+  }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-action-dock [data-choice-type="nuki"]):has(.mahjong-action-dock [data-choice-type="kan"]) .mahjong-action-dock > button { pointer-events: auto; }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-action-dock [data-choice-type="nuki"]):has(.mahjong-action-dock [data-choice-type="kan"]) .mahjong-action-dock > [data-choice-type="nuki"] { grid-area: 2 / 1; }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-action-dock [data-choice-type="nuki"]):has(.mahjong-action-dock [data-choice-type="kan"]) .mahjong-action-dock > .mahjong-button--riichi { grid-area: 1 / 1; }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-action-dock [data-choice-type="nuki"]):has(.mahjong-action-dock [data-choice-type="kan"]) .mahjong-action-dock > [data-choice-type="abort"] { grid-area: 1 / 3; justify-self: end; transform: translateY(-16px); }
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-action-dock [data-choice-type="nuki"]):has(.mahjong-action-dock [data-choice-type="kan"]) .mahjong-action-dock > [data-choice-type="kan"] { grid-area: 2 / 3; justify-self: end; transform: translateY(-16px); }
+}
+
+@media (max-height: 600px) and (orientation: landscape), (max-width: 600px) and (orientation: portrait) and (pointer: coarse) {
+  .mahjong-page .mahjong-game:not(.is-finished):has(.mahjong-action-dock [data-choice-type="kan"][aria-haspopup="dialog"]):not(:has(.mahjong-action-dock [data-choice-type="pass"])) .mahjong-action-dock > [data-choice-type="kan"][aria-haspopup="dialog"],
+  .mahjong-page .mahjong-game:not(.is-finished):not(:has(.mahjong-action-dock [data-choice-type="pass"])):has(.mahjong-button--riichi.is-selected) .mahjong-action-dock > .mahjong-action-dock__cancel {
+    position: fixed;
+    top: max(var(--mahjong-hud-action-top, 4px), var(--mahjong-safe-top, env(safe-area-inset-top)));
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: calc(calc(100 * var(--mahjong-dvw, 1dvw)) - 300px);
+  }
+  .mahjong-page .mahjong-game:not(.is-finished):not(:has(.mahjong-action-dock [data-choice-type="pass"])) .mahjong-action-dock > [data-choice-type="kan"][aria-haspopup="dialog"] .mahjong-call-previews { flex-wrap: nowrap; }
+  .mahjong-page .mahjong-game:not(.is-finished) .mahjong-action-dock .mahjong-button--riichi.is-selected { font-size: 12px; padding-inline: 6px; }
+}
+
+
+/* The measured action layout protects this HUD strip without moving the table. */
+.mahjong-page:has(.mahjong-game:not(.is-finished)) .mahjong-notice {
+  max-width: calc(calc(100 * var(--mahjong-dvw, 1dvw)) - 320px);
+}

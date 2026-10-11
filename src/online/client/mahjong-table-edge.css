@@ -1,0 +1,225 @@
+/* Compact seat identities leave the physical racks on the table's outer lanes. */
+.mahjong-page .mahjong-game .mahjong-player__head,
+.mahjong-page .mahjong-game button.mahjong-player__head {
+  width: clamp(56px, 7.8cqw, 84px);
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  padding: 4px 3px;
+  border: 1px solid #8299a375;
+  border-left: 2px solid #9fbcc7;
+  border-radius: 7px;
+  background: linear-gradient(145deg, #22333eef, #14232eef 78%);
+  box-shadow: 0 2px 0 #0d1a28, 0 5px 12px #08152455;
+}
+
+.mahjong-page .mahjong-game .mahjong-player__wind {
+  width: clamp(32px, 4.4cqw, 48px);
+  height: clamp(32px, 4.4cqw, 48px);
+  flex: 0 0 auto;
+  border: 1px solid #d7c8a4;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px #08131a80;
+}
+
+.mahjong-page .mahjong-game .mahjong-player__wind[data-avatar]::after {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  font-size: 11px;
+}
+
+.mahjong-page .mahjong-game .mahjong-player__head > div {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 0;
+}
+
+.mahjong-page .mahjong-game .mahjong-player__head strong {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  color: #f5f1e7;
+  font-size: clamp(10px, 1.2cqw, 13px);
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mahjong-page .mahjong-game .mahjong-player__head small,
+.mahjong-page .mahjong-game .mahjong-player__head > b {
+  display: none;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-player__head {
+  left: 0;
+  top: 40%;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-player__head {
+  right: 0;
+  top: 40%;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-opponent-rack {
+  left: 12%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-opponent-rack {
+  right: 12%;
+  top: 50%;
+  transform: translate(50%, -50%) rotate(-90deg);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-nuki-tray {
+  left: calc(12% + clamp(22px, 3.6cqw, 46px));
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-nuki-tray {
+  right: calc(12% + clamp(22px, 3.6cqw, 46px));
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__own .mahjong-player__head {
+  left: 0;
+}
+
+/* Keep concealed tiles in a stable left lane and declared melds at the right.
+   Calls shorten the hand; they must not recenter every remaining tile. */
+.mahjong-page .mahjong-game .mahjong-hand-line {
+  justify-content: space-between;
+  padding-inline: 12% 6%;
+}
+
+.mahjong-page .mahjong-game .mahjong-hand,
+.mahjong-page .mahjong-game .mahjong-hand-public-melds {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--north .mahjong-player__head {
+  right: 0;
+}
+
+/* Keep contextual choices just above the viewer's hand, clear of side racks. */
+.mahjong-page .mahjong-game:not(.is-finished) .mahjong-action-dock {
+  bottom: calc(calc(14 * var(--mahjong-dvh, 1dvh)) + 10px);
+}
+
+/* Side backs use a compact perspective so a full rack clears both HUD regions. */
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-player__hidden > i,
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-player__hidden > i {
+  width: min(1.4cqw, 2.9cqh, 22px);
+  height: min(2.5cqw, 4.4cqh, 28px);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-player__melds,
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-player__melds {
+  gap: 3px;
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-meld--public,
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-meld--public {
+  --meld-tile-w: min(1.2cqw, 2.64cqh, 17.6px);
+  --meld-tile-h: min(1.68cqw, 3.68cqh, 24.8px);
+}
+
+.mahjong-page .mahjong-game .mahjong-nuki-tray > small {
+  font-size: clamp(9px, min(1.1cqw, 1.8cqh), 10px);
+  position: relative;
+  z-index: 1;
+  transform: translateZ(var(--nuki-depth));
+}
+
+/* Extra kan tiles lengthen the rotated rack. Reserve one back-tile depth
+   beneath the upper-left indicators on short landscape tables. */
+@media (max-height: 600px) and (orientation: landscape), (max-width: 600px) and (orientation: portrait) and (pointer: coarse) {
+  .mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-opponent-rack {
+    top: calc(50% + min(1.4cqw, 2.9cqh, 22px));
+  }
+}
+
+
+/* Rotate only the physical North group. Its wrapper reserves the swapped
+   dimensions, so up to four Norths stay within the existing side anchor. */
+.mahjong-page .mahjong-game .mahjong-nuki-tray__footprint {
+  position: relative;
+  --nuki-tile-h: min(3.7cqw, 6cqh, 44px);
+}
+
+.mahjong-page .mahjong-game .mahjong-nuki-tray {
+  --nuki-tile-h: min(3.7cqw, 6cqh, 44px);
+  --nuki-depth: calc(var(--nuki-tile-h) * .4);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-nuki-tray__footprint,
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-nuki-tray__footprint {
+  width: var(--nuki-tile-h);
+  height: calc(var(--nuki-count) * var(--nuki-tile-w) + (var(--nuki-count) - 1) * 2px);
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-nuki-tray__tiles,
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-nuki-tray__tiles {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max-content;
+  transform: translate(-50%, -50%) rotate(var(--nuki-seat-angle));
+}
+
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-nuki-tray__tiles { --nuki-seat-angle: 90deg; }
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-nuki-tray__tiles { --nuki-seat-angle: -90deg; }
+.mahjong-page .mahjong-game .mahjong-table__position--north .mahjong-nuki-tray__tiles { transform: rotate(180deg); }
+
+/* A publicly extracted North rests on the felt while its face-up cap sits one
+   tile depth above it. The tray, seat rotation and each six-plane tile stay
+   in the shared table projection. */
+.mahjong-game .mahjong-nuki-tray,
+.mahjong-game .mahjong-nuki-tray__footprint,
+.mahjong-game .mahjong-nuki-tray__tiles,
+.mahjong-game .mahjong-nuki-tray__tiles > [data-nuki-index],
+.mahjong-game .mahjong-nuki-tray__tiles [data-nuki-volume],
+.mahjong-game .mahjong-nuki-tray__tiles [data-flight-volume],
+.mahjong-game .mahjong-nuki-tray__tiles .mahjong-discard-flight__face-up-cap {
+  overflow: visible;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.mahjong-game .mahjong-nuki-tray__tiles > [data-nuki-index] {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.mahjong-game .mahjong-nuki-tray__tiles [data-nuki-volume] {
+  --nuki-depth: calc(var(--nuki-tile-h) * .4);
+  --flight-depth: var(--nuki-depth);
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: var(--nuki-tile-w);
+  height: var(--nuki-tile-h);
+  transform: translateZ(var(--nuki-depth));
+}
+
+.mahjong-page .mahjong-game .mahjong-nuki-tray__tiles .mahjong-discard-flight__face {
+  padding: 1px;
+  border: 1px solid #d4ccb7;
+  border-radius: 3px;
+  background: linear-gradient(104deg, #fffdf2 0, #f8f3e6 66%, #ddd4bf 100%);
+  box-shadow: inset 1px 1px 0 #fffdf5, inset -1px -1px 2px #74684748, 0 1px 2px #07182b60;
+}
