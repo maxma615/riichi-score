@@ -95,6 +95,10 @@ for (const engine of [chromium, webkit])
         await page.getByRole("button", { name: "算符", exact: true }).click();
         await expect(page.locator(".fu-result")).toContainText("30符");
         await expect(page.locator("#fu")).toContainText("门前清荣和");
+        await expect(
+          page.getByRole("heading", { name: "听牌形", exact: true }),
+        ).toBeVisible();
+        await expect(page.locator("#fu")).not.toContainText("等待");
         await page
           .getByRole("button", { name: "自摸 +2符", exact: true })
           .click();

@@ -551,17 +551,17 @@ function renderFu() {
       ["pinfu", fuForm.method === "tsumo" ? "平和自摸 20符" : "平和荣和 30符"],
     ])}${
       fuForm.special === "normal"
-        ? `<h3>雀头</h3>${choices("pair", [
-            [0, "非役牌 +0"],
-            [2, "役牌 +2"],
-            [4, "连风 +4"],
-          ])}<h3>等待</h3>${choices("wait", [
-            [0, "两面 / 双碰 +0"],
-            [2, "边张 / 嵌张 / 单骑 +2"],
+        ? `<h3>雀头（对子）</h3>${choices("pair", [
+            [0, "非役牌 +0符"],
+            [2, "役牌 +2符"],
+            [4, "连风（自风＋场风） +4符"],
+          ])}<h3>听牌形</h3>${choices("wait", [
+            [0, "两面 / 双碰 +0符"],
+            [2, "边张 / 嵌张 / 单骑 +2符"],
           ])}<h3>刻子与杠子</h3>${fuForm.melds
             .map(
               (m, i) =>
-                `<div class="row"><label>面子<select data-meld="${i}">${[
+                `<div class="row"><label>刻子／杠子<select data-meld="${i}">${[
                   ["openTriplet", "明刻 2/4符"],
                   ["closedTriplet", "暗刻 4/8符"],
                   ["openKan", "明杠 8/16符"],
@@ -573,7 +573,7 @@ function renderFu() {
                   )
                   .join(
                     "",
-                  )}</select></label><label class="check"><input type="checkbox" data-terminal="${i}" ${m.terminal ? "checked" : ""}>幺九字牌</label><button data-remove="${i}">移除</button></div>`,
+                  )}</select></label><label class="check"><input type="checkbox" data-terminal="${i}" ${m.terminal ? "checked" : ""}>幺九牌／字牌</label><button data-remove="${i}">移除</button></div>`,
             )
             .join(
               "",

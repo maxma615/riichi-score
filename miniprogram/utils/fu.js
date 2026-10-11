@@ -42,11 +42,11 @@ function calculateFu({
   if (method === "tsumo") items.push({ label: "自摸", value: 2 });
   if (pair)
     items.push({ label: pair === 4 ? "连风雀头" : "役牌雀头", value: pair });
-  if (wait) items.push({ label: "边张 / 嵌张 / 单骑等待", value: 2 });
+  if (wait) items.push({ label: "边张 / 嵌张 / 单骑听牌", value: 2 });
   const types = { openTriplet: 2, closedTriplet: 4, openKan: 8, closedKan: 16 };
   for (const m of melds) {
     if (!Object.hasOwn(types, m.type) || typeof m.terminal !== "boolean")
-      throw Error("面子选择无效");
+      throw Error("刻子／杠子选择无效");
     const value = types[m.type] * (m.terminal ? 2 : 1);
     items.push({
       label:
@@ -55,7 +55,7 @@ function calculateFu({
           closedTriplet: "暗刻",
           openKan: "明杠",
           closedKan: "暗杠",
-        }[m.type] + (m.terminal ? " · 幺九字牌" : " · 中张牌"),
+        }[m.type] + (m.terminal ? " · 幺九牌／字牌" : " · 中张牌"),
       value,
     });
   }
