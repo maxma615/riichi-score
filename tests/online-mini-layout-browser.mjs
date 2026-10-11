@@ -37,7 +37,9 @@ await build({
     js: "import {createRequire} from 'node:module';const require=createRequire(import.meta.url);",
   },
 });
-const { scenario, resultStates } = await import(pathToFileURL(compiled));
+const { scenario, resultStates, tableStates } = await import(
+  pathToFileURL(compiled)
+);
 const template = readFileSync("miniprogram/pages/online/index.wxml", "utf8");
 const css =
   readFileSync("miniprogram/app.wxss", "utf8") +
@@ -63,20 +65,32 @@ function html(room, age) {
     busy: false,
   };
   data.settlement = presentation(data.game, data.seats, age);
+  if (data.settlement)
+    data.actions = data.actions.filter((c) => c.type !== "ack");
   data.settlementAck = data.game?.choices.find((c) => c.type === "ack") || null;
   const id = simulate.load({ template, data }),
     component = simulate.render(id);
   component.attach(document.body);
-  // Built-in image src is not exposed by this simulator. Only own faces are
-  // painted from the known model, to aid visual review; geometry uses real CSS.
-  component.dom.querySelectorAll(".hand .tile wx-image").forEach((image, i) => {
-    const img = document.createElement("img");
-    img.style = "width:100%;height:100%;display:block";
-    img.src =
-      "data:image/png;base64," +
-      readFileSync("miniprogram" + data.hand[i].src).toString("base64");
-    image.append(img);
-  });
+  // Built-in image src is not exposed. Paint known own/public faces only as a
+  // visual aid; this does not verify native image binding. Geometry uses WXSS.
+  const paint = (selector, tiles) =>
+    component.dom.querySelectorAll(selector).forEach((image, i) => {
+      const img = document.createElement("img");
+      img.style = "width:100%;height:100%;display:block";
+      img.src =
+        "data:image/png;base64," +
+        readFileSync("miniprogram" + tiles[i].src).toString("base64");
+      image.append(img);
+    });
+  paint(".hand .tile wx-image", data.hand);
+  for (const player of data.seats) {
+    paint(`.river-${player.edge} .river-slot wx-image`, player.river);
+    paint(
+      `.exposed-${player.edge} .meld-tile:not(.back) wx-image`,
+      player.melds.flat().filter((t) => !t.back),
+    );
+    paint(`.exposed-${player.edge} .north-slot wx-image`, player.north);
+  }
   const result = component.dom.outerHTML;
   component.detach();
   return result;
@@ -125,6 +139,17 @@ try {
           header: box(".row"),
           hostButton: box(".row wx-button"),
           actions: box(".actions"),
+          actionButtons: [
+            ...document.querySelectorAll(".actions wx-button"),
+          ].map((el) => {
+            const r = el.getBoundingClientRect();
+            return {
+              left: r.left,
+              right: r.right,
+              top: r.top,
+              bottom: r.bottom,
+            };
+          }),
           labels: [...document.querySelectorAll(".player-label")].map((el) => {
             const r = el.getBoundingClientRect();
             return {
@@ -189,7 +214,7 @@ try {
             JSON.stringify({ name, width, height, label, rack }),
           );
         assert.ok(
-          !overlap(label, boxes.actions),
+          boxes.actionButtons.every((button) => !overlap(label, button)),
           JSON.stringify({
             name,
             width,
@@ -274,7 +299,7 @@ try {
       await page.route("**/*", (r) => r.abort());
       // Native scroll-y is adapted to browser overflow only for this geometry check.
       await page.setContent(
-          "<style>html,body{margin:0;padding:0}wx-view{display:block}wx-text{display:inline}wx-image{display:inline-block}wx-button{display:block;box-sizing:border-box;text-align:center;border:none}.result-scroll{overflow-y:auto}.result-overlay *{animation:none!important;transition:none!important}" +
+        "<style>html,body{margin:0;padding:0}wx-view{display:block}wx-text{display:inline}wx-image{display:inline-block}wx-button{display:block;box-sizing:border-box;text-align:center;border:none}.result-scroll{overflow-y:auto}.result-overlay *{animation:none!important;transition:none!important}" +
           normalized(width) +
           "</style>" +
           html(room, 10000),
@@ -348,6 +373,89 @@ try {
       results.push({ name, width, height, passed: true, before, after });
       await page.close();
     }
+  for (const { name, room } of tableStates())
+    for (const [width, height] of [
+      [568, 260],
+      [640, 280],
+      [740, 310],
+      [844, 340],
+    ]) {
+      const page = await browser.newPage({ viewport: { width, height } });
+      await page.route("**/*", (r) => r.abort());
+      await page.setContent(
+        "<style>html,body{margin:0;padding:0}wx-view{display:block}wx-text{display:inline}wx-image{display:inline-block}wx-button{display:block;box-sizing:border-box;text-align:center;border:none}.table *{animation:none!important;transition:none!important}" +
+          normalized(width) +
+          "</style>" +
+          html(room, 0),
+      );
+      const boxes = await page.evaluate(() => {
+        const box = (el) => {
+          const r = el.getBoundingClientRect();
+          return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+        };
+        return {
+          table: box(document.querySelector(".table")),
+          hand: box(document.querySelector(".hand")),
+          center: box(document.querySelector(".table-center")),
+          labels: [...document.querySelectorAll(".player-label")].map(box),
+          rivers: [...document.querySelectorAll(".river-slot")].map(box),
+          melds: [...document.querySelectorAll(".exposed .meld-tile")].map(box),
+          north: [...document.querySelectorAll(".north-slot")].map(box),
+          overlay: !!document.querySelector(".result-overlay"),
+        };
+      });
+      assert.equal(boxes.overlay, false);
+      const expected = snapshot({ room }).seats;
+      assert.equal(
+        boxes.rivers.length,
+        expected.reduce((count, p) => count + p.river.length, 0),
+        "Keep every visible discard",
+      );
+      assert.equal(
+        boxes.melds.length,
+        expected.reduce((count, p) => count + p.melds.flat().length, 0),
+        "Keep every exposed physical tile",
+      );
+      assert.equal(
+        boxes.north.length,
+        expected.reduce((count, p) => count + p.north.length, 0),
+        "Keep every extracted North tile",
+      );
+      const overlap = (a, b) =>
+        Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+        Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+      const issues = [];
+      for (const [type, cells] of [
+        ["river", boxes.rivers],
+        ["meld", boxes.melds],
+        ["north", boxes.north],
+      ])
+        for (const cell of cells) {
+          if (
+            cell.left < boxes.table.left + 4 ||
+            cell.right > boxes.table.right - 4 ||
+            cell.top < boxes.table.top + 4 ||
+            cell.bottom + 3 > boxes.table.bottom - 4
+          )
+            issues.push(type + " clipped");
+          if (overlap(cell, boxes.hand)) issues.push(type + " covers hand");
+          if (overlap(cell, boxes.center)) issues.push(type + " covers center");
+          if (boxes.labels.some((label) => overlap(cell, label)))
+            issues.push(type + " covers player information");
+        }
+      await page.screenshot({
+        path: path.join(output, `${name}-${width}x${height}.png`),
+      });
+      results.push({
+        name,
+        width,
+        height,
+        passed: issues.length === 0,
+        issues: [...new Set(issues)],
+        boxes,
+      });
+      await page.close();
+    }
 } finally {
   await browser.close();
   rmSync(compiled, { force: true });
@@ -372,5 +480,18 @@ console.log(
       height,
       passed,
     })),
+  ),
+);
+assert.ok(
+  results.every((r) => r.passed),
+  JSON.stringify(
+    results
+      .filter((r) => !r.passed)
+      .map(({ name, width, height, issues }) => ({
+        name,
+        width,
+        height,
+        issues,
+      })),
   ),
 );

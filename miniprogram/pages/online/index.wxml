@@ -48,7 +48,10 @@
   >
   <block wx:else
     ><view class="row"
-      ><text>{{round || '等待开局'}}</text><text>{{room.code}}</text
+      ><text>{{round || '等待开局'}}</text>
+      <view wx:if="{{game && doraVisible}}" class="dora-tray drag-exclusion">
+        <text>宝牌指示牌</text><view><image wx:for="{{dora}}" wx:key="index" src="{{item.src}}" class="tile-small" /></view>
+      </view><text>{{room.code}}</text
       ><button
         wx:if="{{host}}"
         size="mini"
@@ -84,15 +87,6 @@
     >
     <block wx:if="{{game}}">
       <view class="table {{dropTarget?'is-drop-target':''}}">
-        <view wx:if="{{doraVisible}}" class="dora-tray drag-exclusion"
-          ><text>宝牌指示牌</text
-          ><view
-            ><image
-              wx:for="{{dora}}"
-              wx:key="index"
-              src="{{item.src}}"
-              class="tile-small" /></view
-        ></view>
         <view class="table-center drag-exclusion"
           ><view class="round">{{round}}</view
           ><view class="remaining">余 {{game.remainingTiles}}</view
@@ -131,7 +125,7 @@
                 class="river-slot {{motionTarget===item.nodeId && flight?'arrival-held':''}} {{item.sideways?'sideways':''}}"
                 ><image src="{{item.src}}" class="tile-small" /></view></view
           ></view>
-          <view class="drag-exclusion exposed exposed-{{player.edge}}">
+          <view class="drag-exclusion exposed exposed-{{player.edge}} meld-count-{{player.melds.length}}">
             <view class="melds"
               ><view
                 wx:for="{{player.melds}}"
