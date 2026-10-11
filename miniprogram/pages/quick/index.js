@@ -11,7 +11,6 @@ Page({
       yakuman: 0,
     },
     more: false,
-    settings: false,
   },
   onLoad() {
     this.refresh();

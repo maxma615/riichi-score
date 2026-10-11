@@ -96,14 +96,9 @@ test("小程序记分失败重试同nonce、双响独立符番与实际去重", 
       detail: { value: ["1", "2"] },
     });
     p.choose({ currentTarget: { dataset: { key: "loser", value: 0 } } });
-    p.picker({
-      currentTarget: { dataset: { key: "han", seat: 1 } },
-      detail: { value: "1" },
-    });
-    p.picker({
-      currentTarget: { dataset: { key: "han", seat: 2 } },
-      detail: { value: "2" },
-    });
+    p.stepHan({ currentTarget: { dataset: { seat: 1, step: -1 } } });
+    p.stepHan({ currentTarget: { dataset: { seat: 1, step: -1 } } });
+    p.stepHan({ currentTarget: { dataset: { seat: 2, step: -1 } } });
     await p.save();
     assert.equal(s.raw(r.id).history.length, 1);
     assert.equal(returned, false);
@@ -209,4 +204,48 @@ test("小程序本场加减边界和记分支付明细", async () => {
   assert.equal(record.data.details.rows[1].bonus, 200);
   assert.equal(record.data.details.rows[1].total, 2200);
   assert.equal(record.data.details.next.honba, 3);
+});
+
+test("小程序记分番数加减、符数点选、下限与弱网nonce更新", async () => {
+  const r = {
+    id: "test",
+    isOwner: true,
+    version: 0,
+    rules: { players: 4, start: 25000, kiriage: false, kazoe: true },
+    scores: [25000, 25000, 25000, 25000],
+    members: [0, 1, 2, 3].map((i) => ({ name: "玩家" + i })),
+    dealer: 0,
+    hand: 0,
+    honba: 1,
+    pot: 0,
+    history: [],
+  };
+  const p = page("record", { api: async () => r });
+  p.id = "test";
+  await p.load();
+  const step = (n) =>
+    p.stepHan({ currentTarget: { dataset: { seat: 0, step: n } } });
+  const fu = (index) =>
+    p.chooseFu({ currentTarget: { dataset: { seat: 0, index } } });
+  step(1);
+  fu(3);
+  assert.equal(p.data.winForms[0].han, 4);
+  assert.equal(p.event().winners[0].fu, 40);
+  assert.equal(p.data.details.rows[1].total, 4100);
+  step(-1);
+  step(-1);
+  fu(0);
+  assert.equal(p.event().winners[0].fu, 20);
+  p.nonce = "old";
+  step(-1);
+  assert.equal(p.data.winForms[0].han, 1);
+  assert.equal(p.event().winners[0].fu, 30);
+  assert.equal(p.nonce, null);
+  step(-1);
+  assert.equal(p.data.winForms[0].han, 1);
+  fu(0);
+  assert.equal(p.event().winners[0].fu, 30);
+  p.data.winForms[0].han = 100;
+  step(1);
+  assert.equal(p.data.winForms[0].han, 100);
 });

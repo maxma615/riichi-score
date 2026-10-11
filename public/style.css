@@ -1090,3 +1090,89 @@ body {
   font-size: 14px;
   line-height: 1.7;
 }
+.quick-context {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #c3b9a7;
+}
+.context-label {
+  display: block;
+  color: #736b5d;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.quick-context .choice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin: 0;
+}
+.quick-context .choice-row button {
+  min-width: 0;
+  border-radius: 0;
+  padding: 8px 4px;
+}
+.quick-context .counter {
+  gap: 0;
+  padding: 0;
+}
+.quick-context .counter button {
+  width: 42px;
+  min-height: 46px;
+  font-size: 22px;
+  padding: 6px;
+}
+.quick-context .counter strong {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.record-label {
+  font-size: 14px;
+  color: #756b5b;
+  margin: 16px 0 8px;
+}
+.record-counter {
+  justify-content: flex-start;
+  padding: 0;
+  margin: 0 0 16px;
+}
+.record-counter output {
+  font-size: 24px;
+  min-width: 90px;
+  text-align: center;
+  font-weight: 600;
+}
+.fu-choices {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0 20px;
+}
+.fu-choices button {
+  padding: 8px 2px;
+  font-size: 13px;
+  min-width: 0;
+  min-height: 46px;
+}
+.fu-choices button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+@media (max-width: 500px) {
+  .fu-choices {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .quick-context {
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+  .quick-context .counter button {
+    width: 36px;
+  }
+}

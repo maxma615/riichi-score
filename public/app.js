@@ -118,6 +118,13 @@ function renderQuick() {
     `<button class="point-cell ${c.selected ? "chosen" : ""}" data-fu="${c.fu}" data-han="${c.han}" data-yakuman="${c.yakuman}" ${c.valid ? "" : "disabled"} aria-pressed="${c.selected}" aria-label="${c.yakuman ? c.title : `${c.han}番${c.fu}符`} ${c.main}${c.sub ? " / " + c.sub : ""}">${amount(c)}</button>`;
   $("#quick").innerHTML =
     `<div class="card lookup-card"><div class="lookup-heading"><h2>符番速查</h2><span class="lookup-mark" aria-hidden="true">点数</span></div>
+    <div class="quick-context"><div><span class="context-label">桌型</span>${chips(
+      "players",
+      [
+        [4, "四人"],
+        [3, "三人"],
+      ],
+    )}</div><div><span class="context-label">本场</span><div class="counter" aria-label="调整本场"><button id="honba-minus" aria-label="减少一本场" ${quick.honba === 0 ? "disabled" : ""}>−</button><strong>${quick.honba} 本场</strong><button id="honba-plus" aria-label="增加一本场" ${quick.honba === 100 ? "disabled" : ""}>＋</button></div></div></div>
     <div class="lookup-switches">${chips("dealer", [
       [false, "闲家"],
       [true, "庄家"],
@@ -130,13 +137,7 @@ function renderQuick() {
     <table class="point-matrix"><thead><tr><th>符 / 番</th>${view.columns.map((c) => `<th class="${c.selected ? "axis-selected" : ""}">${c.han}番</th>`).join("")}</tr></thead><tbody>${view.rows.map((row) => `<tr><th class="${row.selected ? "axis-selected" : ""}">${row.fu}符</th>${row.cells.map((c) => `<td class="${!quick.yakuman && quick.han <= 4 && (quick.fu === c.fu || quick.han === c.han) ? "axis-tint" : ""}">${cellButton(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>
     <h3 class="limit-heading">5番及以上 · 满贯与役满</h3><table class="limit-matrix"><tbody>${view.limits.map((c) => `<tr class="${c.selected ? "limit-selected" : ""}"><th>${c.title}</th><td>${c.label}</td><td>${cellButton(c)}</td></tr>`).join("")}</tbody></table>
     <details class="lookup-more" ${quick.yakuman ? "open" : ""}><summary>多倍役满</summary><table class="limit-matrix"><tbody>${view.yakumans.map((c) => `<tr class="${c.selected ? "limit-selected" : ""}"><th>${c.title}</th><td>${cellButton(c)}</td></tr>`).join("")}</tbody></table></details>
-    <details class="lookup-more"><summary>桌型与本场 · ${quick.players}人 / ${quick.honba}本场</summary>${chips(
-      "players",
-      [
-        [4, "四人"],
-        [3, "三人"],
-      ],
-    )}<div class="counter" aria-label="调整本场"><button id="honba-minus" aria-label="减少一本场" ${quick.honba === 0 ? "disabled" : ""}>−</button><strong>${quick.honba} 本场</strong><button id="honba-plus" aria-label="增加一本场" ${quick.honba === 100 ? "disabled" : ""}>＋</button></div></details></div>`;
+</div>`;
   $("#quick")
     .querySelectorAll("[data-key]")
     .forEach(
@@ -171,7 +172,6 @@ function renderQuick() {
     $("#" + id).onclick = () => {
       quick.honba = Math.max(0, Math.min(100, quick.honba + step));
       renderQuick();
-      $("#quick .lookup-more:last-child").open = true;
     };
 }
 const roundLabel = (hand, n) =>
@@ -379,7 +379,52 @@ function openRecord() {
   };
 }
 function winnerInputs(s, check = false) {
-  return `<div class="winner divider" data-seat="${s}">${check ? `<label class="check"><input type="checkbox" name="winner" value="${s}">${esc(seatName(s))} 和牌</label>` : ""}<div class="grid"><label>番数<input class="han" type="number" min="1" max="100" value="3"></label><label>符数<select class="fu">${FU.map((f) => `<option ${f === 30 ? "selected" : ""}>${f}</option>`).join("")}</select></label><label>役满<select class="yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}倍役满</option>`).join("")}</select></label></div></div>`;
+  return `<div class="winner divider" data-seat="${s}" data-han="3" data-fu="30">${check ? `<label class="check"><input type="checkbox" name="winner" value="${s}">${esc(seatName(s))} 和牌</label>` : ""}<div class="record-label">番数</div><div class="counter record-counter"><button type="button" data-han-step="-1" aria-label="减少一番">−</button><output class="han">3 番</output><button type="button" data-han-step="1" aria-label="增加一番">＋</button></div><div class="record-label">符数</div><div class="fu-choices">${FU.map((f) => `<button type="button" data-fu-choice="${f}" aria-pressed="${f === 30}" class="${f === 30 ? "selected" : ""}">${f}符</button>`).join("")}</div><label>役满<select class="yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}倍役满</option>`).join("")}</select></label></div>`;
+}
+function refreshWinnerControls() {
+  const method = $("#kind").value;
+  if (!["tsumo", "ron"].includes(method)) return;
+  $("#record-fields")
+    .querySelectorAll(".winner")
+    .forEach((el) => {
+      const han = Number(el.dataset.han),
+        fu = Number(el.dataset.fu);
+      const valid = (f) => {
+        try {
+          points({ han, fu: f, method });
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      if (!valid(fu)) el.dataset.fu = "30";
+      el.querySelector(".han").textContent = `${han} 番`;
+      el.querySelectorAll("[data-han-step]").forEach(
+        (b) =>
+          (b.disabled = Number(b.dataset.hanStep) < 0 ? han <= 1 : han >= 100),
+      );
+      el.querySelectorAll("[data-fu-choice]").forEach((b) => {
+        const selected = Number(b.dataset.fuChoice) === Number(el.dataset.fu);
+        b.disabled = !valid(Number(b.dataset.fuChoice));
+        b.classList.toggle("selected", selected);
+        b.setAttribute("aria-pressed", String(selected));
+        b.onclick = () => {
+          el.dataset.fu = b.dataset.fuChoice;
+          refreshWinnerControls();
+          previewEvent();
+        };
+      });
+      el.querySelectorAll("[data-han-step]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            el.dataset.han = String(
+              Math.max(1, Math.min(100, han + Number(b.dataset.hanStep))),
+            );
+            refreshWinnerControls();
+            previewEvent();
+          }),
+      );
+    });
 }
 function recordFields() {
   const kind = $("#kind").value;
@@ -391,6 +436,7 @@ function recordFields() {
         : kind === "draw"
           ? `<p class="muted">勾选流局时听牌的玩家</p>${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="tenpai" value="${s}">${esc(seatName(s))}</label>`).join("")}`
           : '<p class="muted">途中流局不交换点数，保留供托、庄家并增加一本场。</p>';
+  refreshWinnerControls();
   previewEvent();
 }
 function previewEvent() {
@@ -428,8 +474,8 @@ function readEvent() {
         kind === "tsumo"
           ? Number($("#tsumo-seat").value)
           : Number(el.dataset.seat),
-      han: Number(el.querySelector(".han").value),
-      fu: Number(el.querySelector(".fu").value),
+      han: Number(el.dataset.han),
+      fu: Number(el.dataset.fu),
       yakuman: Number(el.querySelector(".yakuman").value),
     }));
   return {

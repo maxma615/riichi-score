@@ -1,12 +1,21 @@
 const { api, nonce, error } = require("../../utils/api");
 const { roundStatus, settlementView } = require("../../utils/settlement-view");
-const { FU } = require("../../utils/scoring");
+const { FU, points } = require("../../utils/scoring");
 Page({
   data: {
     room: null,
     kind: "win",
     method: "tsumo",
     fu: FU,
+    yakumans: [
+      "普通符番",
+      "役满",
+      "2倍役满",
+      "3倍役满",
+      "4倍役满",
+      "5倍役满",
+      "6倍役满",
+    ],
     han: 3,
     fuIndex: 2,
     winners: [0],
@@ -31,7 +40,12 @@ Page({
         room,
         status: roundStatus(room),
         names: room.members.map((m) => m?.name || "空位"),
-        winForms: room.members.map(() => ({ han: 3, fuIndex: 2, yakuman: 0 })),
+        winForms: room.members.map((_, seat) => ({
+          seat,
+          han: 3,
+          fuIndex: 2,
+          yakuman: 0,
+        })),
       });
       this.refresh();
     } catch (e) {
@@ -52,6 +66,23 @@ Page({
         e.detail.value,
       ),
     });
+    this.nonce = null;
+    this.refresh();
+  },
+  stepHan(e) {
+    const { seat, step } = e.currentTarget.dataset;
+    const han = Math.max(
+      1,
+      Math.min(100, this.data.winForms[seat].han + Number(step)),
+    );
+    this.setData({ ["winForms[" + seat + "].han"]: han });
+    this.nonce = null;
+    this.refresh();
+  },
+  chooseFu(e) {
+    const { seat, index } = e.currentTarget.dataset;
+    if (!this.data.fuChoices[seat][index].valid) return;
+    this.setData({ ["winForms[" + seat + "].fuIndex"]: Number(index) });
     this.nonce = null;
     this.refresh();
   },
@@ -78,7 +109,22 @@ Page({
     };
   },
   refresh() {
+    const method = this.data.method;
+    const fuChoices = this.data.winForms.map((form, seat) => {
+      const valid = (fu) => {
+        try {
+          points({ han: form.han, fu, method });
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      if (!valid(FU[form.fuIndex]))
+        this.setData({ ["winForms[" + seat + "].fuIndex"]: 2 });
+      return FU.map((fu, index) => ({ fu, index, valid: valid(fu) }));
+    });
     this.setData({
+      fuChoices,
       winnerFlags:
         this.data.names?.map((_, i) => this.data.winners.includes(i)) || [],
     });

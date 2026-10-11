@@ -49,9 +49,12 @@ for (const engine of [chromium, webkit])
           path: path.join(out, `${tag}-bottom-nav.png`),
         });
         await expect(page.locator("#open-fu")).toHaveCount(0);
-        await page
-          .getByText("桌型与本场 · 4人 / 0本场", { exact: true })
-          .click();
+        await expect(page.locator(".quick-context")).toBeVisible();
+        const contextBounds = await page
+          .locator(".quick-context")
+          .boundingBox();
+        const seatBounds = await page.locator(".lookup-switches").boundingBox();
+        assert.ok(contextBounds.y < seatBounds.y);
         await page
           .getByRole("button", { name: "增加一本场", exact: true })
           .click();
@@ -75,7 +78,7 @@ for (const engine of [chromium, webkit])
           page.locator('.point-matrix [data-fu="40"][data-han="3"]'),
         ).toHaveAttribute("aria-pressed", "true");
         const matrixBounds = await page.locator(".point-matrix").boundingBox();
-        assert.ok(matrixBounds.y < (mobile ? 440 : 500));
+        assert.ok(matrixBounds.y < (mobile ? 540 : 600));
         await page
           .locator('.limit-matrix [data-han="5"][data-yakuman="0"]')
           .click();
@@ -211,6 +214,28 @@ for (const engine of [chromium, webkit])
         await expect(page.locator(".round-status")).toContainText("首次坐庄");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
         await expect(page.locator(".record-status")).toContainText("0 本场");
+        await expect(
+          page.locator("#record-fields input[type=number]"),
+        ).toHaveCount(0);
+        await expect(page.locator("#record-fields select.fu")).toHaveCount(0);
+        await page
+          .getByRole("button", { name: "增加一番", exact: true })
+          .click();
+        await expect(page.locator(".winner .han")).toContainText("4 番");
+        await page.locator('[data-fu-choice="40"]').click();
+        await expect(page.locator('[data-fu-choice="40"]')).toHaveAttribute(
+          "aria-pressed",
+          "true",
+        );
+        await expect(
+          page
+            .locator("#preview .payment-table tr")
+            .filter({ hasText: "测试南家" }),
+        ).toContainText("4,000");
+        await page
+          .getByRole("button", { name: "减少一番", exact: true })
+          .click();
+        await page.locator('[data-fu-choice="30"]').click();
         await expect(page.locator("#preview .payment-table")).toContainText(
           "基础点数",
         );

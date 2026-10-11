@@ -205,3 +205,40 @@
   z-index: 2;
   box-shadow: 0 8rpx 28rpx #292d2b26;
 }
+.quick-context {
+  display: flex;
+  gap: 24rpx;
+  border-bottom: 1rpx solid #c3b9a7;
+  margin-bottom: 24rpx;
+  padding-bottom: 24rpx;
+}
+.quick-context > view {
+  flex: 1;
+  min-width: 0;
+}
+.context-label {
+  font-size: 24rpx;
+  color: #736b5d;
+  margin-bottom: 12rpx;
+}
+.quick-context .counter {
+  gap: 0;
+  padding: 0;
+}
+.quick-context .counter button {
+  width: 72rpx;
+  min-height: 84rpx;
+  line-height: 84rpx;
+  margin: 0;
+  font-size: 42rpx;
+  padding: 0;
+}
+.quick-context .counter text {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  white-space: nowrap;
+}
+.quick-context .switch-pair button {
+  min-height: 84rpx;
+}
