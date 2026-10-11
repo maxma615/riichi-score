@@ -78,13 +78,22 @@ writeFileSync(
   ),
 );
 
+// Generate the native layout directly from the existing web parser, without React.
+const meldSource = readFileSync(new URL("../src/online/client/mahjong-meld.tsx", import.meta.url), "utf8");
+const parserStart = meldSource.indexOf("type MeldSource =");
+const parserEnd = meldSource.indexOf("function kindName(", parserStart);
+if (parserStart < 0 || parserEnd < 0) throw Error("Web meld parser boundaries changed; update native generation.");
+const nativeMeldParser = 'import Majiang from "@kobalab/majiang-core";\n' +
+  meldSource.slice(parserStart, parserEnd).replace("function parseMeld(", "export function parseMeld(");
+
 // Public event acceptance is shared with web flights; no concealed opponent faces enter it.
 await build({
   stdin: {
     contents:
-      "export {DiscardMotionTracker, createDiscardEventId} from './discard-motion'; export {acceptedNukiEvent} from './nuki-motion';",
+      nativeMeldParser + "\nexport {DiscardMotionTracker, createDiscardEventId} from './discard-motion'; export {acceptedNukiEvent} from './nuki-motion'; export {acceptedPublicCallEvent, acceptedPendingKakanEvent} from './public-call-motion';",
     resolveDir: fileURLToPath(new URL("../src/online/client", import.meta.url)),
     sourcefile: "native-motion.ts",
+    loader: "ts",
   },
   bundle: true,
   platform: "neutral",

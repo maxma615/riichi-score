@@ -1,4 +1,13 @@
 const { tile, meld } = require("./online");
+// Concealed hand strings contain multiple suits; they are not individual melds.
+function closedTiles(value) {
+  return (String(value || "").match(/[mpsz][0-9]+/g) || []).flatMap((group) =>
+    group
+      .slice(1)
+      .split("")
+      .map((rank) => tile(group[0] + rank)),
+  );
+}
 function hanLabel(value) {
   const text = String(value ?? ""),
     count = (text.match(/\*+/)?.[0] || "").length;
@@ -10,7 +19,7 @@ function hanLabel(value) {
 }
 function winning(settlement) {
   const [closed = "", ...sets] = (settlement.hand || "").split(",");
-  const hand = meld(closed),
+  const hand = closedTiles(closed),
     exposed = sets.filter(Boolean).map(meld);
   const t = settlement.winningTile,
     expected = 14 - exposed.length * 3;
@@ -110,7 +119,7 @@ function presentation(
         seat: p.seat,
         name: p.name,
         tenpai: (s.tenpaiSeats || []).includes(p.seat),
-        hand: meld(closed),
+        hand: closedTiles(closed),
         exposed: sets.filter(Boolean).map(meld),
         waits: (reveal?.waits || []).map(tile),
       };

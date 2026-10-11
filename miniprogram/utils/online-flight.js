@@ -1,4 +1,9 @@
-const { DiscardMotionTracker, acceptedNukiEvent } = require("./online-motion");
+const {
+  DiscardMotionTracker,
+  acceptedNukiEvent,
+  acceptedPublicCallEvent,
+  acceptedPendingKakanEvent,
+} = require("./online-motion");
 const { tile, river } = require("./online");
 const FLIGHT_MS = 230; // Same duration as web use-discard-motion / use-nuki-motion.
 const angles = { bottom: 0, left: 90, right: -90, top: 180 };
@@ -121,8 +126,34 @@ class NativeFlights {
     }
     const discarded = this.tracker.observe(after, { canAnimate: true, intent });
     const nuki = acceptedNukiEvent(before, after);
+    const call =
+      acceptedPublicCallEvent(before, after) ||
+      acceptedPendingKakanEvent(before, after);
     let plan = null;
-    if (discarded.flight && cached) {
+    if (call && cached) {
+      const set = require("./online").meld(call.meld);
+      const index = set.findIndex((t) =>
+        call.kind === "kakan" ? t.added : t.called,
+      );
+      const targetIndex = index < 0 ? set.findIndex((t) => !t.back) : index;
+      const edge =
+        this.host.data.seats.find((s) => s.seat === call.seat)?.edge ||
+        "bottom";
+      const source =
+        call.source &&
+        cached.rivers[`river-${call.source.seat}-${call.source.index}`];
+      plan = {
+        id: call.id,
+        target: `meld-${call.seat}-${call.index}-${targetIndex}`,
+        face: call.tile,
+        from: source?.rect,
+        fromAngle: source?.angle || 0,
+        toAngle:
+          angles[edge] +
+          (set[targetIndex]?.called || set[targetIndex]?.added ? 90 : 0),
+        pulse: !validRect(source?.rect),
+      };
+    } else if (discarded.flight && cached) {
       const f = discarded.flight,
         event = f.event;
       const seat = this.host.data.seats.find((s) => s.seat === event.seat),
@@ -203,6 +234,7 @@ class NativeFlights {
       const q = this.api.createSelectorQuery().in(host);
       q.selectAll(".hand .tile").boundingClientRect();
       q.selectAll(".opponent .back").boundingClientRect();
+      q.selectAll(".river-slot").boundingClientRect();
       q.exec((rects) => {
         if (
           serial !== this.serial ||
@@ -218,7 +250,8 @@ class NativeFlights {
         )
           return;
         const own = {},
-          opponents = {};
+          opponents = {},
+          rivers = {};
         hand.forEach((t, i) => {
           if (validRect(rects[0][i])) own[t.physicalKey] = rects[0][i];
         });
@@ -230,7 +263,19 @@ class NativeFlights {
           offset = end;
         }
         if (offset !== rects[1].length) return;
-        this.sources = { context: key, own, opponents };
+        const cells = host.data.seats.flatMap((s) =>
+          s.river.map((t) => ({
+            ...t,
+            angle: angles[s.edge] + (t.sideways ? 90 : 0),
+          })),
+        );
+        if (!Array.isArray(rects[2]) || rects[2].length !== cells.length)
+          return;
+        cells.forEach((t, i) => {
+          if (validRect(rects[2][i]))
+            rivers[t.nodeId] = { rect: rects[2][i], angle: t.angle };
+        });
+        this.sources = { context: key, own, opponents, rivers };
       });
     } catch (_) {
       this.sources = null;

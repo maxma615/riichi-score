@@ -119,7 +119,11 @@ function harness(room, riichi = false) {
   function capture() {
     flights.capture();
     const q = queued.shift();
-    assert.deepEqual(q.selectors, [".hand .tile", ".opponent .back"]);
+    assert.deepEqual(q.selectors, [
+      ".hand .tile",
+      ".opponent .back",
+      ".river-slot",
+    ]);
     q.cb([
       host.data.hand.map((t, i) => ({
         left: 30 + i * 44,
@@ -137,6 +141,14 @@ function harness(room, riichi = false) {
             height: 30,
           })),
         ),
+      host.data.seats.flatMap((s) =>
+        s.river.map((t, i) => ({
+          left: 200 + s.seat * 20,
+          top: 160 + i * 26,
+          width: t.sideways ? 25 : 17,
+          height: t.sideways ? 17 : 25,
+        })),
+      ),
     ]);
   }
   function render(room, plan) {
@@ -348,4 +360,98 @@ test("目标消失或原生动画API异常时保留实体牌，不留下隐藏�
     assert.equal(h.timers.size, 0);
     assert.equal(h.host.data.seats[0].north.length, 1);
   }
+});
+
+test("真实吃碰明杠从被鸣走的牌河飞到对应横牌；暗杠与加杠强调实际牌体", () => {
+  for (const name of ["chi", "pon", "daiminkan", "ankan", "kakan"]) {
+    const f = scenario(name, false);
+    let before = f.view(),
+      h = harness(before);
+    const type = ["ankan", "kakan", "daiminkan"].includes(name) ? "kan" : name;
+    const c = before.game.choices.find((c) => c.type === type);
+    assert.ok(c, name);
+    let after = f.choose({ id: c.id, decisionId: before.game.decisionId });
+    let plan = h.flights.prepare(before, after, true);
+    for (let seat = 0; !plan && seat < 4; seat++) {
+      if (f.viewFor(seat).game.choices.some((c) => c.type === "pass")) {
+        h.host.setData(snapshot({ room: after }));
+        h.capture();
+        before = after;
+        after = f.act(seat, "pass");
+        plan = h.flights.prepare(before, after, true);
+      }
+    }
+    assert.ok(plan, name);
+    assert.match(plan.target, /^meld-/);
+    h.render(after, plan);
+    h.destination();
+    const set = h.host.data.seats.find((s) => s.seat === after.game.turnSeat)
+      .melds[0];
+    const dest = set.find((t) => t.nodeId === plan.target);
+    assert.ok(dest);
+    if (["chi", "pon", "daiminkan"].includes(name)) {
+      assert.ok(dest.called);
+      assert.equal(plan.pulse, false);
+      assert.equal(h.host.data.flight.src, dest.src);
+      assert.equal(h.host.data.seats[0].river.length, 0);
+    } else {
+      assert.equal(plan.pulse, true);
+      assert.equal(h.host.data.flight, null);
+      if (name === "ankan") assert.equal(set.filter((t) => t.back).length, 2);
+      else assert.ok(dest.added);
+    }
+    h.finish();
+    assert.equal(h.host.data.motionTarget, "");
+    assert.equal(h.timers.size, 0);
+  }
+});
+
+test("两端副露解析同源：鸣牌来源、赤五、加杠叠放和无效编码", () => {
+  const { meld } = require("../miniprogram/utils/online");
+  for (const [marker, index] of [
+    ["-", 0],
+    ["=", 1],
+    ["+", 2],
+  ]) {
+    const pon = meld(`p550${marker}`);
+    assert.equal(
+      pon.findIndex((t) => t.called),
+      index,
+    );
+    assert.equal(pon[index].key, "p0");
+    const kan = meld(`p550${marker}5`);
+    assert.equal(
+      kan.findIndex((t) => t.called),
+      index,
+    );
+    assert.equal(kan[3].stackStyle, `left:${index * 18}px;`);
+    assert.ok(kan[3].added);
+  }
+  const chi = meld("m34-5");
+  assert.deepEqual(
+    chi.map((t) => t.key),
+    ["m4", "m3", "m5"],
+  );
+  assert.ok(chi[0].called);
+  const concealed = meld("p5550");
+  assert.deepEqual(
+    concealed.map((t) => t.back),
+    [true, false, false, true],
+  );
+  assert.equal(concealed[1].key, "p0");
+  for (const bad of ["p12+", "z123-", "p005+", "m135-"])
+    assert.deepEqual(meld(bad), []);
+});
+
+test("旁观座位的鸣牌路径跟随各家的桌边方向，沿用公开牌河而非手牌", () => {
+  const f = scenario("pon", false), before = f.viewFor(2), h = harness(before);
+  const own = f.view(), c = own.game.choices.find(c => c.type === 'pon');
+  f.choose({id:c.id,decisionId:own.game.decisionId});
+  const after = f.viewFor(2), plan = h.flights.prepare(before,after,true);
+  assert.ok(plan);assert.equal(plan.fromAngle,180);assert.equal(plan.toAngle,180);
+  assert.equal(plan.target,'meld-1-0-0');assert.equal(plan.pulse,false);
+  h.render(after,plan);h.destination();
+  assert.equal(h.host.data.flight.src,tile('p1').src);
+  assert.equal(h.host.data.seats.find(s=>s.seat===1).edge,'left');
+  h.flights.cancel();assert.equal(h.timers.size,0);assert.equal(h.host.data.motionTarget,'');
 });

@@ -1,3 +1,4 @@
+const { parseMeld } = require("./online-motion");
 const {
   handRack,
   openingTileCount,
@@ -59,22 +60,34 @@ function tile(value) {
   };
 }
 function meld(value) {
-  const raw = String(value || ""),
-    out = [];
-  let suit = "",
-    called = -1;
-  for (const c of raw) {
-    if ("mpsz".includes(c)) suit = c;
-    else if (/^[0-9]$/.test(c) && suit) out.push(tile(suit + c));
-    else if ("-+=".includes(c)) called = out.length - 1;
-  }
-  const concealed = out.length === 4 && called < 0;
-  return out.map((t, i) => ({
-    ...t,
-    back: concealed && (i === 0 || i === 3),
-    called: i === called,
-    added: out.length === 4 && called >= 0 && called < 3 && i === 3,
-  }));
+  const parsed = parseMeld(String(value || ""));
+  if (!parsed) return [];
+  const out = [],
+    added = [];
+  parsed.slots.forEach((slot, index) => {
+    if (slot.type === "stack") {
+      out.push({
+        ...tile(slot.called),
+        called: true,
+        back: false,
+        added: false,
+      });
+      added.push({
+        ...tile(slot.added),
+        called: false,
+        back: false,
+        added: true,
+        stackStyle: `left:${index * 18}px;`,
+      });
+    } else
+      out.push({
+        ...tile(slot.value),
+        back: slot.type === "back",
+        called: slot.type === "tile" && Boolean(slot.called),
+        added: false,
+      });
+  });
+  return [...out, ...added];
 }
 // Claimed tiles remain in engine history for furiten, but leave the visible river.
 function river(values) {
@@ -183,7 +196,12 @@ function snapshot(
         { length: Math.ceil(visibleRiver.length / 6) },
         (_, row) => visibleRiver.slice(row * 6, row * 6 + 6),
       ),
-      melds: (p?.melds || []).map(meld),
+      melds: (p?.melds || []).map((value, group) =>
+        meld(value).map((t, index) => ({
+          ...t,
+          nodeId: `meld-${seat}-${group}-${index}`,
+        })),
+      ),
       position: (seat - room.mySeat + capacity) % capacity,
       edge: ["bottom", "right", ...(capacity === 4 ? ["top"] : []), "left"][
         (seat - room.mySeat + capacity) % capacity

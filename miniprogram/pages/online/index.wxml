@@ -139,7 +139,8 @@
                 ><view
                   wx:for="{{set}}"
                   wx:key="index"
-                  class="meld-tile {{item.called?'called':''}} {{item.added?'added':''}} {{item.back?'back':''}}"
+                  id="{{item.nodeId}}"
+                  style="{{item.stackStyle}}" class="meld-tile {{item.called?'called':''}} {{item.added?'added':''}} {{item.back?'back':''}} {{motionTarget===item.nodeId?(flight?'arrival-held':'arrival-pulse'):''}}"
                   ><image
                     wx:if="{{!item.back}}"
                     src="{{item.src}}"
@@ -245,7 +246,7 @@
                   ><view
                     wx:for="{{set}}"
                     wx:key="index"
-                    class="meld-tile {{item.called?'called':''}} {{item.added?'added':''}} {{item.back?'back':''}}"
+                    style="{{item.stackStyle}}" class="meld-tile {{item.called?'called':''}} {{item.added?'added':''}} {{item.back?'back':''}} {{motionTarget===item.nodeId?(flight?'arrival-held':'arrival-pulse'):''}}"
                     ><image
                       wx:if="{{!item.back}}"
                       src="{{item.src}}"
@@ -300,7 +301,7 @@
                       ><view
                         wx:for="{{set}}"
                         wx:key="index"
-                        class="meld-tile {{item.called?'called':''}} {{item.added?'added':''}} {{item.back?'back':''}}"
+                        style="{{item.stackStyle}}" class="meld-tile {{item.called?'called':''}} {{item.added?'added':''}} {{item.back?'back':''}} {{motionTarget===item.nodeId?(flight?'arrival-held':'arrival-pulse'):''}}"
                         ><image
                           wx:if="{{!item.back}}"
                           src="{{item.src}}"
