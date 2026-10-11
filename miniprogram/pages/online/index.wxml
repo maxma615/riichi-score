@@ -94,11 +94,20 @@
         >
         <block wx:for="{{seats}}" wx:for-item="player" wx:key="seat">
           <view
-            class="drag-exclusion player-label label-{{player.edge}} {{player.active?'active':''}}"
+            class="drag-exclusion player-label label-{{player.edge}} {{player.active?'active':''}} {{player.nuki?'has-north':''}}"
             ><text class="wind">{{player.wind}}</text
             ><view
               ><text>{{player.name}}</text
-              ><text class="player-score">{{player.score}}</text></view
+              ><text class="player-score">{{player.score}}</text>
+            <view wx:if="{{player.nuki}}" class="north-tray"
+              ><text>拔北 {{player.nuki}}</text
+              ><view
+                wx:for="{{player.north}}"
+                wx:key="index"
+                id="{{item.nodeId}}"
+                class="north-slot {{motionTarget===item.nodeId?(flight?'arrival-held':'arrival-pulse'):''}}"
+              ><image src="{{item.src}}" class="tile-small" /></view></view>
+            </view
             ><text wx:if="{{player.riichi}}" class="call">立直</text></view
           >
           <view
@@ -125,7 +134,7 @@
                 class="river-slot {{motionTarget===item.nodeId && flight?'arrival-held':''}} {{item.sideways?'sideways':''}}"
                 ><image src="{{item.src}}" class="tile-small" /></view></view
           ></view>
-          <view class="drag-exclusion exposed exposed-{{player.edge}} meld-count-{{player.melds.length}}">
+          <view class="drag-exclusion exposed exposed-{{player.edge}} meld-count-{{player.melds.length}} {{player.hasKan?'has-kan':''}}">
             <view class="melds"
               ><view
                 wx:for="{{player.melds}}"
@@ -142,14 +151,7 @@
                     src="{{item.src}}"
                     class="tile-small" /></view></view
             ></view>
-            <view wx:if="{{player.nuki}}" class="north-tray"
-              ><text>拔北 {{player.nuki}}</text
-              ><view
-                wx:for="{{player.north}}"
-                wx:key="index"
-                id="{{item.nodeId}}"
-                class="north-slot {{motionTarget===item.nodeId?(flight?'arrival-held':'arrival-pulse'):''}}"
-              ><image src="{{item.src}}" class="tile-small" /></view></view>
+
           </view>
         </block>
         <view class="hand drag-exclusion {{draggingId>=0?'has-drag':''}}"

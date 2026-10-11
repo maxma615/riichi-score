@@ -89,7 +89,18 @@ function html(room, age) {
       `.exposed-${player.edge} .meld-tile:not(.back) wx-image`,
       player.melds.flat().filter((t) => !t.back),
     );
-    paint(`.exposed-${player.edge} .north-slot wx-image`, player.north);
+    paint(`.label-${player.edge} .north-slot wx-image`, player.north);
+    for (const north of player.north) {
+      const node = component.querySelector("#" + north.nodeId);
+      assert.ok(
+        node?.dom?.classList.contains("north-slot"),
+        "North flight target exists in simulator template tree",
+      );
+      assert.ok(
+        node.dom.closest(".label-" + player.edge),
+        "North target remains with its owning seat",
+      );
+    }
   }
   const result = component.dom.outerHTML;
   component.detach();
@@ -208,6 +219,10 @@ try {
         Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
         Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
       for (const label of boxes.labels) {
+        assert.ok(
+          !overlap(label, boxes.hand),
+          "Player information must stay above own hand",
+        );
         for (const rack of boxes.racks)
           assert.ok(
             !overlap(label, rack),
@@ -400,7 +415,10 @@ try {
           labels: [...document.querySelectorAll(".player-label")].map(box),
           rivers: [...document.querySelectorAll(".river-slot")].map(box),
           melds: [...document.querySelectorAll(".exposed .meld-tile")].map(box),
-          north: [...document.querySelectorAll(".north-slot")].map(box),
+          north: [...document.querySelectorAll(".north-slot")].map((el) => ({
+            ...box(el),
+            ownerLabel: box(el.closest(".player-label")),
+          })),
           overlay: !!document.querySelector(".result-overlay"),
         };
       });
@@ -425,6 +443,14 @@ try {
         Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
         Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
       const issues = [];
+      for (const [index, label] of boxes.labels.entries()) {
+        if (overlap(label, boxes.hand))
+          issues.push("player information covers hand");
+        if (
+          boxes.labels.slice(index + 1).some((other) => overlap(label, other))
+        )
+          issues.push("player information overlaps another seat");
+      }
       for (const [type, cells] of [
         ["river", boxes.rivers],
         ["meld", boxes.melds],
@@ -440,8 +466,25 @@ try {
             issues.push(type + " clipped");
           if (overlap(cell, boxes.hand)) issues.push(type + " covers hand");
           if (overlap(cell, boxes.center)) issues.push(type + " covers center");
-          if (boxes.labels.some((label) => overlap(cell, label)))
+          if (
+            boxes.labels.some(
+              (label) =>
+                overlap(cell, label) &&
+                !(
+                  type === "north" &&
+                  JSON.stringify(label) === JSON.stringify(cell.ownerLabel)
+                ),
+            )
+          )
             issues.push(type + " covers player information");
+          if (
+            type === "north" &&
+            (cell.left < cell.ownerLabel.left ||
+              cell.right > cell.ownerLabel.right ||
+              cell.top < cell.ownerLabel.top ||
+              cell.bottom + 3 > cell.ownerLabel.bottom)
+          )
+            issues.push("north escapes owner panel");
         }
       await page.screenshot({
         path: path.join(output, `${name}-${width}x${height}.png`),

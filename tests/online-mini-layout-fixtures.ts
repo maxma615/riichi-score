@@ -3,7 +3,89 @@ import { scenario } from "./online-interaction-fixtures";
 import { drawEngine, playToDraw } from "./legacy/fixtures/mahjong-draw-game";
 import { SettlementSequenceGame } from "../src/online/domain/settlement-sequence";
 import { physicalEngine } from "./legacy/fixtures/mahjong-settlement-game";
+import { SanmaGame } from "../src/online/domain/sanma";
+import { SanmaWall, sanmaTiles } from "../src/online/domain/sanma-wall";
 export { scenario };
+
+/** Four North replacements, three closed kans and a fourth open kan; all
+ * physical copies are reserved before dealing filler hands. */
+function mixedNorthKanStates() {
+  const game = new SanmaGame("east", ["A", "B", "C"], {
+    dealer: 0,
+    wallFactory: () => {
+      const stock = sanmaTiles(),
+        take = (tile: string) => {
+          const i = stock.indexOf(tile);
+          assert.ok(i >= 0, `physical ${tile}`);
+          return stock.splice(i, 1)[0];
+        };
+      const hand = [..."p111222s111z4445".matchAll(/([psz])(\d+)/g)].flatMap(
+        (m) => [...m[2]].map((n) => take(m[1] + n)),
+      );
+      const drawn = take("z4"),
+        reserve = ["p1", "p2", "s1", "z5"].map(take),
+        donor = take("s2"),
+        tail = ["s2", "s2", "s2", "s3"].map(take);
+      const indicators = stock.splice(0, 10),
+        hands = [hand, [donor, ...stock.splice(0, 12)], stock.splice(0, 13)];
+      return new SanmaWall([
+        ...hands.flat(),
+        drawn,
+        ...stock,
+        ...tail.reverse(),
+        ...reserve,
+        ...indicators,
+      ]);
+    },
+  });
+  const pass = () => {
+    for (let step = 0; step < 10; step++) {
+      let acted = false;
+      for (let seat = 0; seat < 3; seat++) {
+        const v = game.view(seat),
+          c = v.choices.find((c) => c.type === "pass");
+        if (c) {
+          game.respond(seat, v.decisionId, c.id);
+          acted = true;
+          break;
+        }
+      }
+      if (!acted) return;
+    }
+    throw Error("Mixed reaction bound exceeded");
+  };
+  const act = (seat: number, type: string, value?: string, resolve = true) => {
+    const v = game.view(seat),
+      c = v.choices.find(
+        (c) => c.type === type && (value === undefined || c.value === value),
+      );
+    assert.ok(c, `mixed legal ${seat} ${type} ${value}`);
+    game.respond(seat, v.decisionId, c.id);
+    if (resolve) pass();
+  };
+  for (let i = 0; i < 4; i++) act(0, "nuki");
+  assert.equal(game.view(0).players[0].nuki, 4);
+  const base = scenario("nuki-double", false).view(),
+    states = [];
+  const capture = (name: string) => {
+    for (const mySeat of [0, 1, 2])
+      states.push({
+        name: `mixed-${name}-viewer-${mySeat}`,
+        room: structuredClone({ ...base, mySeat, game: game.view(mySeat) }),
+      });
+  };
+  for (const [i, quad] of ["p1111", "p2222", "s1111"].entries()) {
+    act(0, "kan", quad);
+    capture(`north-four-kans-${i + 1}`);
+  }
+  act(0, "discard", "z5");
+  act(1, "discard", "s2", false);
+  act(0, "kan");
+  assert.equal(game.view(0).players[0].melds.length, 4);
+  assert.equal(game.view(0).players[0].nuki, 4);
+  capture("north-four-kans-4");
+  return states;
+}
 
 export function tableStates() {
   const late = resultStates()
@@ -97,7 +179,7 @@ export function tableStates() {
     name: `four-north-viewer-${mySeat}`,
     room: { ...northRoom, mySeat, game: north.view(mySeat) },
   }));
-  return [...late, ...before, ...northStates];
+  return [...late, ...before, ...northStates, ...mixedNorthKanStates()];
 }
 
 /** Result payloads come from actual legal actions and complete physical walls. */

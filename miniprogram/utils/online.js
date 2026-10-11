@@ -200,6 +200,7 @@ function snapshot(
       score: p?.score,
       riichi: p?.riichi,
       nuki: p?.nuki || 0,
+      hasKan: (p?.melds || []).some((value) => meld(value).length === 4),
       hidden: Array.from({ length: p?.handCount || 0 }, (_, i) => i),
       visibleCount: openingTileCount(openingAge, p?.handCount || 0),
       river: visibleRiver,

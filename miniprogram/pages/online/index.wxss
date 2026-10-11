@@ -864,3 +864,16 @@
   .exposed-left.meld-count-3 .melds, .exposed-right.meld-count-3 .melds { transform: scale(.8); }
   .exposed-left.meld-count-4 .melds, .exposed-right.meld-count-4 .melds { transform: scale(.65); }
 }
+
+/* Extracted North tiles belong to the seat panel, independent of meld length. */
+.player-label.has-north { max-width: 96px; }
+.player-label .north-tray { margin-top: 1px; padding: 2px; gap: 1px; }
+.player-label .north-tray text { font-size: 8px; white-space: nowrap; }
+.player-label .north-tray .tile-small { width: 9px; height: 14px; }
+.label-left.has-north, .label-right.has-north { top: 30%; }
+@media (orientation: landscape) {
+  .label-bottom { bottom: calc(10.204082vw + 3.734694px); }
+}
+@media (orientation: landscape) and (min-height: 280px) and (max-height: 309px) {
+  .exposed-left.meld-count-2.has-kan .melds, .exposed-right.meld-count-2.has-kan .melds { transform: scale(.8); }
+}
