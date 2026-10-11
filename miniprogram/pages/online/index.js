@@ -22,6 +22,9 @@ Page({
     hand: [],
     actions: [],
     selected: -1,
+    draggingId: -1,
+    dragStyle: "",
+    dropTarget: false,
     announcement: null,
     riichiMode: false,
     canRiichi: false,
@@ -374,11 +377,20 @@ Page({
     this.ignoreTapUntil = 0;
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];
     const point = e.touches?.length === 1 && touchPoint(e.touches[0]);
-    if (this.active && t?.choiceId && !this.data.busy &&
-        !this.data.openingHolding && point) {
+    if (
+      this.active &&
+      t?.choiceId &&
+      !this.data.busy &&
+      !this.data.openingHolding &&
+      point
+    ) {
       this.drag = {
-        tile: { ...t }, start: point, finger: e.touches[0].identifier,
-        roomId: this.data.room?.id, epoch: this.gestureEpoch,
+        tile: { ...t },
+        start: point,
+        finger: e.touches[0].identifier,
+        roomId: this.data.room?.id,
+        epoch: this.gestureEpoch,
+        raised: this.data.selected === t.id,
       };
     }
   },
@@ -386,7 +398,12 @@ Page({
     const d = this.drag;
     const finger = e.touches?.length === 1 && e.touches[0];
     const point = finger && touchPoint(finger);
-    if (!d || !point || finger.identifier !== d.finger) {
+    if (
+      !d ||
+      !point ||
+      finger.identifier !== d.finger ||
+      !this.currentDrag(d)
+    ) {
       this.touchCancel();
       return;
     }
@@ -394,47 +411,105 @@ Page({
       d.moved = true;
       this.ignoreTapUntil = Date.now() + 250;
     }
+    d.point = point;
+    if (!d.moved) return;
+    this.renderDrag(d);
+    if (!d.geometryRequested) {
+      d.geometryRequested = true;
+      this.dropGeometry().then((geometry) => {
+        if (this.drag !== d || !this.currentDrag(d)) return;
+        d.geometry = geometry;
+        this.renderDrag(d);
+      });
+    }
+  },
+  renderDrag(d) {
+    const dx = Math.round(d.point.x - d.start.x);
+    const dy = Math.round(d.point.y - d.start.y) - (d.raised ? 12 : 0);
+    const dragStyle = `transform:translate(${dx}px,${dy}px);`;
+    const dropTarget =
+      d.start.y - d.point.y >= 40 && dropOnTable(d.point, d.geometry);
+    if (
+      this.data.dragStyle !== dragStyle ||
+      this.data.dropTarget !== dropTarget ||
+      this.data.draggingId !== d.tile.id
+    )
+      this.setData({ draggingId: d.tile.id, dragStyle, dropTarget });
+  },
+  clearDragPreview() {
+    if (
+      this.data.draggingId !== -1 ||
+      this.data.dragStyle ||
+      this.data.dropTarget
+    )
+      this.setData({ draggingId: -1, dragStyle: "", dropTarget: false });
   },
   async touchEnd(e) {
     const d = this.drag;
     this.drag = null;
+    this.clearDragPreview();
     const finger = e.changedTouches?.length === 1 && e.changedTouches[0];
     const point = finger && touchPoint(finger);
-    if (d && (d.moved || (point && Math.hypot(
-        point.x - d.start.x, point.y - d.start.y) >= 12)))
+    if (
+      d &&
+      (d.moved ||
+        (point && Math.hypot(point.x - d.start.x, point.y - d.start.y) >= 12))
+    )
       this.ignoreTapUntil = Date.now() + 250;
-    if (!d || !point || e.touches?.length || finger.identifier !== d.finger ||
-        d.start.y - point.y < 40 || !this.currentDrag(d)) return;
+    if (
+      !d ||
+      !point ||
+      e.touches?.length ||
+      finger.identifier !== d.finger ||
+      d.start.y - point.y < 40 ||
+      !this.currentDrag(d)
+    )
+      return;
     // Query the current viewport geometry at release; never reuse pre-scroll bounds.
     const geometry = await this.dropGeometry();
     if (!this.currentDrag(d) || !dropOnTable(point, geometry)) return;
     this.setData({ selected: -1 });
     return this.send({
-      action: "respond", decisionId: d.tile.decisionId,
+      action: "respond",
+      decisionId: d.tile.decisionId,
       choiceId: d.tile.choiceId,
     });
   },
   currentDrag(d) {
-    return this.active && !this.data.busy && !this.data.openingHolding &&
-      d.epoch === this.gestureEpoch && d.roomId === this.data.room?.id &&
+    return (
+      this.active &&
+      !this.data.busy &&
+      !this.data.openingHolding &&
+      d.epoch === this.gestureEpoch &&
+      d.roomId === this.data.room?.id &&
       d.tile.decisionId === this.data.game?.decisionId &&
-      this.data.hand.some(t => t.id === d.tile.id &&
-        t.physicalKey === d.tile.physicalKey &&
-        t.choiceId === d.tile.choiceId && t.decisionId === d.tile.decisionId);
+      this.data.hand.some(
+        (t) =>
+          t.id === d.tile.id &&
+          t.physicalKey === d.tile.physicalKey &&
+          t.choiceId === d.tile.choiceId &&
+          t.decisionId === d.tile.decisionId,
+      )
+    );
   },
   dropGeometry() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       try {
         const q = wx.createSelectorQuery().in(this);
         q.select(".table").boundingClientRect();
         q.selectAll(".drag-exclusion").boundingClientRect();
-        q.exec(rects => resolve(rects ? { table: rects[0], excluded: rects[1] } : null));
-      } catch (_) { resolve(null); }
+        q.exec((rects) =>
+          resolve(rects ? { table: rects[0], excluded: rects[1] } : null),
+        );
+      } catch (_) {
+        resolve(null);
+      }
     });
   },
   touchCancel() {
     this.gestureEpoch = (this.gestureEpoch || 0) + 1;
     this.drag = null;
+    this.clearDragPreview();
   },
   onShareAppMessage() {
     return {

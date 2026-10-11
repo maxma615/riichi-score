@@ -1,19 +1,33 @@
 // Coordinates are viewport pixels, matching touch.clientX/Y and boundingClientRect.
 function touchPoint(t) {
   return t && Number.isFinite(t.clientX) && Number.isFinite(t.clientY)
-    ? { x: t.clientX, y: t.clientY } : null;
+    ? { x: t.clientX, y: t.clientY }
+    : null;
 }
 function validRect(r) {
-  return r && [r.left, r.right, r.top, r.bottom].every(Number.isFinite) &&
-    r.right > r.left && r.bottom > r.top;
+  return (
+    r &&
+    [r.left, r.right, r.top, r.bottom].every(Number.isFinite) &&
+    r.right > r.left &&
+    r.bottom > r.top
+  );
 }
 function contains(p, r, inset = 0) {
-  return validRect(r) && p.x >= r.left + inset && p.x <= r.right - inset &&
-    p.y >= r.top + inset && p.y <= r.bottom - inset;
+  return (
+    validRect(r) &&
+    p.x >= r.left + inset &&
+    p.x <= r.right - inset &&
+    p.y >= r.top + inset &&
+    p.y <= r.bottom - inset
+  );
 }
 function dropOnTable(point, geometry) {
-  return Boolean(point && geometry && contains(point, geometry.table, 8) &&
-    Array.isArray(geometry.excluded) &&
-    !geometry.excluded.some(r => contains(point, r)));
+  return Boolean(
+    point &&
+      geometry &&
+      contains(point, geometry.table, 8) &&
+      Array.isArray(geometry.excluded) &&
+      !geometry.excluded.some((r) => contains(point, r)),
+  );
 }
 module.exports = { touchPoint, dropOnTable };

@@ -621,3 +621,24 @@
     transform: translateY(0);
   }
 }
+
+/* Only the active tile moves; its place in the rack remains reserved. */
+.hand.has-drag {
+  z-index: 20;
+}
+.tile.is-dragging {
+  position: relative;
+  z-index: 1;
+  transition: none;
+  box-shadow:
+    0 5px 0 #b6ad8d,
+    0 16px 12px #071d2590,
+    0 0 0 2px #e5c479;
+}
+.table.is-drop-target {
+  border-color: #e5c479;
+  box-shadow:
+    0 6px 0 #14221e,
+    inset 0 0 0 2px #b19a66,
+    inset 0 0 28px #e5c47945;
+}
