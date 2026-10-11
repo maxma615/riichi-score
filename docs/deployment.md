@@ -2,12 +2,12 @@
 
 手机入口：**https://8.133.186.15/riichi/**。原情侣空间和联机麻将保持各自入口；不需要情侣空间账号。网页二维码是浏览器入桌链接，不是微信小程序码。
 
-2026-10-11 当前部署源 `b37c74925f752f6804d95992a6e9f82fd56b0903`。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`；运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/b37c749`。
+2026-10-11 当前部署源 `4942b1419cf6132dd24cb118aeb5e017db50f0d2`。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`；运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/4942b14`。
 
 ## 进程与资料
 
 - Compose项目 `yougui-riichi`，容器 `yougui-riichi-score`，Node24 普通用户运行。
-- 镜像 `yougui-riichi-score:b37c749`，启动标签 `yougui-riichi-score:latest`。
+- 镜像 `yougui-riichi-score:4942b14`，启动标签 `yougui-riichi-score:latest`。
 - 独立持久化卷 `yougui-riichi_score_data` 挂载 `/data`；SQLite文件 `score.sqlite`。不共享情侣空间的PostgreSQL、账号或照片卷。
 - 运行限制0.25CPU、128MiB内存、64进程，所有capability撤销。3200仅绑定127.0.0.1；Caddy经私有 `yougui_default` 网络转发。
 - `.env`：`APP_ORIGIN=https://8.133.186.15`、`APP_BASE_PATH=/riichi`。不存放密码；不要提交环境文件或真实数据。
@@ -57,3 +57,7 @@ AppID与备案域名未提供，因此服务端微信配置为空，未发布微
 ## 点按记分与前置桌型上线
 
 2026-10-11源b37c749，镜像 `sha256:7a370642e0f64c16e22287e7b9acc1ef116efd82b99b4ab892353bd182d6428d` 已发布。84项Node24/Linux受限容器测试通过。原业务表升级前后内容哈希一致，实际牌桌及记分保留；情侣空间容器与0.25CPU/128MiB限制均已核对。公网HTTPS Chromium/WebKit手机验证桌型/本场常显且排列最前、本场加减和支付更新、算符回填、点数矩阵与权限通过。原生页面同改，微信工具/真机与正式发布继续待AppID和备案域名。
+
+## 算符中文术语修正上线
+
+2026-10-11源4942b14，镜像 `sha256:ef78bcda3e650e8e134f0062083229ff64451e33f60f139e340a30de097e539c` 已发布。84项Linux受限容器测试、8组完整浏览器流程通过；公网两种浏览器手机验证“听牌形”、加符明细“单骑听牌”及回填。原业务表哈希一致，情侣空间容器及运行限制未改变。小程序源码同步，实际微信编译和发布未执行。
