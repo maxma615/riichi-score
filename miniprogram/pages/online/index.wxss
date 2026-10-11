@@ -826,7 +826,7 @@
   .label-left { left: 78px; top: 34%; }
   .label-right { right: 78px; top: 34%; }
   .label-bottom { left: 78px; }
-  .label-top { right: 78px; top: 4px; }
+  .label-top { right: 62px; top: 4px; max-width: 58px; }
   .opponent-top { top: 6px; }
   .exposed-top { top: 6px; left: 8px; transform: rotate(180deg); }
   .exposed-left, .exposed-right { top: 38%; }
@@ -870,6 +870,20 @@
 .player-label .north-tray { margin-top: 1px; padding: 2px; gap: 1px; }
 .player-label .north-tray text { font-size: 8px; white-space: nowrap; }
 .player-label .north-tray .tile-small { width: 9px; height: 14px; }
+
+/* Landscape phones keep the notch inside the page's horizontal viewport. */
+.online, .online.is-playing {
+  padding-left: calc(10px + var(--safe-left, 0px));
+  padding-right: calc(10px + var(--safe-right, 0px));
+}
+.online.is-playing .tile {
+  width: calc((100vw - var(--safe-left, 0px) - var(--safe-right, 0px) - 130px) / 14);
+  height: calc((100vw - var(--safe-left, 0px) - var(--safe-right, 0px) - 130px) / 9.8);
+}
+.online.is-playing .label-bottom {
+  bottom: calc((100vw - var(--safe-left, 0px) - var(--safe-right, 0px) - 130px) / 9.8 + 17px);
+}
+.result-overlay { left: var(--safe-left, 0px); right: var(--safe-right, 0px); }
 .label-left.has-north, .label-right.has-north { top: 30%; }
 @media (orientation: landscape) {
   .label-bottom { bottom: calc(10.204082vw + 3.734694px); }

@@ -1,5 +1,6 @@
 const { NativeFlights } = require("../../utils/online-flight");
 const { dropOnTable, touchPoint } = require("../../utils/online-gesture");
+const { horizontalInsets } = require("../../utils/online-safe-area");
 const { api, error } = require("../../utils/api");
 const { uuid, snapshot, feedback, callArt } = require("../../utils/online");
 const { presentation } = require("../../utils/online-settlement");
@@ -34,11 +35,13 @@ Page({
     canRiichi: false,
     openingHolding: false,
     doraVisible: true,
+    safeInsets: { left: 0, right: 0 },
   },
   onShow() {
     this.active = true;
     this.liveReady = false;
     this.setData({ busy: false });
+    this.updateSafeArea();
     this.refresh();
     this.timer = setInterval(() => {
       if (!this.data.busy) this.refresh();
@@ -59,10 +62,27 @@ Page({
     this.drag = null;
     this.setData({ announcement: null, selected: -1, riichiMode: false });
   },
-  onResize() {
+  onResize(event) {
+    this.updateSafeArea(event?.size);
     this.flights?.cancel();
     this.touchCancel();
     this.cancelOpening();
+  },
+  updateSafeArea(size) {
+    if (typeof wx === "undefined") return;
+    const info = typeof wx.getWindowInfo === "function"
+      ? wx.getWindowInfo()
+      : typeof wx.getSystemInfoSync === "function" ? wx.getSystemInfoSync() : null;
+    if (!info) return;
+    const revision = this.safeRevision = (this.safeRevision || 0) + 1;
+    const apply = (width) => {
+      if (this.active && revision === this.safeRevision)
+        this.setData({ safeInsets: horizontalInsets(info, width) });
+    };
+    if (Number.isFinite(size?.windowWidth)) apply(size.windowWidth);
+    else if (typeof wx.createSelectorQuery === "function")
+      wx.createSelectorQuery().in(this).select(".online")
+        .boundingClientRect((rect) => apply(rect?.width)).exec();
   },
   onPageScroll() {
     this.flights?.cancel();

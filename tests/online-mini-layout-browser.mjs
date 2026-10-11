@@ -55,11 +55,12 @@ const normalized = (width) =>
       /(?<![.#\w-])(page|view|text|image|button|input|picker)(?![\w-])/g,
       (_, tag) => (tag === "page" ? "body" : "wx-" + tag),
     );
-function html(room, age) {
+function html(room, age, safeInsets = { left: 0, right: 0 }) {
   const data = {
     variant: "yonma",
     mode: "east",
     code: "",
+    safeInsets,
     ...snapshot({ room }),
     selected: -1,
     busy: false,
@@ -109,7 +110,7 @@ function html(room, age) {
 const browser = await chromium.launch({ headless: true }),
   results = [];
 try {
-  for (const name of ["riichi", "nuki-double"])
+  for (const name of ["riichi", "nuki-double", "riichi-notch", "nuki-double-notch"])
     for (const [width, height] of [
       [568, 260],
       [640, 280],
@@ -125,7 +126,8 @@ try {
         "<style>html,body{margin:0;padding:0}wx-view{display:block}wx-text{display:inline}wx-image{display:inline-block}wx-button{display:block;box-sizing:border-box;text-align:center;border:none}" +
           normalized(width) +
           "</style>" +
-          html(scenario(name, false).view()),
+          html(scenario(name.replace("-notch", ""), false).view(), undefined,
+            name.endsWith("-notch") ? { left: 47, right: 47 } : undefined),
       );
       await page
         .locator("img")
@@ -193,6 +195,10 @@ try {
         };
       });
       assert.equal(boxes.tiles.length, 14, name);
+      if (name.endsWith("-notch")) {
+        assert.ok(boxes.table.left >= 47, "table avoids left cutout");
+        assert.ok(boxes.table.right <= width - 47, "table avoids right safe inset");
+      }
       assert.ok(
         boxes.table.bottom <= height + 1,
         JSON.stringify({ name, width, height, ...boxes }),
