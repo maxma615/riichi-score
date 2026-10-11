@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="app-base" content="__BASE__" />
+    <meta name="theme-color" content="#141516" />
+    <title>日麻记分 · 线下牌桌</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="./"
+        ><span class="brand-seal" aria-hidden="true">记</span>日麻<span
+          >记分</span
+        ></a
+      ><span class="caption">牌 谱 · 点 数 · 记 录</span>
+    </header>
+    <main>
+      <section class="hero">
+        <p class="eyebrow">以牌会友 · 落笔记分</p>
+        <h1>一局一记，<br />点数自明。</h1>
+        <p>随手查符翻，逐局记收支。扫码入桌，一起看分。</p>
+      </section>
+      <nav aria-label="功能">
+        <button id="quick-tab" class="active">符翻速查</button
+        ><button id="room-tab">线下牌桌</button>
+      </nav>
+      <div id="notice" role="status" aria-live="polite"></div>
+      <section id="quick"></section>
+      <section id="room" hidden></section>
+    </main>
+    <footer>独立线下记分工具 · 不需要情侣空间账号</footer>
+    <dialog id="modal"><div id="modal-content"></div></dialog>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
