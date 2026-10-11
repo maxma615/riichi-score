@@ -603,3 +603,21 @@
   color: #fff5e6;
   border-color: #e2be8c;
 }
+
+.deal-pending {
+  visibility: hidden;
+}
+.tile.dealt,
+.back.dealt {
+  animation: dealt-in 0.18s ease-out;
+}
+@keyframes dealt-in {
+  from {
+    opacity: 0.2;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

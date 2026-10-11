@@ -2,6 +2,12 @@ const { api, error } = require("../../utils/api");
 const { uuid, snapshot, feedback } = require("../../utils/online");
 const { presentation } = require("../../utils/online-settlement");
 const { presentationBoundaries } = require("../../utils/online-timing");
+const {
+  acceptedRoundOpening,
+  openingKey,
+  isUndealtRound,
+  ROUND_OPENING,
+} = require("../../utils/online-opening");
 Page({
   data: {
     room: null,
@@ -18,9 +24,12 @@ Page({
     announcement: null,
     riichiMode: false,
     canRiichi: false,
+    openingHolding: false,
+    doraVisible: true,
   },
   onShow() {
     this.active = true;
+    this.liveReady = false;
     this.setData({ busy: false });
     this.refresh();
     this.timer = setInterval(() => {
@@ -29,12 +38,18 @@ Page({
   },
   onHide() {
     this.active = false;
+    this.setData({ riichiMode: false });
     this.revision = (this.revision || 0) + 1;
     clearInterval(this.timer);
     clearTimeout(this.feedbackTimer);
     clearTimeout(this.resultTimer);
+    this.cancelOpening();
+    this.openingIntent = null;
     this.drag = null;
     this.setData({ announcement: null, selected: -1, riichiMode: false });
+  },
+  onResize() {
+    this.cancelOpening();
   },
   onUnload() {
     this.onHide();
@@ -43,18 +58,54 @@ Page({
     const revision = (this.revision = (this.revision || 0) + 1);
     try {
       const r = await api("/api/online");
-      if (this.active && revision === this.revision) this.accept(r);
+      if (this.active && revision === this.revision) {
+        this.accept(r, this.liveReady);
+        this.liveReady = true;
+      }
     } catch (e) {
       if (this.active && revision === this.revision) error(e);
     }
   },
-  accept(r) {
+  accept(r, live = false) {
+    const intent = r.room
+      ? acceptedRoundOpening(this.data.room, r.room, live)
+      : null;
+    const run = this.openingRun;
+    if (
+      run &&
+      (!r.room ||
+        openingKey(r.room) !== run.key ||
+        r.room.game?.decisionId !== run.decision ||
+        !isUndealtRound(r.room))
+    )
+      this.cancelOpening();
+    if (intent && !this.openingConsumed?.has(intent)) {
+      this.cancelOpening();
+      if (!this.openingConsumed || this.openingConsumed.size >= 128)
+        this.openingConsumed = new Set();
+      this.openingConsumed.add(intent);
+      this.openingIntent = intent;
+      this.openingRun = {
+        key: intent,
+        decision: r.room.game.decisionId,
+        time: Date.now(),
+        age: 0,
+      };
+    }
+    const openingAge = this.openingRun
+      ? Math.max(this.openingRun.age, Date.now() - this.openingRun.time)
+      : null;
     const previous = this.data.game?.decisionId;
     const announcement = feedback(this.data.game, r.room?.game);
     const sameDecision =
       this.data.room?.id === r.room?.id &&
       previous === r.room?.game?.decisionId;
-    const next = snapshot(r, sameDecision && this.data.riichiMode);
+    const next = snapshot(
+      r,
+      sameDecision && this.data.riichiMode,
+      openingAge,
+      this.openingIntent === (r.room && openingKey(r.room)),
+    );
     const flow = next.game?.settlementFlow;
     const key =
       next.game && flow && !next.game.ranking
@@ -84,6 +135,7 @@ Page({
         : next.actions,
     });
     this.tickResult();
+    this.tickOpening();
     if (!r.room?.game) {
       clearTimeout(this.feedbackTimer);
       this.setData({ announcement: null });
@@ -105,6 +157,59 @@ Page({
       this.drag = null;
       this.setData({ selected: -1 });
     }
+  },
+  cancelOpening() {
+    clearTimeout(this.openingTimer);
+    this.openingRun = null;
+    if (this.data.room) {
+      const next = snapshot(
+        { room: this.data.room },
+        this.data.riichiMode,
+        null,
+        this.openingIntent === openingKey(this.data.room),
+      );
+      this.setData({
+        hand: next.hand,
+        seats: next.seats,
+        openingHolding: false,
+        doraVisible: true,
+      });
+    }
+  },
+  tickOpening() {
+    clearTimeout(this.openingTimer);
+    const run = this.openingRun;
+    if (!this.active || !run || !this.data.room) return;
+    const age = Math.max(run.age, Date.now() - run.time);
+    run.age = age;
+    const done = age >= ROUND_OPENING.operationsMs;
+    const next = snapshot(
+      { room: this.data.room },
+      false,
+      done ? null : age,
+      true,
+    );
+    this.setData({
+      hand: next.hand,
+      seats: next.seats,
+      openingHolding: next.openingHolding,
+      doraVisible: next.doraVisible,
+    });
+    if (done) {
+      this.openingRun = null;
+      return;
+    }
+    const deadline = [
+      ...ROUND_OPENING.waves.slice(1),
+      ROUND_OPENING.doraAndSortMs,
+      ROUND_OPENING.operationsMs,
+    ].find((v) => v > age);
+    this.openingTimer = setTimeout(
+      () => {
+        if (this.openingRun === run) this.tickOpening();
+      },
+      Math.max(1, deadline - age),
+    );
   },
   tickResult() {
     clearTimeout(this.resultTimer);
@@ -163,7 +268,7 @@ Page({
     try {
       const r = await api("/api/online", "POST", this.pending.body);
       this.pending = null;
-      if (this.active && revision === this.revision) this.accept(r);
+      if (this.active && revision === this.revision) this.accept(r, true);
     } catch (e) {
       if (e.status >= 400 && e.status < 500) this.pending = null;
       if (this.active) error(e);
@@ -211,7 +316,7 @@ Page({
       ? [...this.data.actions, this.data.settlementAck]
       : this.data.actions;
     const choice = choices.find((c) => c.id === e.currentTarget.dataset.id);
-    if (choice)
+    if (choice && !this.data.openingHolding)
       return this.send({
         action: "respond",
         decisionId: this.data.game.decisionId,
@@ -226,7 +331,13 @@ Page({
     }
   },
   toggleRiichi() {
-    if (!this.active || this.data.busy || !this.data.canRiichi) return;
+    if (
+      !this.active ||
+      this.data.busy ||
+      this.data.openingHolding ||
+      !this.data.canRiichi
+    )
+      return;
     this.drag = null;
     const next = snapshot(
       { room: this.data.room, serviceRunning: this.data.serviceRunning },
@@ -240,7 +351,7 @@ Page({
   },
   discard(e) {
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];
-    if (!t?.choiceId || this.data.busy) return;
+    if (!t?.choiceId || this.data.busy || this.data.openingHolding) return;
     if (this.data.selected === t.id)
       return this.send({
         action: "respond",
@@ -252,7 +363,10 @@ Page({
   touchStart(e) {
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];
     this.drag =
-      t?.choiceId && !this.data.busy && e.touches?.length === 1
+      t?.choiceId &&
+      !this.data.busy &&
+      !this.data.openingHolding &&
+      e.touches?.length === 1
         ? { tile: t, y: e.touches[0].clientY }
         : null;
   },
@@ -262,6 +376,7 @@ Page({
     if (
       d &&
       !this.data.busy &&
+      !this.data.openingHolding &&
       e.changedTouches?.length === 1 &&
       e.changedTouches[0].clientY < d.y - 40 &&
       d.tile.decisionId === this.data.game?.decisionId

@@ -1,3 +1,8 @@
+const {
+  handRack,
+  openingTileCount,
+  ROUND_OPENING,
+} = require("./online-opening");
 const { apiBase } = require("./api");
 const winds = ["东", "南", "西", "北"],
   names = {
@@ -129,7 +134,12 @@ function feedback(before, after) {
   }
   return null;
 }
-function snapshot(response, riichiMode = false) {
+function snapshot(
+  response,
+  riichiMode = false,
+  openingAge = null,
+  liveOpening = false,
+) {
   const room = response.room;
   if (!room)
     return {
@@ -140,6 +150,8 @@ function snapshot(response, riichiMode = false) {
       actions: [],
       riichiMode: false,
       canRiichi: false,
+      openingHolding: false,
+      doraVisible: true,
       host: false,
       ready: false,
       serviceRunning: response.serviceRunning,
@@ -162,6 +174,7 @@ function snapshot(response, riichiMode = false) {
       riichi: p?.riichi,
       nuki: p?.nuki || 0,
       hidden: Array.from({ length: p?.handCount || 0 }, (_, i) => i),
+      visibleCount: openingTileCount(openingAge, p?.handCount || 0),
       river: visibleRiver,
       riverRows: Array.from(
         { length: Math.ceil(visibleRiver.length / 6) },
@@ -185,27 +198,32 @@ function snapshot(response, riichiMode = false) {
   const canRiichi = choices.some((c) => c.type === "riichi");
   riichiMode = riichiMode && canRiichi;
   const choiceType = riichiMode ? "riichi" : "discard";
-  const hand = closed
-    .concat(game?.drawnTile ? [game.drawnTile] : [])
-    .map((v, i) => {
-      const t = tile(v),
-        drawn = !!game.drawnTile && i === closed.length,
-        choice =
-          choices.find(
-            (c) => c.type === choiceType && c.value === (drawn ? v + "_" : v),
-          ) ||
-          (drawn && !closed.includes(v)
-            ? choices.find((c) => c.type === choiceType && c.value === v)
-            : null);
-      return {
-        ...t,
-        id: i,
-        choiceId: choice?.id || "",
-        choiceType: choice?.type || "",
-        decisionId: game.decisionId,
-        drawn,
-      };
-    });
+  const hand = (
+    game
+      ? handRack({ ...game, hand: game.hand || [] }, openingAge, liveOpening)
+      : []
+  ).map((entry, i) => {
+    const v = entry.value,
+      t = tile(v),
+      drawn = entry.logicalDraw;
+    const choice =
+      choices.find(
+        (c) => c.type === choiceType && c.value === (drawn ? v + "_" : v),
+      ) ||
+      (drawn && !closed.includes(v)
+        ? choices.find((c) => c.type === choiceType && c.value === v)
+        : null);
+    return {
+      ...t,
+      id: i,
+      physicalKey: entry.key,
+      choiceId: choice?.id || "",
+      choiceType: choice?.type || "",
+      decisionId: game.decisionId,
+      drawn: entry.separated,
+      dealVisible: i < openingTileCount(openingAge, (game?.hand || []).length),
+    };
+  });
   return {
     room,
     game,
@@ -213,6 +231,10 @@ function snapshot(response, riichiMode = false) {
     hand,
     riichiMode,
     canRiichi,
+    openingHolding:
+      openingAge !== null && openingAge < ROUND_OPENING.operationsMs,
+    doraVisible:
+      openingAge === null || openingAge >= ROUND_OPENING.doraAndSortMs,
     actions: choices
       .filter((c) => c.type !== "discard" && c.type !== "riichi")
       .map((c) => ({ ...c, label: labels[c.type], tiles: meld(c.value) })),

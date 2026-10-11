@@ -84,7 +84,7 @@
     >
     <block wx:if="{{game}}">
       <view class="table">
-        <view class="dora-tray"
+        <view wx:if="{{doraVisible}}" class="dora-tray"
           ><text>宝牌指示牌</text
           ><view
             ><image
@@ -114,7 +114,7 @@
               ><view
                 wx:for="{{player.hidden}}"
                 wx:key="*this"
-                class="back" /></view
+                class="back {{item>=player.visibleCount?'deal-pending':openingHolding?'dealt':''}}" /></view
           ></view>
           <view class="river river-{{player.edge}}"
             ><view
@@ -157,13 +157,13 @@
         <view class="hand"
           ><view
             wx:for="{{hand}}"
-            wx:key="id"
+            wx:key="physicalKey"
             data-index="{{index}}"
             bindtap="discard"
             bindtouchstart="touchStart"
             catchtouchend="touchEnd"
             bindtouchcancel="touchCancel"
-            class="tile {{riichiMode && !item.choiceId?'locked':''}} {{selected===item.id?'raised':''}} {{item.choiceId?'playable':''}} {{item.drawn?'drawn':''}}"
+            class="tile {{!item.dealVisible?'deal-pending':openingHolding?'dealt':''}} {{riichiMode && !item.choiceId?'locked':''}} {{selected===item.id?'raised':''}} {{item.choiceId?'playable':''}} {{item.drawn?'drawn':''}}"
             ><image src="{{item.src}}" /></view
         ></view>
         <view class="actions"
@@ -171,7 +171,7 @@
             wx:if="{{canRiichi}}"
             bindtap="toggleRiichi"
             class="{{riichiMode?'riichi-active':''}}"
-            disabled="{{busy}}"
+            disabled="{{busy || openingHolding}}"
           >
             {{riichiMode?'取消立直':'立直'}}</button
           ><button
@@ -179,7 +179,7 @@
             wx:key="id"
             data-id="{{item.id}}"
             bindtap="respond"
-            disabled="{{busy}}"
+            disabled="{{busy || openingHolding}}"
           >
             <text>{{item.label}}</text
             ><view class="action-tiles"
