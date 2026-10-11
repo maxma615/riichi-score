@@ -97,7 +97,123 @@ for (const engine of [chromium, webkit])
         document.fonts.load("16px MahjongBrush").then((r) => r.length),
       );
       assert.ok(fonts > 0);
-      results.push({ tag, images: images.length, fontLoaded: true, errors });
+      const readRoom = async () =>
+        (
+          await (
+            await page.request.get(origin + basePath + "/api/online")
+          ).json()
+        ).room;
+      const playable = page
+        .locator(
+          '.mahjong-hand button[data-choice-type="discard"]:not(:disabled)',
+        )
+        .first();
+      const waitForDiscard = async () => {
+        await expect
+          .poll(
+            async () => {
+              const pass = page.locator(
+                'button[data-choice-type="pass"]:not(:disabled)',
+              );
+              if (await pass.count()) await pass.first().click();
+              return playable.count();
+            },
+            { timeout: 30000 },
+          )
+          .toBeGreaterThan(0);
+      };
+      await waitForDiscard();
+      const beforeDrag = await readRoom();
+      const selectedChoice = await playable.getAttribute("data-choice-id");
+      const value = beforeDrag.game.choices.find(
+        (c) => c.id === selectedChoice,
+      ).value;
+      const ownRiverBefore = beforeDrag.game.players.find(
+        (p) => p.seat === beforeDrag.mySeat,
+      ).discards.length;
+      const box = await playable.boundingBox();
+      const target = await page.evaluate(() => {
+        const surface = document.querySelector(".mahjong-table__surface");
+        const rack = document
+          .querySelector(".mahjong-hand")
+          .getBoundingClientRect();
+        const bounds = surface.getBoundingClientRect();
+        for (let y = rack.top - 35; y > bounds.top + 20; y -= 20)
+          for (let x = bounds.left + 50; x < bounds.right - 50; x += 30) {
+            const el = document.elementFromPoint(x, y);
+            if (
+              el &&
+              surface.contains(el) &&
+              !el.closest(
+                'button,a,input,select,textarea,[role="button"],.mahjong-opponent-rack,.mahjong-player__melds,.mahjong-hand-public-melds,.mahjong-nuki-tray',
+              )
+            )
+              return { x, y };
+          }
+        return null;
+      });
+      assert.ok(target, "Projected felt needs a reachable discard point");
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(target.x, target.y, { steps: 8 });
+      await expect(page.locator(".mahjong-table")).toHaveClass(
+        /is-discard-target/,
+      );
+      await page.mouse.up();
+      await expect
+        .poll(async () => {
+          const room = await readRoom();
+          return room.game.players.find((p) => p.seat === room.mySeat).discards
+            .length;
+        })
+        .toBe(ownRiverBefore + 1);
+      let afterDrag = await readRoom();
+      const actual = afterDrag.game.players
+        .find((p) => p.seat === afterDrag.mySeat)
+        .discards.at(-1);
+      assert.equal(actual.slice(0, 2), value.slice(0, 2));
+      await expect
+        .poll(async () =>
+          page
+            .getByTestId(`river-${beforeDrag.mySeat}`)
+            .locator(".mahjong-river__tile")
+            .count(),
+        )
+        .toBe(ownRiverBefore + 1);
+      await waitForDiscard();
+      const beforeClick = await readRoom();
+      const countBeforeClick = beforeClick.game.players.find(
+        (p) => p.seat === beforeClick.mySeat,
+      ).discards.length;
+      // Keyboard activation follows the same select / confirm behavior without mouse hover.
+      await playable.focus();
+      await page.keyboard.press("Enter");
+      await expect(playable).toHaveAttribute("aria-pressed", "true");
+      assert.equal(
+        (await readRoom()).game.players.find(
+          (p) => p.seat === beforeClick.mySeat,
+        ).discards.length,
+        countBeforeClick,
+      );
+      await page.keyboard.press("Enter");
+      await expect
+        .poll(
+          async () =>
+            (await readRoom()).game.players.find(
+              (p) => p.seat === beforeClick.mySeat,
+            ).discards.length,
+        )
+        .toBe(countBeforeClick + 1);
+      assert.deepEqual(errors, []);
+      assert.deepEqual(failed, []);
+      results.push({
+        tag,
+        images: images.length,
+        fontLoaded: true,
+        dragDiscard: true,
+        selectConfirmDiscard: true,
+        errors,
+      });
     } finally {
       await browser.close();
       await online.close();

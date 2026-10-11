@@ -417,3 +417,27 @@
   width: 15px;
   height: 22px;
 }
+
+.river {
+  display: block;
+  width: 112px;
+}
+.river-row {
+  display: flex;
+  align-items: end;
+  gap: 2px;
+  height: 24px;
+}
+.river-slot {
+  width: 15px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.river-slot.sideways {
+  width: 22px;
+  height: 15px;
+}
+.river-slot.sideways image {
+  transform-origin: top left;
+  transform: translateX(22px) rotate(90deg);
+}

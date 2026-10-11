@@ -71,6 +71,18 @@ function meld(value) {
     added: out.length === 4 && called >= 0 && called < 3 && i === 3,
   }));
 }
+// Claimed tiles remain in engine history for furiten, but leave the visible river.
+function river(values) {
+  let declaration = false;
+  const visible = [];
+  for (const value of values || []) {
+    if (value.includes("*")) declaration = true;
+    if (/[+\-=]$/.test(value)) continue;
+    visible.push({ ...tile(value), sideways: declaration });
+    declaration = false;
+  }
+  return visible;
+}
 // Only compare public events within the same hand; a reconnect is not a new call.
 function feedback(before, after) {
   if (
@@ -134,7 +146,8 @@ function snapshot(response) {
     capacity = room.variant === "sanma" ? 3 : 4;
   const seats = Array.from({ length: capacity }, (_, seat) => {
     const member = room.members.find((m) => m.seat === seat),
-      p = game?.players.find((p) => p.seat === seat);
+      p = game?.players.find((p) => p.seat === seat),
+      visibleRiver = river(p?.discards);
     return {
       seat,
       name: member?.displayName || "空位",
@@ -147,7 +160,11 @@ function snapshot(response) {
       riichi: p?.riichi,
       nuki: p?.nuki || 0,
       hidden: Array.from({ length: p?.handCount || 0 }, (_, i) => i),
-      river: (p?.discards || []).map(tile),
+      river: visibleRiver,
+      riverRows: Array.from(
+        { length: Math.ceil(visibleRiver.length / 6) },
+        (_, row) => visibleRiver.slice(row * 6, row * 6 + 6),
+      ),
       melds: (p?.melds || []).map(meld),
       position: (seat - room.mySeat + capacity) % capacity,
       edge: ["bottom", "right", ...(capacity === 4 ? ["top"] : []), "left"][
@@ -212,4 +229,4 @@ function snapshot(response) {
       : null,
   };
 }
-module.exports = { uuid, tile, meld, snapshot, feedback };
+module.exports = { uuid, tile, meld, river, snapshot, feedback };

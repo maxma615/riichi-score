@@ -9,6 +9,7 @@ const require = createRequire(import.meta.url),
     snapshot,
     tile,
     meld,
+    river,
     uuid,
     feedback,
   } = require("../miniprogram/utils/online.js");
@@ -249,4 +250,41 @@ test("原生拖牌取消、过期选择和忙碌中不提交切牌", async () =>
   assert.equal(sent.length, 1);
   assert.equal(sent[0].choiceId, "cut");
   assert.equal(sent[0].decisionId, "d");
+});
+
+test("原生牌河移除被鸣走的牌并保留立直横牌，按六张分行", () => {
+  const cells = river([
+    "p1",
+    "p2*+",
+    "p3-",
+    "p4",
+    "s1_",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+  ]);
+  assert.deepEqual(
+    cells.map((t) => t.key),
+    ["p1", "p4", "s1", "s2", "s3", "s4", "s5"],
+  );
+  assert.deepEqual(
+    cells.map((t) => t.sideways),
+    [false, true, false, false, false, false, false],
+  );
+  assert.equal(river(["z1*"])[0].sideways, true);
+  const data = snapshot({
+    room: {
+      variant: "yonma",
+      mySeat: 0,
+      members: [],
+      game: {
+        players: [
+          { seat: 0, discards: ["p1", "p2", "p3", "p4", "p5", "p6", "p7+"] },
+        ],
+      },
+    },
+  });
+  assert.equal(data.seats[0].riverRows.length, 1);
+  assert.equal(data.seats[0].riverRows[0].length, 6);
 });

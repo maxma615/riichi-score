@@ -9,7 +9,7 @@
   <block wx:for="{{seats}}" wx:for-item="player" wx:key="seat">
    <view class="player-label label-{{player.edge}} {{player.active?'active':''}}"><text class="wind">{{player.wind}}</text><view><text>{{player.name}}</text><text class="player-score">{{player.score}}</text></view><text wx:if="{{player.riichi}}" class="call">立直</text></view>
    <view wx:if="{{!player.self}}" class="opponent opponent-{{player.edge}}"><view class="backs"><view wx:for="{{player.hidden}}" wx:key="*this" class="back"/></view></view>
-   <view class="river river-{{player.edge}}"><image wx:for="{{player.river}}" wx:key="index" src="{{item.src}}" class="tile-small {{index===player.river.length-1?'latest':''}}"/></view>
+   <view class="river river-{{player.edge}}"><view wx:for="{{player.riverRows}}" wx:for-item="row" wx:key="index" class="river-row"><view wx:for="{{row}}" wx:key="index" class="river-slot {{item.sideways?'sideways':''}}"><image src="{{item.src}}" class="tile-small"/></view></view></view>
    <view class="exposed exposed-{{player.edge}}">
     <view class="melds"><view wx:for="{{player.melds}}" wx:for-item="set" wx:key="index" class="meld"><view wx:for="{{set}}" wx:key="index" class="meld-tile {{item.called?'called':''}} {{item.added?'added':''}} {{item.back?'back':''}}"><image wx:if="{{!item.back}}" src="{{item.src}}" class="tile-small"/></view></view></view>
     <view wx:if="{{player.nuki}}" class="north-tray"><text>拔北 {{player.nuki}}</text><image wx:for="{{player.north}}" wx:key="index" src="{{item.src}}" class="tile-small"/></view>
