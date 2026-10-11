@@ -258,3 +258,7 @@ Chromium／WebKit × 根路径／riichi前缀4个流程实际通过拖牌出牌�
 233项常规检查（126 Node＋107规则）通过，产物native-mixed-tests.log、native-mixed-layout-tests.log及`.local/browser/native-layout/`。实际微信原生滚动／测量／手势、加杠叠牌与其他混合布局、正式登录扫码／真机与发布继续待验收；缺AppID及备案域名，不将模拟器和旧编译器当作微信正式发布。本轮网页业务源保持3e1c657，不重启业务服务，不复制或备份真实数据。
 
 最终100个原生文件（966782字节）在隔离Linux旧版官方编译器中8个WXML／4个WXSS无诊断通过，WXML工厂函数建立成功。源SHA256为3e0478e654d3d63471fe9f512c7f0e0a23c093d109f0b938d90aeed3f402d03a；wcc输出2c41ca07f78145ec72bba30abc9d763df6af8b84d858f259e604ccc9c78cc636，wcsc输出99b1fdea3bcfffdd20b1ab5279eb7f2100d3b52660d9e2b55ebc589fd96ef892。证据`.local/release-evidence/native-templates/native-mixed-candidate/remote-r01.json`；容器无网络、源只读、0.25CPU／128MiB且没有真实数据挂载，两套生产容器ID及启动时间不变，禁备份标记保留。2020年旧版编译器不代替当前微信工具打包或原生渲染／测量／真机。
+
+## 当前官方开发者工具补充验证（2026-10-12）
+
+官方稳定版2.02.2608080／基础库3.17.4已在macOS游客模式导入并运行：记分首页、符番、算符回填与查番筛选实际渲染／点选通过，联机入口自动横屏。登录接口因缺正式微信配置返回503，未验证登录后的业务页、实际牌桌、真实微信扫码、安卓真机或上传发布。详见[当前工具实测](devtools-current.md)。此前旧编译器与浏览器适配记录保留为历史证据，不能覆盖这些尚缺项。
