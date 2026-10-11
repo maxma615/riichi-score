@@ -1,0 +1,88 @@
+import { points, settle } from "./scoring.js";
+export function roundStatus(room) {
+  let repeats = 0;
+  for (const h of [...(room.history || [])].reverse()) {
+    if (h.kind === "finish") continue;
+    if (h.hand !== room.hand) break;
+    repeats++;
+  }
+  return {
+    honba: room.honba,
+    repeats,
+    label: repeats ? `连庄 ${repeats} 次` : "首次坐庄",
+    dealerName: room.members?.[room.dealer]?.name || `座位 ${room.dealer + 1}`,
+  };
+}
+export function settlementView(room, event) {
+  const settled = settle(room, event),
+    n = room.rules.players;
+  const rows = Array.from({ length: n }, (_, seat) => ({
+    seat,
+    name: room.members?.[seat]?.name || `座位 ${seat + 1}`,
+    base: 0,
+    bonus: 0,
+    total: 0,
+    riichi: (event.riichi || []).includes(seat) ? 1000 : 0,
+    value: settled.delta[seat],
+    positive: settled.delta[seat] >= 0,
+  }));
+  const transfers = [];
+  if (event.kind === "win") {
+    for (const w of event.winners) {
+      const q = {
+        ...w,
+        method: event.method,
+        players: n,
+        dealer: w.seat === room.dealer,
+        kiriage: room.rules.kiriage,
+        kazoe: room.rules.kazoe,
+      };
+      const base = points({ ...q, honba: 0 }),
+        final = points({ ...q, honba: room.honba });
+      const payers =
+        event.method === "ron"
+          ? [event.loser]
+          : Array.from({ length: n }, (_, i) => i).filter((i) => i !== w.seat);
+      for (const payer of payers) {
+        const key =
+          event.method === "ron"
+            ? "ron"
+            : payer === room.dealer
+              ? "parent"
+              : "child";
+        const payment = {
+          from: payer,
+          to: w.seat,
+          fromName: rows[payer].name,
+          toName: rows[w.seat].name,
+          base: base[key],
+          bonus: final[key] - base[key],
+          total: final[key],
+        };
+        transfers.push(payment);
+        rows[payer].base += payment.base;
+        rows[payer].bonus += payment.bonus;
+        rows[payer].total += payment.total;
+      }
+    }
+  }
+  const continuing =
+    settled.next.dealer === room.dealer && settled.next.hand === room.hand;
+  const next = {
+    honba: settled.next.honba,
+    dealerName: rows[settled.next.dealer].name,
+    label: continuing ? `连庄 ${roundStatus(room).repeats + 1} 次` : "换庄",
+    hand: settled.next.hand,
+  };
+  return {
+    rows,
+    transfers,
+    next,
+    winning: event.kind === "win",
+    potIncome:
+      event.kind === "win"
+        ? (room.pot + (event.riichi || []).length) * 1000
+        : 0,
+    description: settled.description,
+  };
+}

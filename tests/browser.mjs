@@ -49,6 +49,20 @@ for (const engine of [chromium, webkit])
           path: path.join(out, `${tag}-bottom-nav.png`),
         });
         await expect(page.locator("#open-fu")).toHaveCount(0);
+        await page
+          .getByText("桌型与本场 · 4人 / 0本场", { exact: true })
+          .click();
+        await page
+          .getByRole("button", { name: "增加一本场", exact: true })
+          .click();
+        await expect(page.locator("#quick .result")).toContainText("1,300");
+        await page
+          .getByRole("button", { name: "减少一本场", exact: true })
+          .click();
+        await expect(
+          page.getByRole("button", { name: "减少一本场", exact: true }),
+        ).toBeDisabled();
+        await expect(page.locator("#quick-honba")).toHaveCount(0);
         await expect(
           page.locator('.point-matrix [data-fu="20"][data-han="1"]'),
         ).toBeDisabled();
@@ -194,9 +208,57 @@ for (const engine of [chromium, webkit])
           await page.getByRole("button", { name: "保存", exact: true }).click();
           await expect(page.locator("#modal")).not.toBeVisible();
         }
+        await expect(page.locator(".round-status")).toContainText("首次坐庄");
+        await page.getByRole("button", { name: "记一局", exact: true }).click();
+        await expect(page.locator(".record-status")).toContainText("0 本场");
+        await expect(page.locator("#preview .payment-table")).toContainText(
+          "基础点数",
+        );
+        await expect(page.locator("#preview .payment-table")).toContainText(
+          "本场加点",
+        );
+        await expect(page.locator("#preview .next-round")).toContainText(
+          "1 本场",
+        );
+        await page
+          .getByRole("button", { name: "确认记分", exact: true })
+          .click();
+        await expect(page.locator(".round-status")).toContainText("连庄 1 次");
+        await expect(
+          page.getByRole("heading", { name: /东1局/ }),
+        ).toBeVisible();
+        await page.getByRole("button", { name: "记一局", exact: true }).click();
+        await expect(
+          page
+            .locator("#preview .payment-table tr")
+            .filter({ hasText: "测试南家" }),
+        ).toContainText("2,100");
+        await expect(page.locator("#preview .next-round")).toContainText(
+          "2 本场",
+        );
+        await page.locator("#preview .payment-table").scrollIntoViewIfNeeded();
+        await expect(page.locator("#preview .payment-table")).toBeVisible();
+        await page.screenshot({
+          path: path.join(out, `${tag}-honba-payment.png`),
+          fullPage: true,
+        });
+        await page
+          .getByRole("button", { name: "确认记分", exact: true })
+          .click();
+        await expect(page.locator(".round-status")).toContainText("连庄 2 次");
+        for (let i = 0; i < 2; i++) {
+          await page
+            .getByRole("button", { name: "撤回最近记录", exact: true })
+            .click();
+          await page.getByRole("button", { name: "确认", exact: true }).click();
+          await expect(page.locator("#modal")).not.toBeVisible();
+        }
+        await expect(page.locator(".round-status")).toContainText("首次坐庄");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
         await page.locator("#tsumo-seat").selectOption("1");
-        await expect(page.locator("#preview")).toContainText("测试南家 +4000");
+        await expect(
+          page.locator("#preview .line").filter({ hasText: "测试南家" }),
+        ).toContainText("+4,000");
         await page
           .getByRole("button", { name: "确认记分", exact: true })
           .click();

@@ -1,6 +1,7 @@
+import { roundStatus, settlementView } from "./settlement-view.js";
 import { lookup } from "./lookup.js";
 import { calculateFu } from "./fu.js";
-import { points, FU, settle } from "./scoring.js";
+import { points, FU } from "./scoring.js";
 const base = document.querySelector("meta[name=app-base]").content;
 const $ = (s) => document.querySelector(s),
   esc = (s) =>
@@ -135,7 +136,7 @@ function renderQuick() {
         [4, "四人"],
         [3, "三人"],
       ],
-    )}<label>本场<input id="quick-honba" type="number" min="0" max="100" value="${quick.honba}"></label></details></div>`;
+    )}<div class="counter" aria-label="调整本场"><button id="honba-minus" aria-label="减少一本场" ${quick.honba === 0 ? "disabled" : ""}>−</button><strong>${quick.honba} 本场</strong><button id="honba-plus" aria-label="增加一本场" ${quick.honba === 100 ? "disabled" : ""}>＋</button></div></details></div>`;
   $("#quick")
     .querySelectorAll("[data-key]")
     .forEach(
@@ -163,10 +164,15 @@ function renderQuick() {
           renderQuick();
         }),
     );
-  $("#quick-honba").onchange = (e) => {
-    quick.honba = Number(e.target.value);
-    renderQuick();
-  };
+  for (const [id, step] of [
+    ["honba-minus", -1],
+    ["honba-plus", 1],
+  ])
+    $("#" + id).onclick = () => {
+      quick.honba = Math.max(0, Math.min(100, quick.honba + step));
+      renderQuick();
+      $("#quick .lookup-more:last-child").open = true;
+    };
 }
 const roundLabel = (hand, n) =>
   `${["东", "南", "西", "北"][Math.floor(hand / n) % 4]}${(hand % n) + 1}局${hand >= n * 4 ? `（第${Math.floor(hand / (n * 4)) + 1}场）` : ""}`;
@@ -238,8 +244,9 @@ function renderRoom() {
     return;
   }
   const n = room.rules.players;
+  const status = roundStatus(room);
   $("#room").innerHTML =
-    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} <span class="muted">${room.honba} 本场</span></h2></div><button id="share">扫码入桌</button></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}${room.isOwner ? " · 你是桌主" : " · 由桌主记分"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] && room.isOwner ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div>${room.isOwner ? `<div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div>` : ""}</div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
+    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} </h2></div><button id="share">扫码入桌</button></div><div class="round-status"><strong>${room.honba}<small> 本场</small></strong><div><b>${esc(status.label)}</b><span>庄家 · ${esc(status.dealerName)}</span></div></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}${room.isOwner ? " · 你是桌主" : " · 由桌主记分"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] && room.isOwner ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div>${room.isOwner ? `<div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div>` : ""}</div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
       room.history.length
         ? `<div class="scroll"><table><thead><tr><th>局 / 本场</th><th>结果</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${[
             ...room.history,
@@ -358,7 +365,7 @@ function confirmAction(title, text, action) {
 function openRecord() {
   modal({
     title: `${roundLabel(room.hand, room.rules.players)} · 记一局`,
-    body: `<form id="record-form"><label>结果<select id="kind"><option value="tsumo">自摸</option><option value="ron">荣和（可多人）</option><option value="draw">荒牌流局</option><option value="abort">途中流局</option></select></label><div id="record-fields"></div><div class="divider"><p class="muted">本局实际交出立直棒的玩家（每人扣1000）</p>${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="riichi" value="${s}">${esc(seatName(s))}</label>`).join("")}</div><div id="preview" class="muted"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
+    body: `<div class="record-status"><b>${room.honba} 本场</b><span>${esc(roundStatus(room).label)} · 庄家 ${esc(roundStatus(room).dealerName)}</span></div><form id="record-form"><label>结果<select id="kind"><option value="tsumo">自摸</option><option value="ron">荣和（可多人）</option><option value="draw">荒牌流局</option><option value="abort">途中流局</option></select></label><div id="record-fields"></div><div class="divider"><p class="muted">本局实际交出立直棒的玩家（每人扣1000）</p>${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="riichi" value="${s}">${esc(seatName(s))}</label>`).join("")}</div><div id="preview"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
   });
   $("#kind").onchange = recordFields;
   $("#record-form").oninput = previewEvent;
@@ -388,12 +395,10 @@ function recordFields() {
 }
 function previewEvent() {
   try {
-    const { delta } = settle(room, readEvent());
-    $("#preview").textContent =
-      "本局收支：" +
-      delta
-        .map((d, s) => seatName(s) + " " + (d > 0 ? "+" : "") + d)
-        .join(" · ");
+    const view = settlementView(room, readEvent());
+    const num = (x) => x.toLocaleString();
+    $("#preview").innerHTML =
+      `${view.winning ? `<h3>每人最终支付</h3><table class="payment-table"><thead><tr><th>玩家</th><th>基础点数</th><th>本场加点</th><th>最终支付</th></tr></thead><tbody>${view.rows.map((r) => `<tr><th>${esc(r.name)}</th><td>${num(r.base)}</td><td>+${num(r.bonus)}</td><td><b>${num(r.total)}</b></td></tr>`).join("")}</tbody></table>${view.transfers.map((t) => `<p class="payment-transfer">${esc(t.fromName)} → ${esc(t.toName)}：${num(t.base)} + ${num(t.bonus)} = <b>${num(t.total)}</b></p>`).join("")}${view.potIncome ? `<p>供托收入：${num(view.potIncome)} 点</p>` : ""}` : ""}<h3>本局收支</h3>${view.rows.map((r) => `<div class="line"><span>${esc(r.name)}${r.riichi ? ` · 立直支出 ${num(r.riichi)}` : ""}</span><b class="${r.positive ? "positive" : "negative"}">${r.value > 0 ? "+" : ""}${num(r.value)}</b></div>`).join("")}<div class="next-round">记分后：${roundLabel(view.next.hand, room.rules.players)} · <b>${view.next.honba} 本场</b><br>${esc(view.next.dealerName)} · ${view.next.label}</div>`;
     $("#record-form [data-submit]").disabled = false;
   } catch (e) {
     $("#preview").textContent = e.message;

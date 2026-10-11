@@ -6,6 +6,7 @@ for (const [name, exports] of [
   ],
   ["fu", ["calculateFu"]],
   ["lookup", ["lookup"]],
+  ["settlement-view", ["roundStatus", "settlementView"]],
 ]) {
   const source = readFileSync(
     new URL(`../src/${name}.js`, import.meta.url),
@@ -15,6 +16,10 @@ for (const [name, exports] of [
     .replace(
       'import { FU, points } from "./scoring.js";',
       "const { FU, points } = require('./scoring');",
+    )
+    .replace(
+      'import { points, settle } from "./scoring.js";',
+      "const { points, settle } = require('./scoring');",
     )
     .replace("structuredClone(state)", "JSON.parse(JSON.stringify(state))");
   writeFileSync(

@@ -1,5 +1,6 @@
 const { api, nonce, error } = require("../../utils/api");
-const { FU, settle } = require("../../utils/scoring");
+const { roundStatus, settlementView } = require("../../utils/settlement-view");
+const { FU } = require("../../utils/scoring");
 Page({
   data: {
     room: null,
@@ -28,6 +29,7 @@ Page({
       if (!room.isOwner) throw Error("由桌主记分");
       this.setData({
         room,
+        status: roundStatus(room),
         names: room.members.map((m) => m?.name || "空位"),
         winForms: room.members.map(() => ({ han: 3, fuIndex: 2, yakuman: 0 })),
       });
@@ -81,13 +83,10 @@ Page({
         this.data.names?.map((_, i) => this.data.winners.includes(i)) || [],
     });
     try {
-      const r = settle(this.data.room, this.event());
+      const details = settlementView(this.data.room, this.event());
       this.setData({
-        preview: r.delta.map((value, i) => ({
-          name: this.data.names[i],
-          value,
-          positive: value >= 0,
-        })),
+        preview: details.rows,
+        details,
         error: "",
       });
     } catch (e) {

@@ -998,3 +998,95 @@ body {
   z-index: 2;
   box-shadow: 0 4px 14px #292d2b26;
 }
+.counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 16px 0;
+}
+.counter button {
+  width: 54px;
+  font-size: 24px;
+  padding: 8px;
+}
+.counter strong {
+  font-size: 20px;
+  min-width: 90px;
+  text-align: center;
+}
+.round-status {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  background: #293632;
+  color: #f5eddb;
+  padding: 18px 22px;
+  margin: 14px 0 18px;
+  border-left: 4px solid #ac6951;
+}
+.round-status > strong {
+  font-size: 44px;
+  line-height: 1;
+  font-family: system-ui, sans-serif;
+}
+.round-status small {
+  font-size: 16px;
+  font-weight: 400;
+}
+.round-status b {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.round-status span {
+  font-size: 13px;
+  opacity: 0.8;
+}
+.record-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  background: #293632;
+  color: #f5eddb;
+  margin: 8px 0 20px;
+}
+.record-status b {
+  font-size: 24px;
+}
+.record-status span {
+  font-size: 13px;
+}
+.payment-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.payment-table th,
+.payment-table td {
+  padding: 10px 4px;
+  text-align: right;
+  font-size: 12px;
+  white-space: normal;
+}
+.payment-table th:first-child {
+  text-align: left;
+  width: 28%;
+  overflow-wrap: anywhere;
+}
+.payment-transfer {
+  font-size: 12px;
+  color: #756b5b;
+  line-height: 1.5;
+}
+.next-round {
+  background: #e3dbcb;
+  border-left: 3px solid #993e31;
+  padding: 14px;
+  margin-top: 18px;
+  font-size: 14px;
+  line-height: 1.7;
+}

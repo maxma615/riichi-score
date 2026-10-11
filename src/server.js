@@ -230,6 +230,7 @@ export function createApp({
           "image/svg+xml",
         ],
         "/scoring.js": ["src/scoring.js", "text/javascript"],
+        "/settlement-view.js": ["src/settlement-view.js", "text/javascript"],
         "/lookup.js": ["src/lookup.js", "text/javascript"],
         "/fu.js": ["src/fu.js", "text/javascript"],
       };

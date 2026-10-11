@@ -1,5 +1,6 @@
 const { api, nonce, avatar, error, apiBase } = require("../../utils/api");
 const { parseInvite } = require("../../utils/invite");
+const { roundStatus } = require("../../utils/settlement-view");
 const winds = ["东", "南", "西", "北"];
 Page({
   data: {
@@ -97,6 +98,7 @@ Page({
     }
     this.setData({
       room: r,
+      status: roundStatus(r),
       members,
       history: history.reverse(),
       round:

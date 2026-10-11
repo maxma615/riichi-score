@@ -175,3 +175,38 @@ test("小程序从20符自摸切到荣和时回到合法30符", () => {
   assert.equal(p.data.quick.fu, 30);
   assert.equal(p.data.result.ron, 2000);
 });
+
+test("小程序本场加减边界和记分支付明细", async () => {
+  const quick = page("quick", {});
+  quick.onLoad();
+  const step = (n) => quick.honba({ currentTarget: { dataset: { step: n } } });
+  step(-1);
+  assert.equal(quick.data.quick.honba, 0);
+  step(1);
+  assert.equal(quick.data.result.ron, 1300);
+  quick.data.quick.honba = 100;
+  step(1);
+  assert.equal(quick.data.quick.honba, 100);
+  const r = {
+    id: "test",
+    isOwner: true,
+    version: 0,
+    rules: { players: 4, start: 25000, kiriage: false, kazoe: true },
+    scores: [25000, 25000, 25000, 25000],
+    members: [0, 1, 2, 3].map((i) => ({ name: "玩家" + i })),
+    dealer: 0,
+    hand: 0,
+    honba: 2,
+    pot: 0,
+    history: [],
+  };
+  const record = page("record", { api: async () => r });
+  record.id = "test";
+  await record.load();
+  assert.equal(record.data.status.honba, 2);
+  assert.equal(record.data.status.repeats, 0);
+  assert.equal(record.data.details.rows[1].base, 2000);
+  assert.equal(record.data.details.rows[1].bonus, 200);
+  assert.equal(record.data.details.rows[1].total, 2200);
+  assert.equal(record.data.details.next.honba, 3);
+});

@@ -54,7 +54,15 @@ Page({
     this.setData({ [key]: !this.data[key] });
   },
   honba(e) {
-    this.setData({ "quick.honba": Number(e.detail.value || 0) });
+    this.setData({
+      "quick.honba": Math.max(
+        0,
+        Math.min(
+          100,
+          this.data.quick.honba + Number(e.currentTarget.dataset.step),
+        ),
+      ),
+    });
     this.refresh();
   },
   refresh() {
