@@ -2,12 +2,12 @@
 
 手机入口：**https://8.133.186.15/riichi/**。原情侣空间和联机麻将保持各自入口；不需要情侣空间账号。网页二维码是浏览器入桌链接，不是微信小程序码。
 
-当前网页运行源为 `3e1c657`，运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/3e1c657`。后续小程序／测试／文档提交不改变网页运行版本。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`。
+当前网页运行源为 `69c11a9`，运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/69c11a9`。后续小程序／测试／文档提交不改变网页运行版本。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`。
 
 ## 进程与资料
 
 - Compose项目 `yougui-riichi`，容器 `yougui-riichi-score`，Node24 普通用户运行。
-- 生产镜像 `sha256:b8440e3a696d1f97d79e01f91703d41152c5be0cd4ab2b297a4cfbacdc67b798`。
+- 生产镜像 `sha256:e0277fabcd21cde6abcd2e786b4767352bc3335cb640fb1a6b897242407a059a`。
 - 独立持久化卷 `yougui-riichi_score_data` 挂载 `/data`；SQLite文件 `score.sqlite`。不共享有归的PostgreSQL、账号或照片卷。
 - 运行限制0.25CPU、256MiB内存、64进程，所有capability撤销。3200仅绑定127.0.0.1；Caddy经私有 `yougui_default` 网络转发。
 - `.env`：`APP_ORIGIN=https://8.133.186.15`、`APP_BASE_PATH=/riichi`。不存放密码；不要提交环境文件或真实数据。
@@ -99,3 +99,11 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 生产镜像的90项Node检查在0.25 CPU／256 MiB下通过；107项迁入规则回归在同源构建检查镜像的0.25 CPU／384 MiB下通过（开发测试工具有额外内存，不能混称生产算法使用384 MiB）。运行服务仍限制0.25 CPU／256 MiB，端口仅回环、非root、独立卷；有归容器和原有记分业务表哈希保持不变。
 
 全新代码目录独立npm ci与npm test自动构建、90＋107项测试通过。4组浏览器流程覆盖390px首屏大厅和横屏开局；公网360／390px实际检查新昵称纸页、输入能清空、权限与旧入口跳转。线上JS与CSS哈希和本地构建匹配。无生产测试牌桌，无真实资料备份或下载。
+
+## 最近牌桌昵称与零支出修正上线（2026-10-12）
+
+网页源69c11a9、镜像sha256:e0277fabcd21cde6abcd2e786b4767352bc3335cb640fb1a6b897242407a059a已发布。最近牌桌读取最新profiles昵称，历史牌局快照不改写；单局最高支出通过绝对值显示，零支出为0点。网页和原生小程序均消费同一HTTP返回，无需维护不同文案。
+
+本地129项Node＋107项规则检查及8组Chromium／WebKit浏览器流程通过。Linux生产镜像在0.25CPU／256MiB限制下96项服务检查通过，同源开发检查镜像在0.25CPU／384MiB下107项规则回归通过。实际服务仍为0.25CPU／256MiB、node、64进程、撤销所有capability、回环3200和独立卷。升级前后六张业务表（sessions、rooms、commands、profiles、wechat_accounts、wechat_sessions）内容摘要一致；有归容器ID及启动时间不变，禁备份标记保留。未复制真实数据、生成备份或写入生产测试牌桌。
+
+公网健康200、匿名牌桌401、有归200、旧麻将入口302至独立联机页已核对；部署中src/store.js与src/stats.js逐字节哈希匹配本地源码。正式微信配置依旧为空，未上传发布小程序。部署证据保留于旧工具工作目录.local/ecs-deploy/late-response-remote-captures/late-response-profile-refresh-*。
