@@ -12,8 +12,8 @@ services:
       WECHAT_ENV_VERSION: ${WECHAT_ENV_VERSION:-release}
     volumes: ["score_data:/data"]
     cpus: 0.25
-    mem_limit: 128m
-    memswap_limit: 128m
+    mem_limit: 256m
+    memswap_limit: 256m
     pids_limit: 64
     cap_drop: ["ALL"]
     security_opt: ["no-new-privileges:true"]

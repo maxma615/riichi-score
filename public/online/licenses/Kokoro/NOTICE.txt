@@ -1,0 +1,14 @@
+Mahjong declaration voice clips
+
+Generated locally with hexgrad/Kokoro-82M, voice jf_alpha, using kokoro 0.9.4.
+Model revision: f3ff3571791e39611d31c381e3a41a3af07b4987
+Model and software license: Apache License 2.0 (see LICENSE.txt).
+Model: https://huggingface.co/hexgrad/Kokoro-82M
+Software: https://github.com/hexgrad/kokoro
+Voice documentation: https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md
+
+The clips contain the standard Japanese declarations for riichi, ron, tsumo, chi, pon, kan, and north extraction.
+Their edges were trimmed, faded, and normalized locally. No Mahjong Soul audio
+recording or actor voice clone was used. See /audio/mahjong/voices/provenance.json
+for text, phonemes, generation settings and file hashes.
+Model weights and generation dependencies are not shipped to the server or client.

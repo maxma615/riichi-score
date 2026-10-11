@@ -9,3 +9,6 @@ node_modules/
 miniprogram/project.private.config.json
 .DS_Store
 *.log
+dist/
+public/online/client.js
+public/online/client.css

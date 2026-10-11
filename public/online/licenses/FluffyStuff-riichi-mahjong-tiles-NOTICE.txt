@@ -1,0 +1,6 @@
+Stock Japanese riichi mahjong tiles by FluffyStuff
+Repository: https://github.com/FluffyStuff/riichi-mahjong-tiles
+Pinned revision: 26e127ba2117f45cdce5ea0225748cc0cfad3169
+License: Public domain / CC0-1.0 (upstream LICENSE.md)
+Artwork files copied byte-for-byte, without redrawing or modification.
+Provenance and SHA-256 / upstream Git blob checksums: /images/mahjong-tiles/manifest.json

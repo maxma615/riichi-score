@@ -1,0 +1,9 @@
+Yougui tablecloth weave v1
+
+Original texture generated for this project on 2026-10-09 with the imagegen tool.
+No vendor artwork was used as an input.
+Prepared as a 768 x 768 WebP, 135180 bytes.
+SHA-256: 34d9dab4fa3fbb5cd4cceb491122874b1e344f171abf08528f15278767019532
+
+Distributed with the repository under its MIT License.
+The midnight, plum and graphite appearances use this same original weave with local CSS palettes; they are not three separately generated textures.

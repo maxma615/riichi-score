@@ -1,0 +1,6 @@
+/* Shared ink, paper and cinnabar palette; playfield retains original perspective. */
+:root{color-scheme:light;font-family:system-ui,"PingFang SC",sans-serif;--online-paper:#ede6d7;--online-ink:#293632;--online-accent:#993e31}
+*{box-sizing:border-box}body{margin:0;background:#171b1b}button,input{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}
+.mahjong-page{background:#171b1b;color:#eee6d8}.mahjong-brand__mark{background:#993e31;color:#fff5e6}.mahjong-shell{max-width:1050px;margin:auto}.mahjong-lobby{font-size:14px}.mahjong-lobby h1{font-family:serif}.mahjong-variant,.mahjong-mode{border-color:#a39470}.mahjong-primary{background:#993e31;color:#fff5e6}.mahjong-loading{font-size:14px}.mahjong-game{--mahjong-cloth-a:#293c38;--mahjong-cloth-b:#172925}
+
+@font-face{font-family:MahjongBrush;src:url('./assets/fonts/mahjong-brush.woff2') format('woff2');font-display:swap} :root{--font-brush:MahjongBrush,serif}

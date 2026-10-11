@@ -1,0 +1,18 @@
+Tile glyph outline attribution
+
+Noto Serif CJK JP Regular 2.003
+© 2017-2024 Adobe (http://www.adobe.com/).
+
+Source font: Serif/OTF/Japanese/NotoSerifCJKjp-Regular.otf
+Official project: https://github.com/notofonts/noto-cjk
+Pinned revision: f8d157532fbfaeda587e826d4cd5b21a49186f7c
+Source SHA-256: d9854c7a8ef170b5a7932558856fd64eb8de0b007cd823fed6f9f514ad2803d3
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The full license accompanies this notice in Noto-Serif-CJK-OFL.txt.
+https://openfontlicense.org/
+
+This application includes fitted SVG glyph outlines derived from the source
+font in src/components/mahjong/tile-glyphs.ts. Those outlines remain under
+SIL Open Font License 1.1. No complete font file is shipped at runtime.
+The font license does not change the license of the rest of the application.

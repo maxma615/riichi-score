@@ -1,0 +1,161 @@
+{
+  "repo": "hexgrad/Kokoro-82M",
+  "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+  "license": "Apache-2.0",
+  "voice": "jf_alpha",
+  "kokoro": "0.9.4",
+  "sampleRate": 24000,
+  "speed": 1.15,
+  "files": {
+    "config.json": "5abb01e2403b072bf03d04fde160443e209d7a0dad49a423be15196b9b43c17f",
+    "kokoro-v1_0.pth": "496dba118d1a58f5f3db2efc88dbdc216e0483fc89fe6e47ee1f2c53f18ad1e4",
+    "voices/jf_alpha.pt": "1bf4c9dc69e45ee46183b071f4db766349aac5592acbcfeaf051018048a5d787",
+    "README.md": "91dcabced89db6f109b8786642f50402d3ee87450e8189589b6f85520e7f4d78",
+    "VOICES.md": "ec7e4941ad7e194af61e3455928528a9ff5360c7c505e412efab27d6a69ea106"
+  },
+  "samples": [
+    {
+      "kind": "riichi",
+      "text": "リーチ！",
+      "phonemes": [
+        "ɾʲiːʨi!"
+      ],
+      "file": "riichi.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "bytes": 33576,
+      "seconds": 0.6985833333333333,
+      "sha256": "0ddf2ad5c006d22f65961a8a0c5682ae1a432618529811610c9081bdb24991e5",
+      "rawSha256": "00e6ecb9f024389917797dbc8125de9b7fdacd59b2e5133a408adace6f44c434",
+      "trimFrames": [
+        5354,
+        22120
+      ],
+      "normalizedPeak": 0.65,
+      "edgeFadeMs": 5
+    },
+    {
+      "kind": "ron",
+      "text": "ロン！",
+      "phonemes": [
+        "ɾoɴ!"
+      ],
+      "file": "ron.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "bytes": 26250,
+      "seconds": 0.5459583333333333,
+      "sha256": "9f6826d06dd4e76e104027629d07370636324b36aaa6c4449aeb259a5c4d132b",
+      "rawSha256": "09767efc2291e1530acd1f261f7f9ad5898de76b3c465f93b2952af6f62e2af6",
+      "trimFrames": [
+        5430,
+        18533
+      ],
+      "normalizedPeak": 0.65,
+      "edgeFadeMs": 5
+    },
+    {
+      "kind": "tsumo",
+      "text": "ツモ！",
+      "phonemes": [
+        "ʦɨmo!"
+      ],
+      "file": "tsumo.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "bytes": 27916,
+      "seconds": 0.5806666666666667,
+      "sha256": "27ebb1242d6bcbc25a828d9b89a496453b9e1815dbcda76c061b09c3f1014228",
+      "rawSha256": "51f1e9a504e94a17bf1b4e5c8514778217a82be3f623122859f293b766e7f3e3",
+      "trimFrames": [
+        5063,
+        18999
+      ],
+      "normalizedPeak": 0.65,
+      "edgeFadeMs": 5
+    },
+    {
+      "kind": "chi",
+      "text": "チー！",
+      "phonemes": [
+        "ʨiː!"
+      ],
+      "file": "chi.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "bytes": 21228,
+      "seconds": 0.44133333333333336,
+      "sha256": "6d982e8b0ba3612e74ae89251542b5d43aedd335df3117ff2569cdfb90d59d45",
+      "rawSha256": "876576064c64370022aef958972dc8acce45d23a94d21ab5c0c409dbb0632a32",
+      "trimFrames": [
+        4962,
+        15554
+      ],
+      "normalizedPeak": 0.65,
+      "edgeFadeMs": 5
+    },
+    {
+      "kind": "pon",
+      "text": "ポン！",
+      "phonemes": [
+        "poɴ!"
+      ],
+      "file": "pon.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "bytes": 22056,
+      "seconds": 0.45858333333333334,
+      "sha256": "2b9aaf8ea3f13e7e853521c896b5c9afe09270edf1d03e2c62d7c135c999c084",
+      "rawSha256": "0c93c6b93bfe1c9fb5a38744753718b7db3dc232814b94a10bf8cf55dc7ef0d3",
+      "trimFrames": [
+        5453,
+        16459
+      ],
+      "normalizedPeak": 0.65,
+      "edgeFadeMs": 5
+    },
+    {
+      "kind": "kan",
+      "text": "カン！",
+      "phonemes": [
+        "kaɴ!"
+      ],
+      "file": "kan.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "bytes": 21674,
+      "seconds": 0.450625,
+      "sha256": "fa1f21a72e1a179d2e9377f237b4df57963b89b1c0438a9328a3f02a1e0d4736",
+      "rawSha256": "5e653d0ff8329c1a76888a866185bc2936ea00af71fd07f52cbba7bbfa2aeb91",
+      "trimFrames": [
+        5360,
+        16175
+      ],
+      "normalizedPeak": 0.65,
+      "edgeFadeMs": 5
+    },
+    {
+      "kind": "north",
+      "text": "ペー！",
+      "phonemes": [
+        "peː!"
+      ],
+      "file": "north.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "bytes": 19052,
+      "seconds": 0.396,
+      "sha256": "45fb09fd9b1f05546bded2b390f61539c5bf4654b99857d72c018219984e02db",
+      "rawSha256": "f991058e5af22dde7468350c0580dad68b9e50626bd65936cc3383026629e470",
+      "trimFrames": [
+        5226,
+        14730
+      ],
+      "normalizedPeak": 0.65,
+      "edgeFadeMs": 5
+    }
+  ],
+  "productionInference": false,
+  "generatedLocally": true,
+  "vendorAssetsUsed": false
+}

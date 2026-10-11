@@ -3,6 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdirSync, readFileSync } from "node:fs";
 import QRCode from "qrcode";
+import {OnlineManager} from "./online-manager.js";
+import {attachOnlineSockets} from "./online-sockets.js";
 import { Wechat } from "./wechat.js";
 import { randomBytes } from "node:crypto";
 import { writeFileSync, existsSync } from "node:fs";
@@ -13,6 +15,7 @@ export function createApp({
   origin = "http://127.0.0.1:3200",
   basePath = "",
   wechat = new Wechat(),
+  onlineOptions = {},
 } = {}) {
   origin = new URL(origin).origin;
   if (basePath && !/^\/[a-z0-9-]+$/.test(basePath))
@@ -20,6 +23,7 @@ export function createApp({
   mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   const store = new Store(path.join(dataDir, "score.sqlite"));
   const limits = new Map();
+  const online = new OnlineManager(onlineOptions);
   const server = http.createServer(async (req, res) => {
     try {
       res.setHeader("X-Content-Type-Options", "nosniff");
@@ -60,6 +64,10 @@ export function createApp({
         return json({ ok: true, kind: "riichi-score-room" });
       if (req.method === "GET" && url.pathname === "/api/session")
         return json({ user: user ? { name: user.name } : null });
+      if (req.method === "GET" && url.pathname === "/api/online") {
+        if (!user) throw new HttpError(401, "请先填写昵称");
+        return json(await online.view(user.id, {touch:true}));
+      }
       if (req.method === "GET" && url.pathname === "/api/rooms") {
         if (!user) throw new HttpError(401, "请先填写昵称");
         return json(store.list(user));
@@ -212,6 +220,8 @@ export function createApp({
           return json({ user: { name: s.name } }, 201);
         }
         if (!user) throw new HttpError(401, "请先填写昵称");
+        if (url.pathname === "/api/online")
+          return json(await online.execute(user, input));
         if (url.pathname === "/api/rooms")
           return json(store.create(user, input), 201);
         if (url.pathname === "/api/join")
@@ -221,8 +231,22 @@ export function createApp({
         throw new HttpError(404, "接口不存在");
       }
       if (req.method !== "GET") throw new HttpError(405, "方法不支持");
+      if (url.pathname === "/online") {
+        res.writeHead(308, {Location:basePath + "/online/"});return res.end();
+      }
+      if (/^\/online\/(?:assets|licenses)\/[a-zA-Z0-9_./-]+$/.test(url.pathname)) {
+        const file = path.resolve(root,"public", "."+url.pathname);
+        const allowed = path.join(root,"public","online") + path.sep;
+        const types = {".svg":"image/svg+xml", ".webp":"image/webp", ".png":"image/png", ".wav":"audio/wav", ".woff2":"font/woff2", ".json":"application/json", ".txt":"text/plain", ".md":"text/plain"};
+        const type = types[path.extname(file)];
+        if (!file.startsWith(allowed) || !type || !existsSync(file)) throw new HttpError(404,"文件不存在");
+        res.writeHead(200,{"Content-Type":type});return res.end(readFileSync(file));
+      }
       const files = {
         "/": ["public/index.html", "text/html"],
+        "/online/": ["public/online/index.html", "text/html"],
+        "/online/client.js": ["public/online/client.js", "text/javascript"],
+        "/online/client.css": ["public/online/client.css", "text/css"],
         "/app.js": ["public/app.js", "text/javascript"],
         "/style.css": ["public/style.css", "text/css"],
         "/art/ink-landscape.svg": [
@@ -240,7 +264,7 @@ export function createApp({
       res.writeHead(200, { "Content-Type": `${type}; charset=utf-8` });
       const content = readFileSync(path.join(root, file));
       res.end(
-        file === "public/index.html"
+        type === "text/html"
           ? content
               .toString()
               .replace('content="__BASE__"', `content="${basePath}"`)
@@ -256,8 +280,9 @@ export function createApp({
       );
     }
   });
-  server.on("close", () => store.close());
-  return { server, store };
+  const sockets = attachOnlineSockets(server,online,store,{origin,basePath});
+  server.on("close", () => {void sockets.close();void online.close();store.close();});
+  return { server, store, online };
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT ?? 3200),
