@@ -6,11 +6,13 @@ RUN npm ci --no-audit --no-fund
 COPY scripts ./scripts
 COPY src ./src
 COPY public ./public
-RUN npm run build && npm prune --omit=dev --no-audit --no-fund
+RUN npm run build
+FROM build AS runtime-deps
+RUN npm prune --omit=dev --no-audit --no-fund
 FROM ${NODE_IMAGE}
 WORKDIR /app
 COPY --from=build /app/package.json ./
-COPY --from=build /app/node_modules ./node_modules
+COPY --from=runtime-deps /app/node_modules ./node_modules
 COPY --from=build /app/src ./src
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/public ./public

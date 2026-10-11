@@ -8,12 +8,13 @@
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env src/server.js",
-    "test": "node --test tests/*.test.js",
+    "test": "node --test tests/*.test.js && npm run test:rules",
     "test:browser": "node tests/browser.mjs",
     "sync:mini": "node scripts/sync-mini-core.mjs",
     "build": "node scripts/build-online.mjs",
     "test:online": "node --test tests/online*.test.js",
-    "test:online:browser": "node tests/online-browser.mjs"
+    "test:online:browser": "node tests/online-browser.mjs",
+    "test:rules": "vitest run --config vitest.config.js"
   },
   "dependencies": {
     "@kobalab/majiang-core": "1.4.1",
@@ -34,7 +35,8 @@
     "jsqr": "^1.4.0",
     "pngjs": "^7.0.0",
     "prettier": "3.6.2",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
   },
   "allowScripts": {
     "esbuild@0.28.2": true

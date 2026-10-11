@@ -33,7 +33,7 @@ export function MahjongSettlementPanel({ game, room, connected, busy, onChoice, 
   const hanText = String(settlement.han ?? "");
   const yakuYakumanCount = settlement.yaku.reduce((count, yaku) => count + ((String(yaku.han).match(/\*+/)?.[0].length || 0)), 0);
   const yakumanCount = Math.max((hanText.match(/\*+/)?.[0].length || 0), yakuYakumanCount, /役満|役满/.test(hanText) ? 1 : 0);
-  const hanLabel = yakumanCount ? `${yakumanCount > 1 ? `${yakumanCount}倍` : ""}役满` : `${hanText || "—"} 翻`;
+  const hanLabel = yakumanCount ? `${yakumanCount > 1 ? `${yakumanCount}倍` : ""}役满` : `${hanText || "—"} 番`;
   const winning = winningHand(settlement);
   const winner = settlement.winnerSeat === undefined ? null : room.members.find((member) => member.seat === settlement.winnerSeat);
   return <section key={phaseKey} style={abort ? {"--abort-cause-age":`${mountedFade.current!.delay}ms`} as CSSProperties : undefined} className={`mahjong-settlement-panel${flow ? ` is-${flow.stage}` : ""}${abort ? " is-abort" : ""}`} data-settlement-stage={flow?.stage} aria-label={scoresStage ? "本局收支" : nagashiDetail ? "流满贯详情" : detailStage ? "和牌详情" : drawStage ? abort ? "流局原因" : "听牌结果" : "本局结算"}>
@@ -61,7 +61,7 @@ export function MahjongSettlementPanel({ game, room, connected, busy, onChoice, 
       {nagashiDetail ? <ul><li data-testid="nagashi-yaku" className={presentation.elapsed >= NAGASHI_YAKU_MS ? "is-revealed" : "is-pending"}><span>流满贯</span></li></ul> : null}
       {!scoresStage && settlement.yaku.length ? <ul>{settlement.yaku.map((yaku, index) => {
         const units = String(yaku.han).match(/\*+/)?.[0].length || 0;
-        return <li key={`${game.decisionId}:${index}:${yaku.name}`} className={detailStage ? presentation.elapsed >= 300 + Math.min(index,14) * 180 ? "is-revealed" : "is-pending" : undefined} style={detailStage ? {"--reveal-index": Math.min(index,14)} as CSSProperties : undefined}><span>{yaku.name}</span><b>{units ? `${units > 1 ? `${units}倍` : ""}役满` : `${yaku.han} 翻`}</b></li>;
+        return <li key={`${game.decisionId}:${index}:${yaku.name}`} className={detailStage ? presentation.elapsed >= 300 + Math.min(index,14) * 180 ? "is-revealed" : "is-pending" : undefined} style={detailStage ? {"--reveal-index": Math.min(index,14)} as CSSProperties : undefined}><span>{yaku.name}</span><b>{units ? `${units > 1 ? `${units}倍` : ""}役满` : `${yaku.han} 番`}</b></li>;
       })}</ul> : null}
     </div>
     {ack || flow ? <footer className="mahjong-settlement-panel__actions">{flow ? <small role="status">{!ack ? "等待其他玩家" : !connected ? "正在重连" : !presentation.ready ? "正在展示" : busy || !presentation.canConfirm ? "正在确认" : `${presentation.countdown} 秒后继续`}</small> : null}{ack ? <button type="button" className="mahjong-button mahjong-button--gold" data-choice-id={ack.id} data-choice-type={ack.type} disabled={!presentation.canConfirm} onClick={presentation.submit}>继续{flow && presentation.ready && presentation.canConfirm ? ` · ${presentation.countdown}` : ""}</button> : null}</footer> : null}

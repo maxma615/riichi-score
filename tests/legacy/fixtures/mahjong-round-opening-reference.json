@@ -1,0 +1,14 @@
+{
+  "referenceUrl": "https://game.maj-soul.com/1/v0.11.252.w/code.js",
+  "decodedSha256": "5308fe6d3ab8bb8b0c8ab283e75176f839de9723d67179d00abeb15e6a39ff4f",
+  "scope": "Ordinary live standard riichi new round; numeric schedule only, no vendor code or assets. Special modes, hidden server deal ordering and vendor animation curve remain unproven.",
+  "waves": [
+    0,
+    300,
+    600,
+    900
+  ],
+  "tilesPerWave": 4,
+  "doraAndSortMs": 1200,
+  "operationsMs": 1500
+}

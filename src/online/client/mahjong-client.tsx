@@ -300,16 +300,16 @@ function MahjongRoot() {
   };
 
   if (sessionLoading) {
-    return <main className="mahjong-page"><div className="mahjong-loading"><LoaderCircle size={22} className="mahjong-spin"/><span>正在准备牌桌…</span></div></main>;
+    return <main className={`mahjong-page${room?.game ? "" : " mahjong-paper"}`}><div className="mahjong-loading"><LoaderCircle size={22} className="mahjong-spin"/><span>正在准备牌桌…</span></div></main>;
   }
-  if (!session) return <main className="mahjong-page"><div className="mahjong-loading"><h1>联机牌桌</h1><form onSubmit={async e=>{e.preventDefault();setBusy(true);try{await apiRequest('/api/session',{method:'POST',body:JSON.stringify({name:nickname})});await refreshSession();}catch(e){setNotice(errorMessage(e));}finally{setBusy(false);}}}><label>你的昵称<input value={nickname} onChange={e=>setNickname(e.target.value)} maxLength={24} required autoComplete="nickname" /></label><button disabled={busy} type="submit">进入牌桌</button></form><p role="alert">{notice}</p><Link href={asset("/")}>返回日麻记分</Link></div></main>;
+  if (!session) return <main className="mahjong-page mahjong-paper"><div className="mahjong-entry"><h1>联机牌桌</h1><form onSubmit={async e=>{e.preventDefault();setBusy(true);try{await apiRequest('/api/session',{method:'POST',body:JSON.stringify({name:nickname})});await refreshSession();}catch(e){setNotice(errorMessage(e));}finally{setBusy(false);}}}><label>你的昵称<input value={nickname} onChange={e=>setNickname(e.target.value)} maxLength={24} required autoComplete="nickname" /></label><button disabled={busy} type="submit">进入牌桌</button></form><p role="alert">{notice}</p><Link href={asset("/")}>返回日麻记分</Link></div></main>;
   if (!isMember) return <main className="mahjong-page" />;
   if (!response) return <main className="mahjong-page"><div className="mahjong-loading"><span>{notice || "牌桌暂时无法连接。"}</span><button className="mahjong-button mahjong-button--gold" type="button" onClick={() => void refresh()}>重新加载</button></div></main>;
 
   const ownSeat = room?.mySeat ?? -1;
   const host = Boolean(room && session && room.hostUserId === session.user.id);
 
-  return <main className="mahjong-page">
+  return <main className={`mahjong-page${room?.game ? "" : " mahjong-paper"}`}>
     <div className="mahjong-shell" ref={soundRootRef}>
       <header className="mahjong-header">
         <Link href={asset("/")} className="mahjong-brand" aria-label="返回日麻记分"><span className="mahjong-brand__mark"><Dices size={17}/></span><span>日麻记分 <i>/</i> 联机牌桌</span></Link>
@@ -388,13 +388,13 @@ function Lobby({ mode, variant, busy, joinCode, onMode, onVariant, onJoinCode, o
 }) {
   return <section className="mahjong-lobby">
     <div className="mahjong-lobby__copy">
-      <p className="mahjong-kicker"><span/> {variant === "sanma" ? "THREE" : "FOUR"} SEATS · RIICHI</p>
-      <h1>今晚，<br/><em>来一场。</em></h1>
-      <p>三人或四人围坐，一场日本麻将。邀请朋友，也可以让电脑陪你练习。</p>
+      <p className="mahjong-kicker"><span/> {variant === "sanma" ? "三人" : "四人"}日麻</p>
+      <h1>联机牌桌</h1>
+      <p>邀请朋友，或让电脑补齐空位。</p>
       <div className="mahjong-lobby__facts"><span><Swords size={15}/>真人与电脑</span><span><Sparkles size={15}/>赤宝牌</span><span><Clock3 size={15}/>东风或半庄</span></div>
     </div>
     <div className="mahjong-lobby__panel">
-      <div className="mahjong-panel-heading"><div><p className="mahjong-kicker">TAKE A SEAT</p><h2>开始一场新牌局</h2></div><span className="mahjong-panel-heading__icon"><Dices size={21}/></span></div>
+      <div className="mahjong-panel-heading"><div><p className="mahjong-kicker">开桌</p><h2>开始一场新牌局</h2></div><span className="mahjong-panel-heading__icon"><Dices size={21}/></span></div>
       <fieldset className="mahjong-mode-picker mahjong-variant-picker" disabled={busy}>
         <legend>选择人数</legend>
         <button type="button" aria-label="三人" aria-pressed={variant === "sanma"} className={variant === "sanma" ? "is-selected" : ""} onClick={() => onVariant("sanma")}><strong>三人</strong><small>日本三麻 · 可拔北</small></button>
@@ -424,7 +424,7 @@ function WaitingRoom({ room, busy, host, ownSeat, onReady, onStart, onAddBot, on
   const readyCount = room.members.filter((member) => member.ready).length;
   const mine = room.members.find((member) => member.seat === ownSeat);
   return <section className="mahjong-waiting">
-    <div className="mahjong-room-header"><div><p className="mahjong-kicker">PRIVATE TABLE · {room.mode === "east" ? "EAST ROUND" : "HALF GAME"}</p><h1>等朋友坐下</h1><p>{capacity === 3 ? "三人" : "四人"}牌桌 · 分享房间码邀请朋友，或添加电脑补位。</p></div><div className="mahjong-room-code"><span>房间码</span><strong data-testid="mahjong-room-code">{room.code}</strong><button type="button" aria-label="复制房间码" onClick={() => void navigator.clipboard?.writeText(room.code)}><Copy size={14}/></button></div></div>
+    <div className="mahjong-room-header"><div><p className="mahjong-kicker">{room.variant === "sanma" ? "三人日麻" : "四人日麻"} · {room.mode === "east" ? "东风战" : "半庄战"}</p><h1>等朋友坐下</h1><p>{capacity === 3 ? "三人" : "四人"}牌桌 · 分享房间码邀请朋友，或添加电脑补位。</p></div><div className="mahjong-room-code"><span>房间码</span><strong data-testid="mahjong-room-code">{room.code}</strong><button type="button" aria-label="复制房间码" onClick={() => void navigator.clipboard?.writeText(room.code)}><Copy size={14}/></button></div></div>
     <div className={`mahjong-seat-grid${capacity === 3 ? " is-sanma" : ""}`} aria-label="牌桌座位">
       {roomSeats.map((member, seat) => <SeatCard key={seat} member={member} seat={seat} isMe={seat === ownSeat} waiting busy={busy} onAddBot={host ? () => onAddBot(seat) : undefined} onRemoveBot={host ? () => onRemoveBot(seat) : undefined} />)}
     </div>

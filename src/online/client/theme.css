@@ -1,6 +1,273 @@
 /* Shared ink, paper and cinnabar palette; playfield retains original perspective. */
-:root{color-scheme:light;font-family:system-ui,"PingFang SC",sans-serif;--online-paper:#ede6d7;--online-ink:#293632;--online-accent:#993e31}
-*{box-sizing:border-box}body{margin:0;background:#171b1b}button,input{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}
-.mahjong-page{background:#171b1b;color:#eee6d8}.mahjong-brand__mark{background:#993e31;color:#fff5e6}.mahjong-shell{max-width:1050px;margin:auto}.mahjong-lobby{font-size:14px}.mahjong-lobby h1{font-family:serif}.mahjong-variant,.mahjong-mode{border-color:#a39470}.mahjong-primary{background:#993e31;color:#fff5e6}.mahjong-loading{font-size:14px}.mahjong-game{--mahjong-cloth-a:#293c38;--mahjong-cloth-b:#172925}
+:root {
+  color-scheme: light;
+  font-family: system-ui, "PingFang SC", sans-serif;
+  --online-paper: #ede6d7;
+  --online-ink: #293632;
+  --online-accent: #993e31;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #171b1b;
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+.mahjong-page {
+  background: #171b1b;
+  color: #eee6d8;
+}
+.mahjong-brand__mark {
+  background: #993e31;
+  color: #fff5e6;
+}
+.mahjong-shell {
+  max-width: 1050px;
+  margin: auto;
+}
+.mahjong-lobby {
+  font-size: 14px;
+}
+.mahjong-lobby h1 {
+  font-family: serif;
+}
+.mahjong-variant,
+.mahjong-mode {
+  border-color: #a39470;
+}
+.mahjong-primary {
+  background: #993e31;
+  color: #fff5e6;
+}
+.mahjong-loading {
+  font-size: 14px;
+}
+.mahjong-game {
+  --mahjong-cloth-a: #293c38;
+  --mahjong-cloth-b: #172925;
+}
 
-@font-face{font-family:MahjongBrush;src:url('./assets/fonts/mahjong-brush.woff2') format('woff2');font-display:swap} :root{--font-brush:MahjongBrush,serif}
+@font-face {
+  font-family: MahjongBrush;
+  src: url("./assets/fonts/mahjong-brush.woff2") format("woff2");
+  font-display: swap;
+}
+:root {
+  --font-brush: MahjongBrush, serif;
+}
+
+/* Paper lobby and entry use the same ink/cinnabar language as offline scoring. */
+.mahjong-paper {
+  --mj-ink: #171b1b;
+  --mj-panel: #ede6d7;
+  --mj-panel-raised: #f5eedf;
+  --mj-gold: #bb6854;
+  --mj-gold-soft: #993e3118;
+  --mj-muted: #b7b0a0;
+  --mj-hairline: #b4a48742;
+  --font-display: "Songti SC", "Noto Serif CJK SC", serif;
+  --font-body: system-ui, "PingFang SC", sans-serif;
+}
+.mahjong-entry {
+  width: min(380px, calc(100% - 32px));
+  margin: 12vh auto;
+  padding: 22px;
+  background: #f5eedf;
+  border: 1px solid #b7a784;
+  color: #293632;
+  box-shadow: 0 12px 38px #0003;
+  border-radius: 12px;
+}
+.mahjong-entry h1 {
+  font:
+    26px "Songti SC",
+    serif;
+  margin: 0 0 20px;
+}
+.mahjong-entry form,
+.mahjong-entry label {
+  display: grid;
+  gap: 10px;
+}
+.mahjong-entry label {
+  font-size: 13px;
+}
+.mahjong-entry input {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #c4b69d;
+  border-radius: 6px;
+  background: #fffaf0;
+  color: #293632;
+  width: 100%;
+  font-size: 16px;
+}
+.mahjong-entry button {
+  min-height: 44px;
+  background: #993e31;
+  color: #fff5e6;
+  border: 0;
+  border-radius: 6px;
+}
+.mahjong-entry a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  color: #734a3d;
+}
+.mahjong-entry [role="alert"]:empty {
+  display: none;
+}
+.mahjong-paper .mahjong-lobby {
+  padding: 28px 2% 32px;
+  gap: 32px;
+}
+.mahjong-paper .mahjong-lobby__copy h1 {
+  font-size: 40px;
+  letter-spacing: 0.04em;
+  margin: 14px 0;
+}
+.mahjong-paper .mahjong-lobby__facts {
+  margin-top: 18px;
+  gap: 16px;
+}
+.mahjong-paper .mahjong-lobby__panel {
+  padding: 20px;
+  border-color: #ab9978;
+  background: #f5eedf;
+  color: #293632;
+  box-shadow: 0 16px 45px #0002;
+}
+.mahjong-paper .mahjong-panel-heading {
+  margin-bottom: 16px;
+}
+.mahjong-paper .mahjong-panel-heading h2 {
+  font-size: 20px;
+}
+.mahjong-paper .mahjong-mode-picker legend,
+.mahjong-paper .mahjong-code-label {
+  color: #706454;
+}
+.mahjong-paper .mahjong-mode-picker button {
+  background: #ede6d7;
+  color: #3b4239;
+  border-color: #c7bba5;
+  padding: 10px;
+  min-height: 56px;
+}
+.mahjong-paper .mahjong-mode-picker button small {
+  color: #786e5e;
+}
+.mahjong-paper .mahjong-mode-picker button.is-selected {
+  background: #993e310d;
+  border-color: #993e31;
+  color: #913e30;
+}
+.mahjong-paper .mahjong-mode-picker button.is-selected small {
+  color: #734c3e;
+}
+.mahjong-paper .mahjong-button--gold,
+.mahjong-paper .mahjong-button--start {
+  background: #993e31;
+  color: #fff5e6;
+  border-color: #993e31;
+  min-height: 44px;
+}
+.mahjong-paper .mahjong-join-form input {
+  background: #fffaf0;
+  color: #293632;
+  border-color: #c7bba5;
+}
+.mahjong-paper .mahjong-panel-note,
+.mahjong-paper .mahjong-divider {
+  color: #786e5e;
+}
+.mahjong-paper .mahjong-button {
+  min-height: 44px;
+}
+.mahjong-paper .mahjong-waiting {
+  padding-top: 24px;
+}
+.mahjong-paper .mahjong-room-header {
+  margin-bottom: 18px;
+  gap: 16px;
+}
+.mahjong-paper .mahjong-room-header h1 {
+  font-size: 28px;
+  margin-top: 8px;
+}
+.mahjong-paper .mahjong-seat-card {
+  background: #f5eedf;
+  color: #293632;
+  border-color: #b6a78a;
+  padding: 14px 12px;
+  min-height: 100px;
+}
+.mahjong-paper .mahjong-seat-card__ready,
+.mahjong-paper .mahjong-seat-card__identity > span {
+  color: #716a5b;
+}
+.mahjong-paper .mahjong-seat-card__ready.is-ready {
+  color: #3c705b;
+}
+.mahjong-paper .mahjong-seat-card__identity strong small {
+  background: #993e31;
+  color: #fff5e6;
+}
+.mahjong-paper .mahjong-room-code button {
+  min-width: 44px;
+  min-height: 44px;
+  color: #e8decb;
+}
+@media (max-width: 640px) {
+  .mahjong-paper .mahjong-shell {
+    padding: 0 16px 20px;
+  }
+  .mahjong-paper .mahjong-lobby {
+    display: block;
+    padding: 20px 0;
+  }
+  .mahjong-paper .mahjong-lobby__copy {
+    margin-bottom: 18px;
+  }
+  .mahjong-paper .mahjong-lobby__copy h1 {
+    font-size: 28px;
+  }
+  .mahjong-paper .mahjong-lobby__copy > p:not(.mahjong-kicker) {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .mahjong-paper .mahjong-lobby__facts {
+    margin-top: 12px;
+  }
+  .mahjong-paper .mahjong-lobby__panel {
+    max-width: none;
+    padding: 18px;
+  }
+  .mahjong-paper .mahjong-room-header h1 {
+    font-size: 24px;
+  }
+  .mahjong-entry {
+    margin-top: 10vh;
+  }
+}
+
+.mahjong-paper .mahjong-brand,
+.mahjong-paper .mahjong-rules-trigger {
+  min-height: 44px;
+}
+.mahjong-paper .mahjong-button--gold:hover:not(:disabled) {
+  background: #803629;
+}
