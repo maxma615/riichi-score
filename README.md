@@ -66,6 +66,7 @@ docker compose up -d --build
 npm test # 自动先构建联机服务和前端，再运行服务与规则检查
 npx playwright install chromium webkit
 npm run test:browser
+npm run test:mini:layout # 实际WXML与样式的浏览器布局适配检查；不是微信真机
 ```
 
 测试只用合成昵称和临时数据库。浏览器截图在 `.local/browser/`，不提交运行数据。测试覆盖真实 HTTP 权限、来源校验、数据库重启、并发、幂等、计分与撤回，浏览器流程还将二维码截图解码后在另一个独立会话加入。
@@ -106,3 +107,5 @@ npm run check:mini:templates -- .local/mini-compiler/node_modules/miniprogram-co
 原生流局按共享时间翻开已公开手牌、显示听牌状态，再进入收支；多人荣和及途中流局声明对应真实座位。当前48个原生文件的旧版官方模板语法检查通过，实际微信工具与真机仍待验收。
 
 小程序牌面与书法字样已打包为本地PNG，与网页授权原素材同源；声明和结算标题使用同一书法字形。重建资源：`npm run sync:mini:assets`（先安装Chromium），来源／指纹见miniprogram/assets/README.md和manifest.json。图片随包加载，API与真实微信登录仍需服务器及正式配置。
+
+小程序联机页配置固定横屏，记分、查点、算符及统计保持竖屏。牌桌高度按页面视口分配，14张手牌在窄横屏留出两侧牌区；顶部操作与大厅改为紧凑尺寸，两侧玩家信息避开牌背。`test:mini:layout`覆盖三／四麻、开桌入口及大厅的16组视口布局，使用真实WXML与模型、浏览器CSS适配，不能代替微信方向锁定、原生图片渲染、拖牌和真机验收。

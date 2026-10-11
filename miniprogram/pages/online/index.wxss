@@ -711,3 +711,67 @@
 .draw-declaration image { width: 110px; height: 55px; }
 .announcement > view image { width: 140px; height: 70px; }
 .result-title image { width: 100px; height: 50px; vertical-align: middle; }
+
+/* The native page viewport already excludes its standard navigation bar. */
+.online.is-playing {
+  padding: 4px 10px;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+.online .row { min-height: 36px; gap: 8px; }
+.online .row button {
+  height: 36px; min-height: 36px; line-height: 36px;
+  margin: 0; padding: 0 12px; font-size: 13px;
+}
+.online.is-playing .table {
+  box-sizing: border-box;
+  height: calc(100vh - 50px);
+  min-height: 0;
+  margin: 6px 0 0;
+}
+.online.is-playing .tile {
+  width: calc(7.142857vw - 9.285714px);
+  height: calc(10.204082vw - 13.265306px);
+}
+.revealed-rack { justify-content: center; }
+@media (orientation: landscape) {
+  .opponent-left, .opponent-right { top: 50%; }
+  .player-label { max-width: 82px; }
+  .label-left { left: 44px; top: 32%; transform: translateY(-50%); }
+  .label-right { right: 44px; top: 32%; transform: translateY(-50%); }
+  .label-bottom { left: 44px; bottom: 62px; }
+  .label-top { left: auto; right: 30px; }
+  .dora-tray { left: 140px; top: 40px; }
+  .actions { bottom: 80px; left: 140px; right: 44px; }
+  .exposed-left {
+    left: 48px; top: 50%; transform-origin: center;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+  .exposed-right {
+    right: 48px; top: 50%; transform-origin: center;
+    transform: translate(50%, -50%) rotate(-90deg);
+  }
+  .result-panel { padding: 12px; }
+  .result-panel .line { padding: 6px 0; }
+  .balance { padding: 8px 0; }
+  .result-footer { bottom: -12px; }
+}
+@media (orientation: landscape) and (max-height: 270px) {
+  .actions { bottom: 70px; }
+}
+
+@media (orientation: landscape) {
+  .online .card { padding: 12px; margin-bottom: 8px; }
+  .online .title { font-size: 20px; margin: 0 0 6px; }
+  .table-entry, .table-lobby { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+  .table-entry .title { grid-column: 1 / -1; color: #292d2b; }
+  .table-entry .toolbar { gap: 8px; }
+  .table-entry button, .table-lobby button {
+    min-height: 40px; margin: 0; font-size: 14px; padding: 0 10px;
+  }
+  .table-entry .toolbar button { flex: 1; }
+  .table-entry .join { gap: 6px; }
+  .table-entry input { min-height: 40px; padding: 8px; font-size: 16px; box-sizing: border-box; }
+  .table-entry .join button { flex: 0 0 64px; }
+  .table-lobby .line { padding: 4px 0; font-size: 13px; line-height: 16px; }
+}

@@ -210,3 +210,15 @@ Chromium／WebKit × 根路径／riichi前缀4个流程实际通过拖牌出牌�
 当前100个原生源／资源文件在官方旧版Linux编译器检查通过：8个WXML、4个WXSS无诊断，工厂函数建立成功。源SHA256为51190b71acd110f17617bd6409209e0cbe953b399f30292e5ceae2287458af05；wcc输出187010beb8789f2c482cc1eee8b46b967a827605742f5059910aa48f6a4c53a0，wcsc输出afc81450bba89596b0616218276c7f370631cef10cb22a4ab7ba6c363fa8062b。检查容器仍无网络、源只读、0.25CPU／128MiB，无真实数据挂载，两套生产容器及禁备份状态不变。当前微信开发者工具／真机及正式发布仍未验收。
 
 本地PNG策略用于可预测的打包加载；微信官方WeUI图标也有[data SVG实现](https://github.com/wechat-miniprogram/weui-miniprogram/blob/master/src/components/icon/icon.ts)，本轮没有以搜索或格式选择声称微信一概不支持SVG。API登录及联机仍需要服务器与正式微信配置。网页构建JS／CSS保持既有生产哈希，本轮没有重启业务服务。
+
+## 原生横屏视口与大厅布局（2026-10-12）
+
+联机页由auto改为landscape，应用默认portrait；记分、查点、算符和统计保持竖屏。微信[页面配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/page.html)及[屏幕旋转说明](https://developers.weixin.qq.com/miniprogram/dev/framework/view/resizable.html)确认基础库2.5.0起支持landscape；本轮配置不证明真机已执行方向锁定。
+
+牌桌不再强制310px最小高度，按页面视口扣除50px顶部区；标准导航栏已由微信从页面视口排除，不重复扣除。顶部按钮固定36px；14张手牌按可用宽度缩放并给两侧牌列留空。两侧信息卡移到牌列内侧，最矮视口调整操作区高度；开桌入口及大厅改双列紧凑布局，纸页标题修正为深色。
+
+`npm run test:mini:layout`新增可在独立克隆后重现的布局检查，jsdom及miniprogram-simulate固定版本列入开发依赖。实际WXML、原生model及WXSS经浏览器适配，在568×260、640×280、740×310、844×340四种页面视口检查三／四麻、入口和大厅，16组通过；牌桌及手牌未裁切、页面无溢出、操作在手牌上方，玩家信息不与对手牌列或当前操作区重叠。产物`.local/browser/native-layout/`；8组对局使用真实规则固定场景，入口／大厅是合成布局投影，不作为权限证明。
+
+浏览器适配按宽度换算rpx并映射原生标签；模拟器不暴露image的src，仅给本人手牌按实际模型补入PNG供目视检查。此证据不证明微信原生图片绑定、拖牌、设备方向锁定，也未覆盖所有长牌河／多副露／结算布局。232项常规检查（125 Node＋107规则）通过，日志`.local/browser/native-landscape-tests.log`。网页运行源保持3e1c657，没有重启业务服务。当前微信工具／真机、正式登录扫码与发布仍待实际平台配置。
+
+最终100个原生文件（961795字节）在ECS隔离旧版官方Linux编译器中，8个WXML及4个WXSS无诊断通过，WXML工厂函数建立成功。源SHA256：47dcd1833cbfa307cd18a748f1b19659c119c7aee9be1650a24f980d502c969e；wcc输出27819aa813a707006f3fe520c094e8db08734b09a9690f4c831a9e735650cc22，wcsc输出8a934722c10b2d1dd5122b8f2b298a1fb3d55e1084e9121d90b956aa2cafa777。产物`.local/release-evidence/native-templates/native-landscape-candidate/remote-r02.json`；检查容器无网络、只读源、0.25CPU／128MiB且没有真实数据挂载。前后两套生产容器ID和启动时间相同，禁备份标记保留。编译器仍为2020年miniprogram-compiler@0.2.3，仅证明语法和生成函数，不代替当前微信工具／渲染／真机。

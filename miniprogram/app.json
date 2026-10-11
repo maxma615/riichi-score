@@ -13,7 +13,8 @@
     "navigationBarTitleText": "日麻记分",
     "navigationBarBackgroundColor": "#171b1b",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#ede6d7"
+    "backgroundColor": "#ede6d7",
+    "pageOrientation": "portrait"
   },
   "tabBar": {
     "color": "#817463",

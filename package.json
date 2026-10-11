@@ -18,7 +18,8 @@
     "pretest": "npm run build",
     "check:mini:templates": "node scripts/check-mini-templates.mjs",
     "test:online:interactions": "node tests/online-interactions-browser.mjs",
-    "sync:mini:assets": "node scripts/sync-mini-assets.mjs"
+    "sync:mini:assets": "node scripts/sync-mini-assets.mjs",
+    "test:mini:layout": "node tests/online-mini-layout-browser.mjs"
   },
   "dependencies": {
     "@kobalab/majiang-core": "1.4.1",
@@ -36,7 +37,9 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "esbuild": "0.28.2",
+    "jsdom": "26.1.0",
     "jsqr": "^1.4.0",
+    "miniprogram-simulate": "1.6.2",
     "pngjs": "^7.0.0",
     "prettier": "3.6.2",
     "typescript": "7.0.2",

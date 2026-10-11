@@ -1,5 +1,5 @@
-<view class="page online">
-  <view wx:if="{{!room}}" class="card"
+<view class="page online {{game?'is-playing':''}}">
+  <view wx:if="{{!room}}" class="card table-entry"
     ><view class="title">联机牌桌</view
     ><view class="toolbar"
       ><button
@@ -65,7 +65,7 @@
         离开
       </button></view
     >
-    <view wx:if="{{room.status==='lobby'}}" class="card"
+    <view wx:if="{{room.status==='lobby'}}" class="card table-lobby"
       ><view wx:for="{{seats}}" wx:key="seat" class="line"
         ><text>{{item.wind}} · {{item.name}} {{item.self?'· 你':''}}</text
         ><text>{{item.ready?'已准备':''}}</text></view
