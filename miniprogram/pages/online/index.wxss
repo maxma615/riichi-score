@@ -784,6 +784,8 @@
   max-height: none;
   padding: 12px;
   overflow: hidden;
+  font-size: 14px;
+  line-height: 1.4;
 }
 .result-scroll {
   display: block;
@@ -791,6 +793,23 @@
   flex: 1;
   min-height: 0;
 }
+/* Match the compact web result hierarchy inside a short native landscape page. */
+.is-win-detail .result-title image { width: 72px; height: 36px; }
+.is-win-detail .result-subtitle { margin-top: 2px; }
+.is-win-detail .result-points {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  margin: 6px 0;
+}
+.is-win-detail .result-points .result-value-meta { font-size: 13px; margin: 0; }
+.is-win-detail .result-points .result-value-total { font-size: 24px; margin: 0; }
+.is-win-detail .winning-rack { margin: 6px 0; }
+.is-win-detail .result-indicators > view > view { margin-top: 3px; }
+.is-win-detail .result-yaku { padding: 4px 0; }
+.draw-player .winning-rack { margin: 6px 0; }
+.draw-wait-label { font-size: 12px; align-self: center; }
 .result-footer {
   position: static;
   flex: 0 0 58px;

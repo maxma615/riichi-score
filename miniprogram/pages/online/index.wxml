@@ -203,7 +203,7 @@
         wx:if="{{(settlement && settlement.visible) || game.ranking}}"
         class="result-overlay drag-exclusion"
       >
-        <view class="result-panel">
+        <view class="result-panel {{settlement.kind==='win' && settlement.stage!=='scores'?'is-win-detail':''}}">
           <scroll-view class="result-scroll" scroll-y="{{true}}" scroll-into-view="{{game.ranking?'result-ranking':settlement.anchor}}">
           <view id="{{game.ranking?'result-ranking':settlement.anchor}}"></view>
           <block wx:if="{{game.ranking}}"
@@ -222,8 +222,8 @@
               <view
                 wx:if="{{settlement.kind==='win' || settlement.drawInfo.kind==='nagashi'}}"
                 class="result-points {{settlement.pointsVisible?'is-visible':'is-pending'}}"
-                >{{settlement.kind==='win' ? settlement.hanLabel : '满贯'}}
-                {{settlement.fu ? '· '+settlement.fu+'符' : ''}}<text
+                ><text class="result-value-meta">{{settlement.kind==='win' ? settlement.hanLabel : '满贯'}}
+                {{settlement.fu ? '· '+settlement.fu+'符' : ''}}</text><text class="result-value-total"
                   >{{settlement.points}}点</text
                 ></view
               >
@@ -304,7 +304,7 @@
                           src="{{item.src}}"
                           class="tile-small" /></view></view></view
                   ><view wx:if="{{item.waits.length}}" class="winning-rack"
-                    ><text>听牌</text
+                    ><text class="draw-wait-label">听牌</text
                     ><image
                       wx:for="{{item.waits}}"
                       wx:for-item="t"

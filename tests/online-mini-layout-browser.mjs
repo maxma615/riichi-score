@@ -351,6 +351,8 @@ try {
             contentHeight: scroll.scrollHeight,
             viewportHeight: scroll.clientHeight,
             scrollTop: scroll.scrollTop,
+            firstYaku: scroll.querySelector(".result-yaku")
+              ? rect(scroll.querySelector(".result-yaku")) : null,
             last: rect(rows.at(-1)),
             pageHeight: document.documentElement.scrollHeight,
             pageWidth: document.documentElement.scrollWidth,
@@ -365,6 +367,9 @@ try {
         JSON.stringify({ name, width, height, before }),
       );
       assert.ok(before.scroll.bottom <= before.footer.top + 1);
+      if (height >= 340 && before.firstYaku)
+        assert.ok(before.firstYaku.bottom <= before.scroll.bottom + 1,
+          JSON.stringify({ name, width, height, before }));
       for (const b of before.buttons)
         assert.ok(b.height >= 44 && b.bottom <= height && b.top >= 0);
       assert.ok(

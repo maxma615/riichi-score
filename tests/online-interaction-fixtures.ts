@@ -5,6 +5,7 @@ import { SanmaGame } from "../src/online/domain/sanma";
 import { SanmaWall, sanmaTiles } from "../src/online/domain/sanma-wall";
 import { physicalEngine } from "./legacy/fixtures/mahjong-settlement-game";
 import { kakanSoundFixture } from "./legacy/fixtures/mahjong-audio-game";
+import { drawEngine, playToDraw } from "./legacy/fixtures/mahjong-draw-game";
 import type { PlayerIdentity } from "../src/online/domain/types";
 
 function nukiGame(double = false) {
@@ -37,9 +38,11 @@ function nukiGame(double = false) {
   });
 }
 export function scenario(name: string, autoReactions = true) {
-  const variant = name.startsWith("nuki") ? "sanma" : "yonma",
+  const variant = name.startsWith("nuki") || name === "draw-three" ? "sanma" : "yonma",
     capacity = variant === "sanma" ? 3 : 4;
-  const raw = name.startsWith("nuki")
+  const raw = name.startsWith("draw-")
+    ? drawEngine(variant)
+    : name.startsWith("nuki")
     ? nukiGame(name === "nuki-double")
     : name === "kakan"
       ? kakanSoundFixture(false)
@@ -74,6 +77,7 @@ export function scenario(name: string, autoReactions = true) {
                     { 0: "p123456789s123z2" },
                     name === "tsumo" ? "z2" : "z3",
                   );
+  if (name.startsWith("draw-")) playToDraw(raw, capacity);
   if (["pon", "chi", "daiminkan", "double-ron"].includes(name)) {
     const v = raw.view(0),
       c = v.choices.find(
