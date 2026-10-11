@@ -16,6 +16,8 @@ Page({
     actions: [],
     selected: -1,
     announcement: null,
+    riichiMode: false,
+    canRiichi: false,
   },
   onShow() {
     this.active = true;
@@ -32,7 +34,7 @@ Page({
     clearTimeout(this.feedbackTimer);
     clearTimeout(this.resultTimer);
     this.drag = null;
-    this.setData({ announcement: null });
+    this.setData({ announcement: null, selected: -1, riichiMode: false });
   },
   onUnload() {
     this.onHide();
@@ -49,7 +51,10 @@ Page({
   accept(r) {
     const previous = this.data.game?.decisionId;
     const announcement = feedback(this.data.game, r.room?.game);
-    const next = snapshot(r);
+    const sameDecision =
+      this.data.room?.id === r.room?.id &&
+      previous === r.room?.game?.decisionId;
+    const next = snapshot(r, sameDecision && this.data.riichiMode);
     const flow = next.game?.settlementFlow;
     const key =
       next.game && flow && !next.game.ranking
@@ -96,7 +101,10 @@ Page({
         if (this.active) this.setData({ announcement: null });
       }, 1500);
     }
-    if (previous !== this.data.game?.decisionId) this.setData({ selected: -1 });
+    if (previous !== this.data.game?.decisionId) {
+      this.drag = null;
+      this.setData({ selected: -1 });
+    }
   },
   tickResult() {
     clearTimeout(this.resultTimer);
@@ -216,6 +224,19 @@ Page({
       this.autoPhase = this.resultAnchor?.key || "";
       return this.respond({ currentTarget: { dataset: { id: c.id } } });
     }
+  },
+  toggleRiichi() {
+    if (!this.active || this.data.busy || !this.data.canRiichi) return;
+    this.drag = null;
+    const next = snapshot(
+      { room: this.data.room, serviceRunning: this.data.serviceRunning },
+      !this.data.riichiMode,
+    );
+    this.setData({
+      hand: next.hand,
+      riichiMode: next.riichiMode,
+      selected: -1,
+    });
   },
   discard(e) {
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];

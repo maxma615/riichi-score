@@ -288,3 +288,128 @@ test("原生牌河移除被鸣走的牌并保留立直横牌，按六张分行",
   assert.equal(data.seats[0].riverRows.length, 1);
   assert.equal(data.seats[0].riverRows[0].length, 6);
 });
+
+test("原生立直模式只开放宣言牌，区分同张摸牌和赤五", () => {
+  const room = {
+    id: "r",
+    variant: "yonma",
+    mySeat: 0,
+    members: [],
+    game: {
+      decisionId: "d",
+      hand: ["p5", "s0", "s5", "p5"],
+      drawnTile: "p5",
+      players: [],
+      choices: [
+        { id: "closed-discard", type: "discard", value: "p5" },
+        { id: "drawn-discard", type: "discard", value: "p5_" },
+        { id: "red-discard", type: "discard", value: "s0" },
+        { id: "five-discard", type: "discard", value: "s5" },
+        { id: "drawn-riichi", type: "riichi", value: "p5_" },
+        { id: "five-riichi", type: "riichi", value: "s5" },
+      ],
+    },
+  };
+  const normal = snapshot({ room });
+  assert.equal(normal.canRiichi, true);
+  assert.equal(normal.riichiMode, false);
+  assert.ok(normal.actions.every((c) => c.type !== "riichi"));
+  const declared = snapshot({ room }, true);
+  assert.equal(declared.riichiMode, true);
+  assert.deepEqual(
+    declared.hand.map((t) => t.choiceId),
+    ["", "", "five-riichi", "drawn-riichi"],
+  );
+  assert.equal(declared.hand.length, room.game.hand.length);
+  assert.equal(declared.hand[3].choiceType, "riichi");
+  const closedOnly = snapshot(
+    {
+      room: {
+        ...room,
+        game: {
+          ...room.game,
+          choices: [{ id: "closed-riichi", type: "riichi", value: "p5" }],
+        },
+      },
+    },
+    true,
+  );
+  assert.equal(closedOnly.hand[0].choiceId, "closed-riichi");
+  assert.equal(closedOnly.hand[3].choiceId, "");
+  assert.equal(
+    snapshot({ room: { ...room, game: { ...room.game, choices: [] } } }, true)
+      .riichiMode,
+    false,
+  );
+  assert.equal(snapshot({ room: null }, true).canRiichi, false);
+});
+
+test("原生立直可取消，轮询保持选择模式，换决策与解散清除模式", async () => {
+  let p;
+  const req = createRequire(
+    new URL("../miniprogram/pages/online/index.js", import.meta.url),
+  );
+  vm.runInNewContext(
+    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    {
+      Page: (v) => (p = v),
+      require: (s) => (s === "../../utils/api" ? {} : req(s)),
+      clearTimeout: () => {},
+      setTimeout: () => 1,
+    },
+  );
+  p.data = JSON.parse(JSON.stringify(p.data));
+  p.setData = (v) => Object.assign(p.data, v);
+  p.active = true;
+  const sent = [];
+  p.send = async (c) => sent.push(c);
+  const room = {
+    id: "r",
+    variant: "yonma",
+    mySeat: 0,
+    members: [],
+    game: {
+      decisionId: "d",
+      hand: ["p1", "p2", "p3"],
+      drawnTile: null,
+      players: [],
+      choices: [
+        { id: "d1", type: "discard", value: "p1" },
+        { id: "d2", type: "discard", value: "p2" },
+        { id: "d3", type: "discard", value: "p3" },
+        { id: "r2", type: "riichi", value: "p2" },
+      ],
+    },
+  };
+  p.accept({ room });
+  p.toggleRiichi();
+  assert.equal(p.data.riichiMode, true);
+  await p.discard({ currentTarget: { dataset: { index: 0 } } });
+  assert.equal(p.data.selected, -1);
+  p.touchStart({
+    currentTarget: { dataset: { index: 1 } },
+    touches: [{ clientY: 200 }],
+  });
+  p.toggleRiichi();
+  assert.equal(p.drag, null);
+  assert.equal(p.data.riichiMode, false);
+  await p.touchEnd({ changedTouches: [{ clientY: 100 }] });
+  assert.equal(sent.length, 0);
+  p.toggleRiichi();
+  p.accept({ room });
+  assert.equal(p.data.riichiMode, true);
+  await p.discard({ currentTarget: { dataset: { index: 1 } } });
+  assert.equal(sent.length, 0);
+  await p.discard({ currentTarget: { dataset: { index: 1 } } });
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].choiceId, "r2");
+  assert.equal(sent[0].decisionId, "d");
+  p.accept({ room: { ...room, game: { ...room.game, decisionId: "next" } } });
+  assert.equal(p.data.riichiMode, false);
+  assert.equal(p.data.selected, -1);
+  p.toggleRiichi();
+  p.accept({ room: null });
+  assert.equal(p.data.riichiMode, false);
+  assert.equal(p.data.canRiichi, false);
+  assert.equal(p.data.hand.length, 0);
+});

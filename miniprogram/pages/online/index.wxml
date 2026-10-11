@@ -163,10 +163,17 @@
             bindtouchstart="touchStart"
             catchtouchend="touchEnd"
             bindtouchcancel="touchCancel"
-            class="tile {{selected===item.id?'raised':''}} {{item.choiceId?'playable':''}} {{item.drawn?'drawn':''}}"
+            class="tile {{riichiMode && !item.choiceId?'locked':''}} {{selected===item.id?'raised':''}} {{item.choiceId?'playable':''}} {{item.drawn?'drawn':''}}"
             ><image src="{{item.src}}" /></view
         ></view>
         <view class="actions"
+          ><button
+            wx:if="{{canRiichi}}"
+            bindtap="toggleRiichi"
+            class="{{riichiMode?'riichi-active':''}}"
+            disabled="{{busy}}"
+          >
+            {{riichiMode?'取消立直':'立直'}}</button
           ><button
             wx:for="{{actions}}"
             wx:key="id"

@@ -129,7 +129,7 @@ function feedback(before, after) {
   }
   return null;
 }
-function snapshot(response) {
+function snapshot(response, riichiMode = false) {
   const room = response.room;
   if (!room)
     return {
@@ -138,6 +138,8 @@ function snapshot(response) {
       seats: [],
       hand: [],
       actions: [],
+      riichiMode: false,
+      canRiichi: false,
       host: false,
       ready: false,
       serviceRunning: response.serviceRunning,
@@ -180,6 +182,9 @@ function snapshot(response) {
       game?.drawnTile && raw[raw.length - 1] === game.drawnTile
         ? raw.slice(0, -1)
         : raw;
+  const canRiichi = choices.some((c) => c.type === "riichi");
+  riichiMode = riichiMode && canRiichi;
+  const choiceType = riichiMode ? "riichi" : "discard";
   const hand = closed
     .concat(game?.drawnTile ? [game.drawnTile] : [])
     .map((v, i) => {
@@ -187,15 +192,16 @@ function snapshot(response) {
         drawn = !!game.drawnTile && i === closed.length,
         choice =
           choices.find(
-            (c) => c.type === "discard" && c.value === (drawn ? v + "_" : v),
+            (c) => c.type === choiceType && c.value === (drawn ? v + "_" : v),
           ) ||
-          (drawn
-            ? choices.find((c) => c.type === "discard" && c.value === v)
+          (drawn && !closed.includes(v)
+            ? choices.find((c) => c.type === choiceType && c.value === v)
             : null);
       return {
         ...t,
         id: i,
         choiceId: choice?.id || "",
+        choiceType: choice?.type || "",
         decisionId: game.decisionId,
         drawn,
       };
@@ -205,8 +211,10 @@ function snapshot(response) {
     game,
     seats,
     hand,
+    riichiMode,
+    canRiichi,
     actions: choices
-      .filter((c) => c.type !== "discard")
+      .filter((c) => c.type !== "discard" && c.type !== "riichi")
       .map((c) => ({ ...c, label: labels[c.type], tiles: meld(c.value) })),
     host:
       room.hostUserId ===

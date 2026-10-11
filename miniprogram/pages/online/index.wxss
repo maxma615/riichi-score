@@ -594,3 +594,12 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+.tile.locked {
+  opacity: 0.45;
+}
+.actions button.riichi-active {
+  background: #993e31;
+  color: #fff5e6;
+  border-color: #e2be8c;
+}
