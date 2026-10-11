@@ -1,6 +1,6 @@
 <view class="page quick-page">
   <view class="card lookup-card">
-    <view class="lookup-heading"><view class="heading">符番速查</view><text class="lookup-mark">点数</text></view>
+    <view class="lookup-heading"><view class="heading">符番速查</view><button bindtap="yaku">查役种</button></view>
     <view class="quick-context">
       <view><view class="context-label">桌型</view><view class="switch-pair"><button data-key="players" data-value="{{4}}" class="{{quick.players===4?'selected':''}}" bindtap="choose">四人</button><button data-key="players" data-value="{{3}}" class="{{quick.players===3?'selected':''}}" bindtap="choose">三人</button></view></view>
       <view><view class="context-label">本场</view><view class="counter"><button data-step="-1" bindtap="honba" disabled="{{quick.honba===0}}" aria-label="减少一本场">−</button><text>{{quick.honba}} 本场</text><button data-step="1" bindtap="honba" disabled="{{quick.honba===100}}" aria-label="增加一本场">＋</button></view></view>

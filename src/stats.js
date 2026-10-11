@@ -10,6 +10,8 @@ export function monthlyStats(rooms, userId, month, profile = () => null) {
       hit: 0,
       net: 0,
       peers: [],
+      maxGain: 0,
+      maxLoss: 0,
     },
     peers = new Map();
   const ym = new Intl.DateTimeFormat("sv-SE", {
@@ -25,6 +27,8 @@ export function monthlyStats(rooms, userId, month, profile = () => null) {
         continue;
       result.hands++;
       result.net += h.delta[seat];
+      result.maxGain = Math.max(result.maxGain, h.delta[seat]);
+      result.maxLoss = Math.min(result.maxLoss, h.delta[seat]);
       const event = h.event;
       if (event?.kind === "win") {
         const winner = event.winners.some((w) => w.seat === seat);
@@ -60,6 +64,15 @@ export function monthlyStats(rooms, userId, month, profile = () => null) {
   result.peers = [...peers.values()].sort(
     (a, b) => b.net - a.net || a.name.localeCompare(b.name),
   );
+  result.winRate = result.hands
+    ? Math.round((result.wins * 1000) / result.hands) / 10
+    : 0;
+  result.dealinRate = result.hands
+    ? Math.round((result.dealin * 1000) / result.hands) / 10
+    : 0;
+  result.summary = result.hands
+    ? `本月打了${result.hands}局，和牌率${result.winRate}%，放铳率${result.dealinRate}%。单局最高收入${result.maxGain.toLocaleString()}点，最高支出${(-result.maxLoss).toLocaleString()}点。`
+    : "本月还未开桌，记下第一局吧。";
   result.best = result.peers.filter((p) => p.net > 0)[0] ?? null;
   result.worst = [...result.peers].reverse().find((p) => p.net < 0) ?? null;
   return result;

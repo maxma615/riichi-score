@@ -91,11 +91,12 @@ test("小程序记分失败重试同nonce、双响独立符番与实际去重", 
     p.id = r.id;
     await p.load();
     p.choose({ currentTarget: { dataset: { key: "method", value: "ron" } } });
-    p.check({
-      currentTarget: { dataset: { key: "winners" } },
-      detail: { value: ["1", "2"] },
-    });
     p.choose({ currentTarget: { dataset: { key: "loser", value: 0 } } });
+    p.selectWinner({ currentTarget: { dataset: { seat: 1 } } });
+    p.selectWinner({ currentTarget: { dataset: { seat: 2 } } });
+    assert.deepEqual(Array.from(p.data.winners), [1, 2]);
+    p.selectWinner({ currentTarget: { dataset: { seat: 0 } } });
+    assert.deepEqual(Array.from(p.data.winners), [1, 2]);
     p.stepHan({ currentTarget: { dataset: { seat: 1, step: -1 } } });
     p.stepHan({ currentTarget: { dataset: { seat: 1, step: -1 } } });
     p.stepHan({ currentTarget: { dataset: { seat: 2, step: -1 } } });
@@ -125,10 +126,10 @@ test("扫码scene解析与每个原生页面可加载", () => {
   ])
     assert.equal(parseInvite(input), code);
   assert.equal(parseInvite("garbage"), "");
-  for (const name of ["quick", "fu", "room", "record", "me", "profile"])
+  for (const name of ["quick", "fu", "room", "record", "me", "profile", "yaku"])
     assert.ok(page(name, {}).data);
   const config = JSON.parse(readFileSync("miniprogram/app.json"));
-  assert.equal(config.pages.length, 6);
+  assert.equal(config.pages.length, 7);
 });
 
 test("小程序交叉格点击、禁用组合、限界档位与算符回填清除役满", () => {
@@ -248,4 +249,39 @@ test("小程序记分番数加减、符数点选、下限与弱网nonce更新", 
   p.data.winForms[0].han = 100;
   step(1);
   assert.equal(p.data.winForms[0].han, 100);
+});
+
+test("荣和点选、切换放铳者与单人自摸保留独立符番", async () => {
+  const r = {
+    id: "test",
+    version: 1,
+    isOwner: true,
+    rules: { players: 4, start: 25000, kiriage: false, kazoe: true },
+    scores: [25000, 25000, 25000, 25000],
+    members: [0, 1, 2, 3].map((i) => ({ id: "p" + i, name: "玩家" + i })),
+    dealer: 0,
+    hand: 0,
+    honba: 0,
+    pot: 0,
+    history: [],
+  };
+  const p = page("record", { api: async () => r });
+  p.id = r.id;
+  await p.load();
+  p.choose({ currentTarget: { dataset: { key: "method", value: "ron" } } });
+  p.choose({ currentTarget: { dataset: { key: "loser", value: 0 } } });
+  p.selectWinner({ currentTarget: { dataset: { seat: 1 } } });
+  p.stepHan({ currentTarget: { dataset: { seat: 1, step: 1 } } });
+  p.selectWinner({ currentTarget: { dataset: { seat: 2 } } });
+  p.selectWinner({ currentTarget: { dataset: { seat: 3 } } });
+  assert.equal(p.data.winners.length, 2);
+  p.selectWinner({ currentTarget: { dataset: { seat: 1 } } });
+  p.selectWinner({ currentTarget: { dataset: { seat: 1 } } });
+  assert.equal(p.data.winForms[1].han, 4);
+  p.choose({ currentTarget: { dataset: { key: "loser", value: 1 } } });
+  assert.deepEqual(Array.from(p.data.winners), [2]);
+  p.choose({ currentTarget: { dataset: { key: "method", value: "tsumo" } } });
+  p.selectWinner({ currentTarget: { dataset: { seat: 3 } } });
+  assert.deepEqual(Array.from(p.data.winners), [3]);
+  assert.ok(p.data.preview);
 });

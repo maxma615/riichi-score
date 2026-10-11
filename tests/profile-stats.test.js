@@ -90,6 +90,12 @@ test("月度荣和、自摸、双响、供托、同桌净点、撤回与隐私",
     assert.equal(stats.dealin, 1);
     assert.equal(stats.hit, 2);
     assert.equal(stats.net, -3000);
+    assert.equal(stats.maxGain, 0);
+    assert.equal(stats.maxLoss, -3000);
+    assert.equal(stats.dealinRate, 100);
+    assert.equal(stats.winRate, 0);
+    assert.match(stats.summary, /放铳率100%/);
+    assert.equal(stats.worst.net, -3000);
     assert.equal(s.stats(a, "2026-09").hands, 0);
     assert.equal(s.stats(foreign, "2026-10").hands, 0);
     command({
@@ -103,6 +109,10 @@ test("月度荣和、自摸、双响、供托、同桌净点、撤回与隐私",
     s.save(raw);
     stats = s.stats(a, "2026-10");
     assert.equal(stats.wins, 1);
+    assert.equal(stats.winRate, 50);
+    assert.equal(stats.dealinRate, 50);
+    assert.equal(stats.maxGain, 3000);
+    assert.equal(stats.best, null);
     assert.equal(stats.tsumo, 1);
     assert.equal(stats.peers.length, 2);
     assert.equal(s.stats(b, "2026-10").hit, 1);

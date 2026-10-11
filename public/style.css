@@ -1417,3 +1417,52 @@ label {
 footer {
   padding: 22px 0;
 }
+.player-checks,
+.fortune-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.fortune-grid > div {
+  background: #fffaf055;
+  border: 1px solid #bcb5a5;
+  padding: 10px;
+}
+.fortune-grid h3 {
+  margin-top: 0;
+}
+.monthly-summary {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #65685f;
+}
+.winner-picker button:disabled {
+  opacity: 0.4;
+}
+.yaku-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #bcb5a560;
+}
+.yaku-item > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.yaku-item h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.yaku-item span {
+  font-size: 12px;
+  color: #65685f;
+  text-align: right;
+}
+.yaku-item p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.winner-picker button {
+  transition: transform 0.18s;
+}

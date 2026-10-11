@@ -232,6 +232,7 @@ export function createApp({
         "/scoring.js": ["src/scoring.js", "text/javascript"],
         "/settlement-view.js": ["src/settlement-view.js", "text/javascript"],
         "/lookup.js": ["src/lookup.js", "text/javascript"],
+        "/yaku.js": ["src/yaku.js", "text/javascript"],
         "/fu.js": ["src/fu.js", "text/javascript"],
       };
       if (!files[url.pathname]) throw new HttpError(404, "页面不存在");

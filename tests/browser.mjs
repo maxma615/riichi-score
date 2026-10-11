@@ -37,6 +37,15 @@ for (const engine of [chromium, webkit])
           errors = [];
         page.on("pageerror", (e) => errors.push(e.message));
         await page.goto(entry);
+        await expect(page.locator("#room")).toBeVisible();
+        await expect(page.locator("#quick")).not.toBeVisible();
+        assert.equal(
+          await page.locator(".bottom-nav button").first().getAttribute("id"),
+          "room-tab",
+        );
+        await page
+          .getByRole("button", { name: "符番速查", exact: true })
+          .click();
         await expect(
           page.getByRole("heading", { name: "符番速查", exact: true }),
         ).toBeVisible();
@@ -49,6 +58,16 @@ for (const engine of [chromium, webkit])
           path: path.join(out, `${tag}-bottom-nav.png`),
         });
         await expect(page.locator("#open-fu")).toHaveCount(0);
+        await page.locator("#open-yaku").click();
+        await page.locator("#yaku-query").fill("三色");
+        await expect(page.locator(".yaku-item")).toHaveCount(2);
+        await expect(
+          page.locator(".yaku-item").filter({ hasText: "三色同顺" }),
+        ).toContainText("副露 1番");
+        await page.locator("#yaku-query").fill("");
+        await page.locator('[data-group="役满"]').click();
+        await expect(page.locator("#yaku-list")).toContainText("国士无双");
+        await page.locator("#back-points").click();
         await expect(page.locator(".quick-context")).toBeVisible();
         const contextBounds = await page
           .locator(".quick-context")
@@ -239,6 +258,30 @@ for (const engine of [chromium, webkit])
         }
         await expect(page.locator(".round-status")).toContainText("首次坐庄");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
+        await page.locator("#kind").selectOption("ron");
+        await expect(page.locator(".winner:visible")).toHaveCount(0);
+        await expect(page.locator('[data-winner-seat="0"]')).toBeDisabled();
+        await page.locator('[data-winner-seat="1"]').click();
+        await page
+          .locator('.winner[data-seat="1"] [data-han-step="1"]')
+          .click();
+        await page.locator('[data-winner-seat="2"]').click();
+        await expect(page.locator(".winner:visible")).toHaveCount(2);
+        await expect(page.locator('[data-winner-seat="3"]')).toBeDisabled();
+        await expect(page.locator("#preview")).toContainText("本局收支");
+        await page.screenshot({
+          path: path.join(out, `${tag}-winner-picker.png`),
+        });
+        await page.locator('[data-winner-seat="1"]').click();
+        await expect(page.locator('.winner[data-seat="1"]')).not.toBeVisible();
+        await page.locator('[data-winner-seat="1"]').click();
+        await expect(page.locator('.winner[data-seat="1"] .han')).toContainText(
+          "4 番",
+        );
+        await page.locator("#loser").selectOption("1");
+        await expect(page.locator('.winner[data-seat="1"]')).not.toBeVisible();
+        await expect(page.locator(".winner:visible")).toHaveCount(1);
+        await page.locator("#kind").selectOption("tsumo");
         await expect(page.locator(".record-status")).toContainText("0 本场");
         await expect(
           page.locator("#record-fields input[type=number]"),
@@ -381,6 +424,9 @@ for (const engine of [chromium, webkit])
         await expect(page.locator("#me")).toContainText("净点数");
         await expect(page.locator("#me .seat").first()).toContainText("3,000");
         await expect(page.locator("#me")).toContainText("同桌收支");
+        await expect(page.locator("#me")).toContainText("带福之人");
+        await expect(page.locator("#me")).toContainText("带负之人");
+        await expect(page.locator(".monthly-summary")).toContainText("放铳率");
         await page.screenshot({
           path: path.join(out, `${tag}-stats.png`),
           fullPage: true,

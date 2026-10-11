@@ -19,20 +19,21 @@
     <main>
       <section class="hero" hidden></section>
       <div id="notice" role="status" aria-live="polite"></div>
-      <section id="quick"></section>
-      <section id="room" hidden></section>
+      <section id="quick" hidden></section>
+      <section id="room"></section>
       <section id="fu" hidden></section>
       <section id="me" hidden></section>
     </main>
     <nav class="bottom-nav" aria-label="功能">
-      <button id="quick-tab" class="active" aria-current="page">
+      <button id="room-tab" class="active" aria-current="page">
+        <span aria-hidden="true">桌</span><span>线下牌桌</span>
+      </button>
+
+      <button id="quick-tab">
         <span aria-hidden="true">番</span><span>符番速查</span>
       </button>
       <button id="fu-tab">
         <span aria-hidden="true">符</span><span>算符</span>
-      </button>
-      <button id="room-tab">
-        <span aria-hidden="true">桌</span><span>线下牌桌</span>
       </button>
       <button id="me-tab">
         <span aria-hidden="true">我</span><span>我的</span>

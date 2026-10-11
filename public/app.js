@@ -1,4 +1,5 @@
 import { roundStatus, settlementView } from "./settlement-view.js";
+import { searchYaku } from "./yaku.js";
 import { lookup } from "./lookup.js";
 import { calculateFu } from "./fu.js";
 import { points, FU } from "./scoring.js";
@@ -16,6 +17,7 @@ const $ = (s) => document.querySelector(s),
           "'": "&#39;",
         })[c],
     );
+let ronWinners = new Set();
 let quick = {
     fu: 30,
     han: 1,
@@ -117,7 +119,7 @@ function renderQuick() {
   const cellButton = (c) =>
     `<button class="point-cell ${c.selected ? "chosen" : ""}" data-fu="${c.fu}" data-han="${c.han}" data-yakuman="${c.yakuman}" ${c.valid ? "" : "disabled"} aria-pressed="${c.selected}" aria-label="${c.yakuman ? c.title : `${c.han}番${c.fu}符`} ${c.main}${c.sub ? " / " + c.sub : ""}">${amount(c)}</button>`;
   $("#quick").innerHTML =
-    `<div class="card lookup-card"><div class="lookup-heading"><h2>符番速查</h2><span class="lookup-mark" aria-hidden="true">点数</span></div>
+    `<div class="card lookup-card"><div class="lookup-heading"><h2>符番速查</h2><button id="open-yaku" type="button">查役种</button></div>
     <div class="quick-context"><div><span class="context-label">桌型</span>${chips(
       "players",
       [
@@ -165,6 +167,7 @@ function renderQuick() {
           renderQuick();
         }),
     );
+  $("#open-yaku").onclick = renderYaku;
   for (const [id, step] of [
     ["honba-minus", -1],
     ["honba-plus", 1],
@@ -173,6 +176,36 @@ function renderQuick() {
       quick.honba = Math.max(0, Math.min(100, quick.honba + step));
       renderQuick();
     };
+}
+function renderYaku() {
+  $("#quick").innerHTML =
+    `<div class="card"><div class="lookup-heading"><h2>役种查番</h2><button id="back-points">查点数</button></div><label>搜索役名或条件<input id="yaku-query" type="search" placeholder="例如：门清、三色、字牌"></label><div class="choice-row" id="yaku-groups">${["全部", "1番", "2番", "3番", "6番", "役满"].map((g) => `<button data-group="${g}" aria-pressed="${g === "全部"}" class="${g === "全部" ? "selected" : ""}">${g}</button>`).join("")}</div><div id="yaku-list"></div><p class="muted">宝牌、赤宝牌、里宝牌、拔北宝牌各加1番，和牌须另有役。</p></div>`;
+  let group = "全部";
+  const refresh = () => {
+    const items = searchYaku($("#yaku-query").value, group);
+    $("#yaku-list").innerHTML =
+      items
+        .map(
+          (y) =>
+            `<article class="yaku-item"><div><h3>${esc(y.name)}</h3><span>门清 ${esc(y.closedLabel)} · ${y.open === null ? esc(y.openLabel) : `副露 ${esc(y.openLabel)}`}</span></div><p>${esc(y.description)}</p></article>`,
+        )
+        .join("") || "<p>没有找到，换个关键词试试。</p>";
+    document.querySelectorAll("[data-group]").forEach((b) => {
+      b.classList.toggle("selected", b.dataset.group === group);
+      b.setAttribute("aria-pressed", String(b.dataset.group === group));
+    });
+  };
+  $("#yaku-query").oninput = refresh;
+  document.querySelectorAll("[data-group]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        group = b.dataset.group;
+        refresh();
+      }),
+  );
+  $("#back-points").onclick = renderQuick;
+  refresh();
+  window.scrollTo(0, 0);
 }
 const roundLabel = (hand, n) =>
   `${["东", "南", "西", "北"][Math.floor(hand / n) % 4]}${(hand % n) + 1}局${hand >= n * 4 ? `（第${Math.floor(hand / (n * 4)) + 1}场）` : ""}`;
@@ -365,7 +398,7 @@ function confirmAction(title, text, action) {
 function openRecord() {
   modal({
     title: `${roundLabel(room.hand, room.rules.players)} · 记一局`,
-    body: `<div class="record-status"><b>${room.honba} 本场</b><span>${esc(roundStatus(room).label)} · 庄家 ${esc(roundStatus(room).dealerName)}</span></div><form id="record-form"><label>结果<select id="kind"><option value="tsumo">自摸</option><option value="ron">荣和（可多人）</option><option value="draw">荒牌流局</option><option value="abort">途中流局</option></select></label><div id="record-fields"></div><div class="divider"><p class="muted">本局实际交出立直棒的玩家（每人扣1000）</p>${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="riichi" value="${s}">${esc(seatName(s))}</label>`).join("")}</div><div id="preview"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
+    body: `<div class="record-status"><b>${room.honba} 本场</b><span>${esc(roundStatus(room).label)} · 庄家 ${esc(roundStatus(room).dealerName)}</span></div><form id="record-form"><label>结果<select id="kind"><option value="tsumo">自摸</option><option value="ron">荣和（可多人）</option><option value="draw">荒牌流局</option><option value="abort">途中流局</option></select></label><div id="record-fields"></div><div class="divider"><p class="muted">本局立直 · 每人1000点</p><div class="player-checks">${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="riichi" value="${s}">${esc(seatName(s))}</label>`).join("")}</div></div><div id="preview"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
   });
   $("#kind").onchange = recordFields;
   $("#record-form").oninput = previewEvent;
@@ -378,8 +411,8 @@ function openRecord() {
     });
   };
 }
-function winnerInputs(s, check = false) {
-  return `<div class="winner divider" data-seat="${s}" data-han="3" data-fu="30">${check ? `<label class="check"><input type="checkbox" name="winner" value="${s}">${esc(seatName(s))} 和牌</label>` : ""}<div class="record-label">番数</div><div class="counter record-counter"><button type="button" data-han-step="-1" aria-label="减少一番">−</button><output class="han">3 番</output><button type="button" data-han-step="1" aria-label="增加一番">＋</button></div><div class="record-label">符数</div><div class="fu-choices">${FU.map((f) => `<button type="button" data-fu-choice="${f}" aria-pressed="${f === 30}" class="${f === 30 ? "selected" : ""}">${f}符</button>`).join("")}</div><label>役满<select class="yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}倍役满</option>`).join("")}</select></label></div>`;
+function winnerInputs(s, selectable = false) {
+  return `<div class="winner divider" data-seat="${s}" data-han="3" data-fu="30" ${selectable ? "hidden" : ""}>${selectable ? `<h3>${esc(seatName(s))} · 荣和</h3>` : ""}<div class="record-label">番数</div><div class="counter record-counter"><button type="button" data-han-step="-1" aria-label="减少一番">−</button><output class="han">3 番</output><button type="button" data-han-step="1" aria-label="增加一番">＋</button></div><div class="record-label">符数</div><div class="fu-choices">${FU.map((f) => `<button type="button" data-fu-choice="${f}" aria-pressed="${f === 30}" class="${f === 30 ? "selected" : ""}">${f}符</button>`).join("")}</div><label>役满<select class="yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}倍役满</option>`).join("")}</select></label></div>`;
 }
 function refreshWinnerControls() {
   const method = $("#kind").value;
@@ -428,14 +461,42 @@ function refreshWinnerControls() {
 }
 function recordFields() {
   const kind = $("#kind").value;
+  ronWinners = new Set();
   $("#record-fields").innerHTML =
     kind === "tsumo"
       ? `<label>自摸玩家${selectSeats("tsumo-seat")}</label>${winnerInputs(0)}`
       : kind === "ron"
-        ? `<label>放铳玩家${selectSeats("loser")}</label>${room.members.map((m, s) => winnerInputs(s, true)).join("")}`
+        ? `<label>放铳玩家${selectSeats("loser")}</label><h3>谁荣和了？</h3><div class="choice-row winner-picker">${room.members.map((m, s) => `<button type="button" data-winner-seat="${s}" aria-pressed="false">${esc(seatName(s))} 荣和</button>`).join("")}</div>${room.members.map((m, s) => winnerInputs(s, true)).join("")}`
         : kind === "draw"
           ? `<p class="muted">勾选流局时听牌的玩家</p>${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="tenpai" value="${s}">${esc(seatName(s))}</label>`).join("")}`
           : '<p class="muted">途中流局不交换点数，保留供托、庄家并增加一本场。</p>';
+  if (kind === "ron") {
+    const sync = () => {
+      const loser = Number($("#loser").value);
+      ronWinners.delete(loser);
+      document.querySelectorAll("[data-winner-seat]").forEach((b) => {
+        const seat = Number(b.dataset.winnerSeat),
+          selected = ronWinners.has(seat);
+        b.disabled = seat === loser || (!selected && ronWinners.size >= 2);
+        b.classList.toggle("selected", selected);
+        b.setAttribute("aria-pressed", String(selected));
+        document.querySelector(`.winner[data-seat="${seat}"]`).hidden =
+          !selected;
+      });
+      previewEvent();
+    };
+    $("#loser").onchange = sync;
+    document.querySelectorAll("[data-winner-seat]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const seat = Number(b.dataset.winnerSeat);
+          if (ronWinners.has(seat)) ronWinners.delete(seat);
+          else ronWinners.add(seat);
+          sync();
+        }),
+    );
+    sync();
+  }
   refreshWinnerControls();
   previewEvent();
 }
@@ -466,9 +527,7 @@ function readEvent() {
     };
   if (kind === "abort") return { kind, riichi };
   const winners = [...document.querySelectorAll(".winner")]
-    .filter(
-      (el) => kind === "tsumo" || el.querySelector("[name=winner]").checked,
-    )
+    .filter((el) => kind === "tsumo" || ronWinners.has(Number(el.dataset.seat)))
     .map((el) => ({
       seat:
         kind === "tsumo"
@@ -487,6 +546,7 @@ function readEvent() {
   };
 }
 renderQuick();
+tab("room");
 renderRoom();
 await task(async () => {
   user = (await api("/api/session")).user;
@@ -682,7 +742,7 @@ async function renderMe(
       )
       .join(
         "",
-      )}</div></div><div class="card"><h2>同桌收支</h2>${s.best ? `<p>赢得最多 · ${esc(s.best.name)} <strong class="positive">+${s.best.net.toLocaleString()}</strong></p>` : ""}${s.worst ? `<p>输得最多 · ${esc(s.worst.name)} <strong class="negative">${s.worst.net.toLocaleString()}</strong></p>` : ""}${s.peers.map((p) => `<div class="line"><span>${esc(p.name)} · ${p.hands}局</span><strong class="${p.net >= 0 ? "positive" : "negative"}">${p.net >= 0 ? "+" : ""}${p.net.toLocaleString()}</strong></div>`).join("") || "<p>这个月还没有牌局</p>"}</div>`;
+      )}</div><p class="monthly-summary">${esc(s.summary)}</p></div><div class="card"><h2>本月牌缘</h2><div class="fortune-grid"><div><h3>带福之人</h3><p>${s.best ? `${esc(s.best.name)} <strong class="positive">+${s.best.net.toLocaleString()}</strong>` : "还未遇到"}</p></div><div><h3>带负之人</h3><p>${s.worst ? `${esc(s.worst.name)} <strong class="negative">${s.worst.net.toLocaleString()}</strong>` : "还未遇到"}</p></div></div><p class="muted">与你同桌时的净收支</p></div><div class="card"><h2>同桌收支</h2>${s.best ? `<p>赢得最多 · ${esc(s.best.name)} <strong class="positive">+${s.best.net.toLocaleString()}</strong></p>` : ""}${s.worst ? `<p>输得最多 · ${esc(s.worst.name)} <strong class="negative">${s.worst.net.toLocaleString()}</strong></p>` : ""}${s.peers.map((p) => `<div class="line"><span>${esc(p.name)} · ${p.hands}局</span><strong class="${p.net >= 0 ? "positive" : "negative"}">${p.net >= 0 ? "+" : ""}${p.net.toLocaleString()}</strong></div>`).join("") || "<p>这个月还没有牌局</p>"}</div>`;
   $("#stats-month").onchange = (e) => {
     if (e.target.value) task(() => renderMe(e.target.value));
   };

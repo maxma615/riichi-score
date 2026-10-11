@@ -28,6 +28,7 @@ Page({
     }
     this.refresh();
   },
+  yaku() { wx.navigateTo({url:"/pages/yaku/index"}); },
   choose(e) {
     const { key, value } = e.currentTarget.dataset;
     this.setData({ ["quick." + key]: value });

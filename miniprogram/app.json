@@ -1,11 +1,12 @@
 {
   "pages": [
+    "pages/room/index",
     "pages/quick/index",
     "pages/fu/index",
-    "pages/room/index",
     "pages/record/index",
     "pages/me/index",
-    "pages/profile/index"
+    "pages/profile/index",
+    "pages/yaku/index"
   ],
   "window": {
     "navigationBarTitleText": "日麻记分",
@@ -18,10 +19,22 @@
     "selectedColor": "#993e31",
     "backgroundColor": "#f5eedf",
     "list": [
-      { "pagePath": "pages/quick/index", "text": "符番" },
-      { "pagePath": "pages/fu/index", "text": "算符" },
-      { "pagePath": "pages/room/index", "text": "牌桌" },
-      { "pagePath": "pages/me/index", "text": "我的" }
+      {
+        "pagePath": "pages/room/index",
+        "text": "记分"
+      },
+      {
+        "pagePath": "pages/quick/index",
+        "text": "符番"
+      },
+      {
+        "pagePath": "pages/fu/index",
+        "text": "算符"
+      },
+      {
+        "pagePath": "pages/me/index",
+        "text": "我的"
+      }
     ]
   },
   "sitemapLocation": "sitemap.json"

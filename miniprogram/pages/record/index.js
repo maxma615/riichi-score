@@ -59,6 +59,20 @@ Page({
     this.nonce = null;
     this.refresh();
   },
+  selectWinner(e) {
+    const seat = Number(e.currentTarget.dataset.seat),
+      d = this.data;
+    if (d.method === "ron" && seat === d.loser) return;
+    let winners;
+    if (d.method === "tsumo") winners = [seat];
+    else if (d.winners.includes(seat))
+      winners = d.winners.filter((s) => s !== seat);
+    else if (d.winners.length < 2) winners = [...d.winners, seat];
+    else return;
+    this.setData({ winners });
+    this.nonce = null;
+    this.refresh();
+  },
   picker(e) {
     const { key, seat } = e.currentTarget.dataset;
     this.setData({
@@ -110,6 +124,11 @@ Page({
   },
   refresh() {
     const method = this.data.method;
+    let winners = this.data.winners;
+    if (method === "tsumo" && winners.length > 1) winners = winners.slice(0, 1);
+    if (method === "ron")
+      winners = winners.filter((s) => s !== Number(this.data.loser));
+    this.setData({ winners });
     const fuChoices = this.data.winForms.map((form, seat) => {
       const valid = (fu) => {
         try {
