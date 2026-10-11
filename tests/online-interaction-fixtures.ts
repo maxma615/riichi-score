@@ -7,7 +7,7 @@ import { physicalEngine } from "./legacy/fixtures/mahjong-settlement-game";
 import { kakanSoundFixture } from "./legacy/fixtures/mahjong-audio-game";
 import type { PlayerIdentity } from "../src/online/domain/types";
 
-function nukiGame() {
+function nukiGame(double = false) {
   return new SanmaGame("east", ["A", "B", "C"], {
     dealer: 0,
     wallFactory: () => {
@@ -17,9 +17,9 @@ function nukiGame() {
         assert.ok(i >= 0);
         return stock.splice(i, 1)[0];
       };
-      const hand = [..."123456789"]
-        .map((n) => "p" + n)
-        .concat(["s1", "s2", "s3", "z2"])
+      const code = double ? "p123456789s12z24" : "p123456789s123z2";
+      const hand = [...code.matchAll(/([psz])(\d+)/g)]
+        .flatMap((m) => [...m[2]].map((n) => m[1] + n))
         .map(take);
       const drawn = take("z4"),
         reserve = [take("z2")];
@@ -36,45 +36,44 @@ function nukiGame() {
     },
   });
 }
-export function scenario(name: string) {
-  const variant = name === "nuki" ? "sanma" : "yonma",
+export function scenario(name: string, autoReactions = true) {
+  const variant = name.startsWith("nuki") ? "sanma" : "yonma",
     capacity = variant === "sanma" ? 3 : 4;
-  const raw =
-    name === "nuki"
-      ? nukiGame()
-      : name === "kakan"
-        ? kakanSoundFixture(false)
-        : name === "double-ron"
+  const raw = name.startsWith("nuki")
+    ? nukiGame(name === "nuki-double")
+    : name === "kakan"
+      ? kakanSoundFixture(false)
+      : name === "double-ron"
+        ? physicalEngine(
+            "yonma",
+            { 1: "p123456789s123z2", 2: "p123456789s123z2" },
+            "z2",
+          )
+        : name === "chi"
           ? physicalEngine(
               "yonma",
-              { 1: "p123456789s123z2", 2: "p123456789s123z2" },
-              "z2",
+              { 0: "p1s123456789z123", 1: "p23s123456789z45" },
+              "p9",
             )
-          : name === "chi"
+          : name === "daiminkan"
             ? physicalEngine(
                 "yonma",
-                { 0: "p1s123456789z123", 1: "p23s123456789z45" },
+                { 0: "p1s123456789z123", 1: "p111s123456789z4" },
                 "p9",
               )
-            : name === "daiminkan"
+            : name === "pon"
               ? physicalEngine(
                   "yonma",
-                  { 0: "p1s123456789z123", 1: "p111s123456789z4" },
+                  { 0: "p1s123456789z123", 1: "p11s123456789z45" },
                   "p9",
                 )
-              : name === "pon"
-                ? physicalEngine(
+              : name === "ankan"
+                ? physicalEngine("yonma", { 0: "p111s123456789z1" }, "p1")
+                : physicalEngine(
                     "yonma",
-                    { 0: "p1s123456789z123", 1: "p11s123456789z45" },
-                    "p9",
-                  )
-                : name === "ankan"
-                  ? physicalEngine("yonma", { 0: "p111s123456789z1" }, "p1")
-                  : physicalEngine(
-                      "yonma",
-                      { 0: "p123456789s123z2" },
-                      name === "tsumo" ? "z2" : "z3",
-                    );
+                    { 0: "p123456789s123z2" },
+                    name === "tsumo" ? "z2" : "z3",
+                  );
   if (["pon", "chi", "daiminkan", "double-ron"].includes(name)) {
     const v = raw.view(0),
       c = v.choices.find(
@@ -115,7 +114,7 @@ export function scenario(name: string) {
       decisionId: input.decisionId,
       choiceId: c.id,
     });
-    if (name === "double-ron" && c.type === "ron") {
+    if (autoReactions && name === "double-ron" && c.type === "ron") {
       const other = store.view(players[2].userId)!.game!,
         ron = other.choices.find((c) => c.type === "ron");
       assert.ok(ron);
@@ -126,7 +125,7 @@ export function scenario(name: string) {
         choiceId: ron.id,
       });
     }
-    if (c.type === "ack")
+    if (autoReactions && c.type === "ack")
       for (let seat = 0; seat < capacity; seat++)
         if (seat !== actor) {
           const other = store.view(players[seat].userId)!.game!;
@@ -140,7 +139,7 @@ export function scenario(name: string) {
             });
         }
     // Simulate the other human participants declining optional calls, using their real choices.
-    for (let round = 0; round < 4; round++)
+    for (let round = 0; autoReactions && round < 4; round++)
       for (let seat = 0; seat < capacity; seat++)
         if (seat !== actor) {
           const v = store.view(players[seat].userId)!.game!;
@@ -155,5 +154,20 @@ export function scenario(name: string) {
         }
     return view();
   }
-  return { view, choose };
+  const viewFor = (seat: number) => store.view(players[seat].userId)!;
+  const act = (seat: number, type: string, value?: string) => {
+    const game = viewFor(seat).game!,
+      c = game.choices.find(
+        (c) => c.type === type && (value === undefined || c.value === value),
+      );
+    assert.ok(c);
+    execute(seat, {
+      action: "respond",
+      roomId: created.id,
+      decisionId: game.decisionId,
+      choiceId: c.id,
+    });
+    return view();
+  };
+  return { view, choose, viewFor, act };
 }

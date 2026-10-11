@@ -1,3 +1,4 @@
+const { NativeFlights } = require("../../utils/online-flight");
 const { dropOnTable, touchPoint } = require("../../utils/online-gesture");
 const { api, error } = require("../../utils/api");
 const { uuid, snapshot, feedback } = require("../../utils/online");
@@ -25,6 +26,9 @@ Page({
     draggingId: -1,
     dragStyle: "",
     dropTarget: false,
+    flight: null,
+    flightAnimation: {},
+    motionTarget: "",
     announcement: null,
     riichiMode: false,
     canRiichi: false,
@@ -41,6 +45,7 @@ Page({
     }, 2000);
   },
   onHide() {
+    this.flights?.cancel(true);
     this.touchCancel();
     this.active = false;
     this.setData({ riichiMode: false });
@@ -54,10 +59,12 @@ Page({
     this.setData({ announcement: null, selected: -1, riichiMode: false });
   },
   onResize() {
+    this.flights?.cancel();
     this.touchCancel();
     this.cancelOpening();
   },
   onPageScroll() {
+    this.flights?.cancel();
     this.touchCancel();
   },
   onUnload() {
@@ -75,7 +82,23 @@ Page({
       if (this.active && revision === this.revision) error(e);
     }
   },
+  nativeFlights() {
+    if (!this.flights)
+      this.flights = new NativeFlights(
+        this,
+        typeof wx === "undefined" ? null : wx,
+      );
+    return this.flights;
+  },
   accept(r, live = false) {
+    const flights = this.nativeFlights();
+    const flightPlan = flights.prepare(
+      this.data.room,
+      r.room,
+      live,
+      this.motionRequest,
+    );
+    this.motionRequest = null;
     const intent = r.room
       ? acceptedRoundOpening(this.data.room, r.room, live)
       : null;
@@ -133,16 +156,22 @@ Page({
     this.resultAnchor = key ? { key, time, age } : null;
     if (previousAnchor?.key !== key) this.autoPhase = "";
     const result = presentation(next.game, next.seats, age);
-    this.setData({
-      ...next,
-      settlement: result,
-      settlementAck: result
-        ? next.actions.find((c) => c.type === "ack") || null
-        : null,
-      actions: result
-        ? next.actions.filter((c) => c.type !== "ack")
-        : next.actions,
-    });
+    this.setData(
+      {
+        ...next,
+        settlement: result,
+        settlementAck: result
+          ? next.actions.find((c) => c.type === "ack") || null
+          : null,
+        actions: result
+          ? next.actions.filter((c) => c.type !== "ack")
+          : next.actions,
+      },
+      () => {
+        flights.start(flightPlan);
+        flights.capture();
+      },
+    );
     this.tickResult();
     this.tickOpening();
     if (!r.room?.game) {
@@ -198,12 +227,17 @@ Page({
       done ? null : age,
       true,
     );
-    this.setData({
-      hand: next.hand,
-      seats: next.seats,
-      openingHolding: next.openingHolding,
-      doraVisible: next.doraVisible,
-    });
+    this.setData(
+      {
+        hand: next.hand,
+        seats: next.seats,
+        openingHolding: next.openingHolding,
+        doraVisible: next.doraVisible,
+      },
+      () => {
+        if (done) this.flights?.capture();
+      },
+    );
     if (done) {
       this.openingRun = null;
       return;
@@ -273,6 +307,15 @@ Page({
     if (!this.pending || this.pending.key !== key)
       this.pending = { key, body: { ...body, nonce: uuid() } };
     const revision = (this.revision = (this.revision || 0) + 1);
+    this.motionRequest =
+      command.action === "respond" && this.chosenMotion
+        ? {
+            ...this.chosenMotion,
+            decisionId: command.decisionId,
+            choiceId: command.choiceId,
+          }
+        : null;
+    this.chosenMotion = null;
     this.touchCancel();
     this.setData({ busy: true });
     try {
@@ -353,24 +396,29 @@ Page({
       { room: this.data.room, serviceRunning: this.data.serviceRunning },
       !this.data.riichiMode,
     );
-    this.setData({
-      hand: next.hand,
-      riichiMode: next.riichiMode,
-      selected: -1,
-    });
+    this.setData(
+      {
+        hand: next.hand,
+        riichiMode: next.riichiMode,
+        selected: -1,
+      },
+      () => this.flights?.capture(),
+    );
   },
   discard(e) {
     if (!this.active || Date.now() < (this.ignoreTapUntil || 0)) return;
     this.touchCancel();
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];
     if (!t?.choiceId || this.data.busy || this.data.openingHolding) return;
-    if (this.data.selected === t.id)
+    if (this.data.selected === t.id) {
+      this.chosenMotion = { key: t.physicalKey };
       return this.send({
         action: "respond",
         decisionId: t.decisionId,
         choiceId: t.choiceId,
       });
-    this.setData({ selected: t.id });
+    }
+    this.setData({ selected: t.id }, () => this.flights?.capture());
   },
   touchStart(e) {
     this.touchCancel();
@@ -468,6 +516,10 @@ Page({
     // Query the current viewport geometry at release; never reuse pre-scroll bounds.
     const geometry = await this.dropGeometry();
     if (!this.currentDrag(d) || !dropOnTable(point, geometry)) return;
+    this.chosenMotion = {
+      key: d.tile.physicalKey,
+      shift: { x: point.x - d.start.x, y: point.y - d.start.y },
+    };
     this.setData({ selected: -1 });
     return this.send({
       action: "respond",

@@ -80,10 +80,10 @@ function meld(value) {
 function river(values) {
   let declaration = false;
   const visible = [];
-  for (const value of values || []) {
+  for (const [rawIndex, value] of (values || []).entries()) {
     if (value.includes("*")) declaration = true;
     if (/[+\-=]$/.test(value)) continue;
-    visible.push({ ...tile(value), sideways: declaration });
+    visible.push({ ...tile(value), rawIndex, sideways: declaration });
     declaration = false;
   }
   return visible;
@@ -161,7 +161,10 @@ function snapshot(
   const seats = Array.from({ length: capacity }, (_, seat) => {
     const member = room.members.find((m) => m.seat === seat),
       p = game?.players.find((p) => p.seat === seat),
-      visibleRiver = river(p?.discards);
+      visibleRiver = river(p?.discards).map((t) => ({
+        ...t,
+        nodeId: `river-${seat}-${t.rawIndex}`,
+      }));
     return {
       seat,
       name: member?.displayName || "空位",
@@ -185,7 +188,10 @@ function snapshot(
       edge: ["bottom", "right", ...(capacity === 4 ? ["top"] : []), "left"][
         (seat - room.mySeat + capacity) % capacity
       ],
-      north: Array.from({ length: p?.nuki || 0 }, () => tile("z4")),
+      north: Array.from({ length: p?.nuki || 0 }, (_, i) => ({
+        ...tile("z4"),
+        nodeId: `north-${seat}-${i}`,
+      })),
       active: game?.turnSeat === seat,
     };
   });

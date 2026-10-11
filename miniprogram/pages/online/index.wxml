@@ -125,7 +125,8 @@
               ><view
                 wx:for="{{row}}"
                 wx:key="index"
-                class="river-slot {{item.sideways?'sideways':''}}"
+                id="{{item.nodeId}}"
+                class="river-slot {{motionTarget===item.nodeId && flight?'arrival-held':''}} {{item.sideways?'sideways':''}}"
                 ><image src="{{item.src}}" class="tile-small" /></view></view
           ></view>
           <view class="drag-exclusion exposed exposed-{{player.edge}}">
@@ -146,12 +147,12 @@
             ></view>
             <view wx:if="{{player.nuki}}" class="north-tray"
               ><text>拔北 {{player.nuki}}</text
-              ><image
+              ><view
                 wx:for="{{player.north}}"
                 wx:key="index"
-                src="{{item.src}}"
-                class="tile-small"
-            /></view>
+                id="{{item.nodeId}}"
+                class="north-slot {{motionTarget===item.nodeId?(flight?'arrival-held':'arrival-pulse'):''}}"
+              ><image src="{{item.src}}" class="tile-small" /></view></view>
           </view>
         </block>
         <view class="hand drag-exclusion {{draggingId>=0?'has-drag':''}}"
@@ -348,3 +349,4 @@
     ></block
   >
 </view>
+<view wx:if="{{flight}}" class="tile-flight" style="{{flight.style}}" animation="{{flightAnimation}}"><image src="{{flight.src}}" /></view>
