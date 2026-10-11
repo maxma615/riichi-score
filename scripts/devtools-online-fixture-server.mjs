@@ -6,7 +6,20 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 if (process.argv[2] !== "--synthetic")
   throw Error("Use --synthetic for disposable loopback fixtures");
-const allowed = ["tsumo", "double-ron", "nuki-double", "draw-four", "draw-three"];
+const allowed = [
+  "tsumo",
+  "double-ron",
+  "nuki",
+  "nuki-double",
+  "draw-four",
+  "draw-three",
+  "pon",
+  "chi",
+  "ankan",
+  "daiminkan",
+  "kakan",
+  "riichi",
+];
 let name = process.argv[3] || "double-ron";
 if (!allowed.includes(name)) throw Error("Unsupported fixture");
 const root = path.resolve(".local/devtools-synthetic");

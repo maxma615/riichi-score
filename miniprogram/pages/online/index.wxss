@@ -209,7 +209,7 @@
 }
 .exposed-bottom {
   right: 8px;
-  bottom: 74px;
+  bottom: 16px;
 }
 .exposed-top {
   left: 50%;
@@ -732,6 +732,9 @@
 .online.is-playing .tile {
   width: calc(7.142857vw - 9.285714px);
   height: calc(10.204082vw - 13.265306px);
+}
+.online.is-playing .hand {
+  left: calc(50% - var(--own-meld-offset, 0px));
 }
 .revealed-rack { justify-content: center; }
 @media (orientation: landscape) {

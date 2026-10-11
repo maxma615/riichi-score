@@ -110,7 +110,7 @@ function html(room, age, safeInsets = { left: 0, right: 0 }) {
 const browser = await chromium.launch({ headless: true }),
   results = [];
 try {
-  for (const name of ["riichi", "nuki-double", "riichi-notch", "nuki-double-notch"])
+  for (const name of ["riichi", "nuki-double", "riichi-notch", "nuki-double-notch", "post-ankan", "post-ankan-notch"])
     for (const [width, height] of [
       [568, 260],
       [640, 280],
@@ -122,11 +122,19 @@ try {
         deviceScaleFactor: 1,
       });
       await page.route("**/*", (r) => r.abort());
+      const fixture = scenario(name.startsWith("post-ankan") ? "ankan" : name.replace("-notch", ""));
+      if (name.startsWith("post-ankan")) {
+        const game = fixture.view().game;
+        const kan = game.choices.find((c) => c.type === "kan");
+        assert.ok(kan);
+        fixture.choose({ id: kan.id, decisionId: game.decisionId });
+        assert.ok(fixture.view().game.choices.some((c) => c.type === "riichi"));
+      }
       await page.setContent(
         "<style>html,body{margin:0;padding:0}wx-view{display:block}wx-text{display:inline}wx-image{display:inline-block}wx-button{display:block;box-sizing:border-box;text-align:center;border:none}" +
           normalized(width) +
           "</style>" +
-          html(scenario(name.replace("-notch", ""), false).view(), undefined,
+          html(fixture.view(), undefined,
             name.endsWith("-notch") ? { left: 47, right: 47 } : undefined),
       );
       await page
@@ -163,6 +171,10 @@ try {
               bottom: r.bottom,
             };
           }),
+          ownMelds: [...document.querySelectorAll(".exposed-bottom .meld-tile")].map((el) => {
+            const r = el.getBoundingClientRect();
+            return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+          }),
           labels: [...document.querySelectorAll(".player-label")].map((el) => {
             const r = el.getBoundingClientRect();
             return {
@@ -194,7 +206,7 @@ try {
           scrollWidth: document.documentElement.scrollWidth,
         };
       });
-      assert.equal(boxes.tiles.length, 14, name);
+      assert.equal(boxes.tiles.length, name.startsWith("post-ankan") ? 11 : 14, name);
       if (name.endsWith("-notch")) {
         assert.ok(boxes.table.left >= 47, "table avoids left cutout");
         assert.ok(boxes.table.right <= width - 47, "table avoids right safe inset");
@@ -224,6 +236,12 @@ try {
       const overlap = (a, b) =>
         Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
         Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+      for (const meld of boxes.ownMelds) {
+        assert.ok(!boxes.actionButtons.some((b) => overlap(meld, b)),
+          "Own meld covered by action: " + JSON.stringify({ name, width, height, meld, buttons: boxes.actionButtons }));
+        assert.ok(!boxes.tiles.some((t) => overlap(meld, t)),
+          "Own meld covers hand: " + JSON.stringify({ name, width, height, meld, tiles: boxes.tiles }));
+      }
       for (const label of boxes.labels) {
         assert.ok(
           !overlap(label, boxes.hand),

@@ -35,6 +35,7 @@ Page({
     canRiichi: false,
     openingHolding: false,
     doraVisible: true,
+    ownMeldCount: 0,
     safeInsets: { left: 0, right: 0 },
   },
   onShow() {

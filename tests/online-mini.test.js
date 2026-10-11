@@ -62,6 +62,9 @@ test("原生联机牌面、合法动作、拔北与解散状态", () => {
   assert.equal(data.hand[1].choiceId, "");
   assert.equal(data.hand[2].choiceId, "drawn");
   assert.equal(data.seats[0].nuki, 2);
+  assert.equal(data.ownMeldCount, 1);
+  assert.equal(snapshot({ room: { ...room, mySeat: 1 } }).ownMeldCount, 0);
+  assert.equal(snapshot({ room: { ...room, game: { ...room.game, players: [...room.game.players].reverse() } } }).ownMeldCount, 1);
   assert.equal(data.seats[0].north.length, 2);
   assert.ok(data.seats[0].north.every((t) => t.key === "z4"));
   assert.deepEqual(
@@ -79,6 +82,7 @@ test("原生联机牌面、合法动作、拔北与解散状态", () => {
   assert.equal(data.actions[1].tiles.length, 3);
   assert.equal(data.actions[0].label, "拔北");
   assert.equal(snapshot({ room: null, serviceRunning: false }).room, null);
+  assert.equal(snapshot({ room: null, serviceRunning: false }).ownMeldCount, 0);
 });
 test("原生小程序真实独立HTTP开桌、重试同nonce、人机准备及解散", async () => {
   mkdirSync(".local/test-data", { recursive: true });

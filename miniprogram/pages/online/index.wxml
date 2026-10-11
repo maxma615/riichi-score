@@ -1,4 +1,4 @@
-<view class="page online {{game?'is-playing':''}}" style="--safe-left:{{safeInsets.left}}px;--safe-right:{{safeInsets.right}}px;">
+<view class="page online {{game?'is-playing':''}}" style="--safe-left:{{safeInsets.left}}px;--safe-right:{{safeInsets.right}}px;--own-meld-offset:{{ownMeldCount*40}}px;">
   <view wx:if="{{!room}}" class="card table-entry"
     ><view class="title">联机牌桌</view
     ><view class="toolbar"

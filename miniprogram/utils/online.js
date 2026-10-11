@@ -176,6 +176,7 @@ function snapshot(
       canRiichi: false,
       openingHolding: false,
       doraVisible: true,
+      ownMeldCount: 0,
       host: false,
       ready: false,
       serviceRunning: response.serviceRunning,
@@ -265,6 +266,7 @@ function snapshot(
     game,
     seats,
     hand,
+    ownMeldCount: (game?.players.find((p) => p.seat === room.mySeat)?.melds || []).length,
     riichiMode,
     canRiichi,
     openingHolding:
