@@ -70,7 +70,7 @@ npm run test:browser
 
 测试只用合成昵称和临时数据库。浏览器截图在 `.local/browser/`，不提交运行数据。测试覆盖真实 HTTP 权限、来源校验、数据库重启、并发、幂等、计分与撤回，浏览器流程还将二维码截图解码后在另一个独立会话加入。
 
-[两套应用的边界](docs/applications.md) · [实现设计](docs/design.md) · [验收状态](docs/acceptance.md) · [下一阶段微信小程序](docs/wechat-plan.md)
+[当前目标验收核对](docs/goal-audit.md) · [两套应用的边界](docs/applications.md) · [实现设计](docs/design.md) · [验收状态](docs/acceptance.md) · [下一阶段微信小程序](docs/wechat-plan.md)
 
 部署目录、独立数据卷、HTTPS 接入与后续升级见[服务器部署说明](docs/deployment.md)。
 
