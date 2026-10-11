@@ -4,7 +4,7 @@
 
 **手机直接访问：[日麻记分](https://8.133.186.15/riichi/)**。无需情侣空间账号，填写昵称后开桌，通过“扫码入桌”邀请朋友。
 
-这是独立运行的应用，有自己的进程、端口、SQLite 数据库和成员身份；**不需要启动情侣空间，不读取情侣空间账号或资料**。源码独立仓库：[maxma615/riichi-score](https://github.com/maxma615/riichi-score)。有归保留自己的源码与部署。网页版三／四人联机与电脑牌桌已经迁入，右上角进入[联机牌桌](https://8.133.186.15/riichi/online/)。原生联机源码已加入围桌布局、实体拔北与副露、动作提示及分阶段和牌／收支／名次面板，开局发牌／理牌与结算时间规则与网页同源；仍需微信开发者工具、AppID及备案域名完成编译与真机验收。
+这是独立运行的应用，有自己的进程、端口、SQLite 数据库和成员身份；**不需要启动情侣空间，不读取情侣空间账号或资料**。源码独立仓库：[maxma615/riichi-score](https://github.com/maxma615/riichi-score)。有归保留自己的源码与部署。网页版三／四人联机与电脑牌桌已经迁入，右上角进入[联机牌桌](https://8.133.186.15/riichi/online/)。原生联机源码已加入围桌布局、实体拔北与副露、动作提示及分阶段和牌／收支／名次面板，开局发牌／理牌与结算时间规则与网页同源；Linux官方WXML／WXSS旧版编译器检查已通过，仍需微信开发者工具、AppID及备案域名完成打包与真机验收。
 
 ## 中国风界面
 
@@ -84,6 +84,17 @@ npm run test:browser
 
 本地先运行`npm ci`、`npm run build`、`npm start`。联机进程只在开桌时启动，无桌60秒后停止；所有桌共用一个有内存和时间限额的电脑决策线程。重启或进程异常会清空未完成的联机牌桌，线下记分数据库不受影响。运行容器的总上限为0.25 CPU／256 MiB。
 
-验证命令：`npm test`（90项独立服务／小程序逻辑检查＋107项迁入的规则回归）、`npm run test:browser`、`npm run test:online:browser`。规则回归也可单独运行`npm run test:rules`，包含四麻／三麻、立直、拔北、听牌、人数／房主权限及多人结算。新增真实进程测试覆盖双人入桌、三／四麻电脑补位、独立身份、私有手牌、非房主权限、请求幂等、解散同步、按需停止和异常退出后线下服务可用。
+验证命令：`npm test`（104项独立服务／小程序逻辑检查＋107项迁入的规则回归）、`npm run test:browser`、`npm run test:online:browser`。规则回归也可单独运行`npm run test:rules`，包含四麻／三麻、立直、拔北、听牌、人数／房主权限及多人结算。新增真实进程测试覆盖双人入桌、三／四麻电脑补位、独立身份、私有手牌、非房主权限、请求幂等、解散同步、按需停止和异常退出后线下服务可用。
 
 网页版联机已实现，原生小程序新增联机页面，使用微信独立身份，可开桌、邀请、电脑补位、操作合法动作、查看拔北与结算；HTTP交互已作合成身份验证，页面视觉、拖牌和微信端编译／真机尚未验收。现有原生线下记分独立保留。正式小程序发布仍需AppID与备案域名。
+
+## 小程序模板检查
+
+Linux x86_64可以重复运行已验证的旧版官方编译器检查：
+
+```sh
+npm install --prefix .local/mini-compiler --ignore-scripts --no-audit --no-fund miniprogram-compiler@0.2.3
+npm run check:mini:templates -- .local/mini-compiler/node_modules/miniprogram-compiler/bin/linux
+```
+
+8个WXML和4个WXSS编译及WXML生成函数检查通过，输出和源码指纹在`.local/mini-template-check/`。该包的wcc版本是2020年，不能代替当前微信开发者工具打包、AppID配置、原生渲染或真机验收；macOS本机无法运行其旧二进制。

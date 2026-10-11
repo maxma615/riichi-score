@@ -15,7 +15,8 @@
     "test:online": "node --test tests/online*.test.js",
     "test:online:browser": "node tests/online-browser.mjs",
     "test:rules": "vitest run --config vitest.config.js",
-    "pretest": "npm run build"
+    "pretest": "npm run build",
+    "check:mini:templates": "node scripts/check-mini-templates.mjs"
   },
   "dependencies": {
     "@kobalab/majiang-core": "1.4.1",
