@@ -222,8 +222,7 @@
               <view
                 wx:if="{{settlement.kind==='win' || settlement.drawInfo.kind==='nagashi'}}"
                 class="result-points {{settlement.pointsVisible?'is-visible':'is-pending'}}"
-                ><text class="result-value-meta">{{settlement.kind==='win' ? settlement.hanLabel : '满贯'}}
-                {{settlement.fu ? '· '+settlement.fu+'符' : ''}}</text><text class="result-value-total"
+                ><text class="result-value-meta">{{settlement.kind==='win' ? settlement.hanLabel : '满贯'}}{{settlement.fu ? ' · '+settlement.fu+'符' : ''}}</text><text class="result-value-total"
                   >{{settlement.points}}点</text
                 ></view
               >

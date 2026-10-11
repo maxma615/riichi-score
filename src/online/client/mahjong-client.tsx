@@ -1,4 +1,5 @@
 "use client";
+import { mahjongTerm } from "../../yaku.js";
 import {acceptedRoundOpening,openingTileCount,openingKey,isOpeningGame} from "../domain/round-opening";
 import {handRack,validOpeningDeal} from "./hand-rack";
 import {useOpeningSort} from "./use-opening-sort";
@@ -866,7 +867,7 @@ export function GameRoom({ tableAudio, room, busy, host, ownSeat, connected, mot
         <span className="mahjong-call-previews">{choices.map(choice => <MahjongCallOption key={choice.id} choice={choice}/>)}</span>
       </button>)}
       {riichiMode ? <button type="button" className="mahjong-action-dock__cancel" onClick={() => setRiichiMode(false)}>返回普通切牌</button> : null}
-      {game.settlement && !game.settlementFlow ? <div className="mahjong-settlement" role="status"><span>{settlementTitle(game.settlement)}</span>{game.settlement.yaku.slice(0, 3).map((yaku) => <i key={yaku.name}>{yaku.name}</i>)}</div> : null}
+      {game.settlement && !game.settlementFlow ? <div className="mahjong-settlement" role="status"><span>{settlementTitle(game.settlement)}</span>{game.settlement.yaku.slice(0, 3).map((yaku) => <i key={yaku.name}>{mahjongTerm(yaku.name)}</i>)}</div> : null}
     </div> : null}
 
     {game.settlement ? <MahjongSettlementPanel leadInMs={drawLead} game={game} room={room} connected={connected} busy={busy} onChoice={choice => { publicCallMotion.cancel(); onChoice(choice); }}/> : null}

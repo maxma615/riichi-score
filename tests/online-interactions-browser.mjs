@@ -201,6 +201,8 @@ try {
             assert.ok(
               won.game.settlement.yaku.some((y) => /抜きドラ/.test(y.name)),
             );
+            await expect(page.locator('[data-settlement-stage="detail"] li').filter({ hasText: "拔北宝牌" })).toBeVisible();
+            await expect(page.locator('[data-settlement-stage="detail"]')).not.toContainText("抜きドラ");
           } else if (name === "tsumo") {
             await page.locator('button[data-choice-type="tsumo"]').click();
             await expect(
@@ -219,6 +221,9 @@ try {
             await expect(detail).toContainText("第 1 / 共 2 位");
             let current = await state();
             assert.equal(current.game.settlement.winnerSeat, 1);
+            assert.ok(current.game.settlement.yaku.some((y) => y.name === "一気通貫"));
+            await expect(detail.locator("li").filter({ hasText: "一气通贯" })).toBeVisible();
+            await expect(detail).not.toContainText("一気通貫");
             assert.deepEqual(scoresBySeat(current.game), oldScores);
             const next = async () => {
               const ack = page.locator('button[data-choice-type="ack"]');

@@ -803,7 +803,7 @@
   gap: 10px;
   margin: 6px 0;
 }
-.is-win-detail .result-points .result-value-meta { font-size: 13px; margin: 0; }
+.is-win-detail .result-points .result-value-meta { font-size: 13px; margin: 0; flex-shrink: 0; white-space: nowrap; }
 .is-win-detail .result-points .result-value-total { font-size: 24px; margin: 0; }
 .is-win-detail .winning-rack { margin: 6px 0; }
 .is-win-detail .result-indicators > view > view { margin-top: 3px; }

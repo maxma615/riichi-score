@@ -5,7 +5,7 @@ for (const [name, exports] of [
     ["ValidationError", "FU", "integer", "points", "defaults", "settle"],
   ],
   ["fu", ["calculateFu"]],
-  ["yaku", ["YAKU", "searchYaku"]],
+  ["yaku", ["YAKU", "searchYaku", "mahjongTerm"]],
   ["lookup", ["lookup"]],
   ["settlement-view", ["roundStatus", "settlementView"]],
 ]) {

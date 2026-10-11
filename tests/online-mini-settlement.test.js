@@ -28,6 +28,19 @@ const result = {
   delta: [5200, -5200, 0, 0],
   uraIndicators: ["s4"],
 };
+test("原生结算只翻译展示役名，保留引擎名称、番数及收支", () => {
+  const original = {
+    ...result, yaku: [{ name: "一気通貫", han: 2 }, { name: "抜きドラ", han: 1 }],
+  };
+  const before = structuredClone(original);
+  const shown = presentation({ settlement: original }, seats, 10000);
+  assert.deepEqual(shown.yaku.map((y) => [y.name, y.han, y.label]),
+    [["一气通贯", 2, "2番"], ["拔北宝牌", 1, "1番"]]);
+  assert.deepEqual(original, before);
+  assert.equal(shown.points, original.points);
+  assert.deepEqual(shown.delta, original.delta);
+  assert.equal(presentation({ settlement: { ...original, kind: "draw", name: "九種九牌" } }, seats).title, "九种九牌");
+});
 test("原生多人结算的滚动锚点随赢家及收支阶段切换，计时更新不跳回顶部", () => {
   const game = {
     settlement: result,

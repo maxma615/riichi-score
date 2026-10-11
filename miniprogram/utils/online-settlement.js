@@ -1,4 +1,5 @@
 const { tile, meld, callArt } = require("./online");
+const { mahjongTerm } = require("./yaku");
 // Concealed hand strings contain multiple suits; they are not individual melds.
 function closedTiles(value) {
   return (String(value || "").match(/[mpsz][0-9]+/g) || []).flatMap((group) =>
@@ -62,7 +63,7 @@ function presentation(
           : "荣和"
         : s.drawInfo?.kind === "nagashi"
           ? "流满贯"
-          : s.name;
+        : mahjongTerm(s.name);
   const yakuman = (s.yaku || []).reduce(
     (count, y) => count + (String(y.han).match(/\*+/)?.[0].length || 0),
     0,
@@ -167,6 +168,7 @@ function presentation(
         : "",
     yaku: (s.yaku || []).map((y, i) => ({
       ...y,
+      name: mahjongTerm(y.name),
       label: hanLabel(y.han),
       visible: stage !== "detail" || age >= 300 + Math.min(i, 14) * 180,
     })),

@@ -1,5 +1,6 @@
 import Majiang from "@kobalab/majiang-core";
 import type { Settlement } from "../domain/types";
+import { mahjongTerm } from "../../yaku.js";
 
 type MeldValidator = { valid_mianzi(value: string): string | undefined };
 
@@ -25,5 +26,5 @@ export function winningHand(settlement: Settlement) {
 
 export function settlementTitle(settlement: Settlement) {
   return settlement.kind === "win" && settlement.winMethod === "tsumo" ? "自摸"
-    : settlement.kind === "win" && settlement.winMethod === "ron" ? "荣和" : settlement.name;
+    : settlement.kind === "win" && settlement.winMethod === "ron" ? "荣和" : mahjongTerm(settlement.name);
 }

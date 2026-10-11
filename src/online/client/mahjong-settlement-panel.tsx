@@ -7,6 +7,7 @@ import type { Choice, GameView, RoomView } from "../domain/types";
 import { winningHand, settlementTitle } from "./mahjong-winning-hand";
 import { TileFace, tileName } from "./mahjong-tile";
 import { MahjongMeld as MeldView } from "./mahjong-meld";
+import { mahjongTerm } from "../../yaku.js";
 const number = (value: number) => value.toLocaleString("en-US");
 
 export function MahjongSettlementPanel({ game, room, connected, busy, onChoice, leadInMs = 0 }: { game: GameView; room: RoomView; connected: boolean; busy: boolean; onChoice: (choice: Choice) => void; leadInMs?: number }) {
@@ -61,7 +62,7 @@ export function MahjongSettlementPanel({ game, room, connected, busy, onChoice, 
       {nagashiDetail ? <ul><li data-testid="nagashi-yaku" className={presentation.elapsed >= NAGASHI_YAKU_MS ? "is-revealed" : "is-pending"}><span>流满贯</span></li></ul> : null}
       {!scoresStage && settlement.yaku.length ? <ul>{settlement.yaku.map((yaku, index) => {
         const units = String(yaku.han).match(/\*+/)?.[0].length || 0;
-        return <li key={`${game.decisionId}:${index}:${yaku.name}`} className={detailStage ? presentation.elapsed >= 300 + Math.min(index,14) * 180 ? "is-revealed" : "is-pending" : undefined} style={detailStage ? {"--reveal-index": Math.min(index,14)} as CSSProperties : undefined}><span>{yaku.name}</span><b>{units ? `${units > 1 ? `${units}倍` : ""}役满` : `${yaku.han} 番`}</b></li>;
+        return <li key={`${game.decisionId}:${index}:${yaku.name}`} className={detailStage ? presentation.elapsed >= 300 + Math.min(index,14) * 180 ? "is-revealed" : "is-pending" : undefined} style={detailStage ? {"--reveal-index": Math.min(index,14)} as CSSProperties : undefined}><span>{mahjongTerm(yaku.name)}</span><b>{units ? `${units > 1 ? `${units}倍` : ""}役满` : `${yaku.han} 番`}</b></li>;
       })}</ul> : null}
     </div>
     {ack || flow ? <footer className="mahjong-settlement-panel__actions">{flow ? <small role="status">{!ack ? "等待其他玩家" : !connected ? "正在重连" : !presentation.ready ? "正在展示" : busy || !presentation.canConfirm ? "正在确认" : `${presentation.countdown} 秒后继续`}</small> : null}{ack ? <button type="button" className="mahjong-button mahjong-button--gold" data-choice-id={ack.id} data-choice-type={ack.type} disabled={!presentation.canConfirm} onClick={presentation.submit}>继续{flow && presentation.ready && presentation.canConfirm ? ` · ${presentation.countdown}` : ""}</button> : null}</footer> : null}
