@@ -90,3 +90,11 @@ respond @retired_mahjong "联机麻将已迁移至 /riichi/online/" 410
 @riichi_score path /riichi /riichi/*
 reverse_proxy @riichi_score yougui-riichi-score:3200
 ```
+
+## 联机大厅与完整规则回归上线
+
+网页源`3e1c657`、镜像`sha256:b8440e3a696d1f97d79e01f91703d41152c5be0cd4ab2b297a4cfbacdc67b798`已发布，current为`/srv/riichi-score/releases/3e1c657`。昵称入口和大厅使用紧凑纸页界面，结算和役种统一写“番”。`3c0dcc4`只补了本地测试自动构建及README接手说明，不改线上运行源。
+
+生产镜像的90项Node检查在0.25 CPU／256 MiB下通过；107项迁入规则回归在同源构建检查镜像的0.25 CPU／384 MiB下通过（开发测试工具有额外内存，不能混称生产算法使用384 MiB）。运行服务仍限制0.25 CPU／256 MiB，端口仅回环、非root、独立卷；有归容器和原有记分业务表哈希保持不变。
+
+全新代码目录独立npm ci与npm test自动构建、90＋107项测试通过。4组浏览器流程覆盖390px首屏大厅和横屏开局；公网360／390px实际检查新昵称纸页、输入能清空、权限与旧入口跳转。线上JS与CSS哈希和本地构建匹配。无生产测试牌桌，无真实资料备份或下载。
