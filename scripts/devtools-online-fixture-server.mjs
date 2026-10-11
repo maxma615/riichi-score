@@ -19,6 +19,8 @@ const allowed = [
   "daiminkan",
   "kakan",
   "riichi",
+  "final-win",
+  "final-win-three",
 ];
 let name = process.argv[3] || "double-ron";
 if (!allowed.includes(name)) throw Error("Unsupported fixture");
@@ -93,6 +95,16 @@ const server = createServer(async (req, res) => {
           choiceId: input.choiceId,
           decisionId: input.decisionId,
         });
+      } else if (
+        route === "/api/online" &&
+        req.method === "POST" &&
+        ["rematch", "leave"].includes(input.action)
+      ) {
+        value = {
+          serviceRunning: true,
+          room: fixture.roomCommand(input.action) ?? null,
+        };
+        receipt(input.action);
       } else throw Error("Unsupported synthetic route");
     }
     res.writeHead(200, { "Content-Type": "application/json" });

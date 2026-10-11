@@ -38,12 +38,14 @@ function nukiGame(double = false) {
   });
 }
 export function scenario(name: string, autoReactions = true) {
-  const variant = name.startsWith("nuki") || name === "draw-three" ? "sanma" : "yonma",
+  const variant = name.startsWith("nuki") || name === "draw-three" || name === "final-win-three" ? "sanma" : "yonma",
     capacity = variant === "sanma" ? 3 : 4;
   const raw = name.startsWith("draw-")
     ? drawEngine(variant)
     : name.startsWith("nuki")
     ? nukiGame(name === "nuki-double")
+    : name.startsWith("final-win")
+      ? physicalEngine(variant, { 0: "z1112223334445" }, "z5")
     : name === "kakan"
       ? kakanSoundFixture(false)
       : name === "double-ron"
@@ -173,5 +175,9 @@ export function scenario(name: string, autoReactions = true) {
     });
     return view();
   };
-  return { view, choose, viewFor, act };
+  const roomCommand = (action: "rematch" | "leave") => {
+    execute(actor, { action, roomId: created.id });
+    return store.view(players[actor].userId);
+  };
+  return { view, choose, viewFor, act, roomCommand };
 }

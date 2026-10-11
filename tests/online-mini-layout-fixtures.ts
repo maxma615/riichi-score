@@ -208,18 +208,24 @@ export function resultStates() {
     ).view();
     return { ...base, mySeat: 0, game: game.view(0) };
   };
-  const ranking = {
-    ...single,
-    status: "finished",
-    game: {
-      ...single.game!,
-      ranking: single.members.map((p, i) => ({
-        seat: p.seat,
-        rank: i + 1,
-        score: 35000 - i * 5000,
-      })),
-    },
-  };
+  const rankings = ["final-win", "final-win-three"].flatMap((name) => {
+    const fixture = scenario(name);
+    const before = fixture.view();
+    const tsumo = before.game!.choices.find((c) => c.type === "tsumo")!;
+    fixture.choose({ id: tsumo.id, decisionId: before.game!.decisionId });
+    for (let page = 0; !fixture.view().game!.ranking; page++) {
+      assert.ok(page < 3, "Final win settles in detail and scores pages");
+      const current = fixture.view().game!;
+      const ack = current.choices.find((c) => c.type === "ack")!;
+      fixture.choose({ id: ack.id, decisionId: current.decisionId });
+    }
+    assert.equal(fixture.view().status, "finished");
+    assert.ok(fixture.view().game!.ranking!.some((p) => p.score < 0));
+    return [0, 1].map((seat) => ({
+      name: `result-ranking-${name}-${seat === 0 ? "host" : "member"}`,
+      room: structuredClone(fixture.viewFor(seat)),
+    }));
+  });
   return [
     { name: "result-tsumo", room: single },
     { name: "result-ron-first", room: first },
@@ -227,7 +233,6 @@ export function resultStates() {
     { name: "result-scores", room: scores },
     { name: "result-draw-four", room: natural("yonma") },
     { name: "result-draw-three", room: natural("sanma") },
-    // Ranking is a layout projection; no claim of a complete-match rule proof.
-    { name: "result-ranking", room: ranking },
+    ...rankings,
   ];
 }

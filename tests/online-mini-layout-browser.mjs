@@ -327,7 +327,8 @@ try {
       results.push({ name, width, height, passed: true, boxes });
       await page.close();
     }
-  for (const { name, room } of resultStates())
+  for (const { name: resultName, room } of resultStates())
+    for (const cutout of (resultName.startsWith("result-ranking") ? [false, true] : [false]))
     for (const [width, height] of [
       [568, 260],
       [640, 280],
@@ -336,12 +337,13 @@ try {
     ]) {
       const page = await browser.newPage({ viewport: { width, height } });
       await page.route("**/*", (r) => r.abort());
+      const name = resultName + (cutout ? "-notch" : "");
       // Native scroll-y is adapted to browser overflow only for this geometry check.
       await page.setContent(
         "<style>html,body{margin:0;padding:0}wx-view{display:block}wx-text{display:inline}wx-image{display:inline-block}wx-button{display:block;box-sizing:border-box;text-align:center;border:none}.result-scroll{overflow-y:auto}.result-overlay *{animation:none!important;transition:none!important}" +
           normalized(width) +
           "</style>" +
-          html(room, 10000),
+          html(room, 10000, cutout ? { left: 47, right: 47 } : undefined),
       );
       const measure = () =>
         page.evaluate(() => {
@@ -376,7 +378,37 @@ try {
             pageWidth: document.documentElement.scrollWidth,
           };
         });
+      if (room.game?.ranking) {
+        const rows = await page
+          .locator(".result-scroll .line")
+          .allTextContents();
+        assert.equal(rows.length, room.game.ranking.length);
+        room.game.ranking.forEach((rank, index) => {
+          assert.ok(rows[index].includes(`${rank.rank}位`));
+          assert.ok(
+            rows[index].includes(
+              room.members.find((m) => m.seat === rank.seat).displayName,
+            ),
+          );
+          assert.ok(rows[index].includes(String(rank.score)));
+        });
+        const labels = (
+          await page.locator(".ranking-footer wx-button").allTextContents()
+        ).map((label) => label.trim());
+        assert.deepEqual(
+          labels,
+          room.mySeat === 0 ? ["再来一场", "返回大厅"] : ["返回大厅"],
+        );
+        assert.equal(
+          await page.locator(".result-footer:not(.ranking-footer)").count(),
+          0,
+        );
+      }
       const before = await measure();
+      if (cutout)
+        assert.ok(
+          before.panel.left >= 47 && before.panel.right <= width - 47,
+        );
       assert.ok(
         before.panel.top >= 0 &&
           before.panel.bottom <= height + 1 &&
