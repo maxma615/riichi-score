@@ -71,7 +71,7 @@ export function monthlyStats(rooms, userId, month, profile = () => null) {
     ? Math.round((result.dealin * 1000) / result.hands) / 10
     : 0;
   result.summary = result.hands
-    ? `本月打了${result.hands}局，和牌率${result.winRate}%，放铳率${result.dealinRate}%。单局最高收入${result.maxGain.toLocaleString()}点，最高支出${(-result.maxLoss).toLocaleString()}点。`
+    ? `本月打了${result.hands}局，和牌率${result.winRate}%，放铳率${result.dealinRate}%。单局最高收入${result.maxGain.toLocaleString()}点，最高支出${Math.abs(result.maxLoss).toLocaleString()}点。`
     : "本月还未开桌，记下第一局吧。";
   result.best = result.peers.filter((p) => p.net > 0)[0] ?? null;
   result.worst = [...result.peers].reverse().find((p) => p.net < 0) ?? null;

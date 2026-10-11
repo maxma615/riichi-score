@@ -169,7 +169,9 @@ export class Store {
         players: s.rules.players,
         hand: s.hand,
         finished: s.finished,
-        names: s.members.map((m) => m?.name ?? "空位"),
+        names: s.members.map((m) =>
+          m ? this.profile(m.id)?.name ?? m.name : "空位",
+        ),
       }));
   }
   create(u, { players = 4, kiriage = false, kazoe = true } = {}) {

@@ -123,12 +123,56 @@ test("月度荣和、自摸、双响、供托、同桌净点、撤回与隐私",
     assert.equal(s.stats(a, "2026-10").net, -3000);
     s.updateProfile(b, "乙改名");
     assert.equal(s.get(r.id, a).members[1].name, "乙改名");
+    assert.equal(s.list(a)[0].names[1], "乙改名");
+    assert.equal(s.list(b)[0].names[1], "乙改名");
+    assert.deepEqual(s.list(foreign), []);
     assert.ok(s.stats(a, "2026-10").peers.some((p) => p.name === "乙改名"));
     assert.equal(
       s.command(a, r.id, { action: "undo", version, nonce: "undo-stats" })
         .version,
       r.version,
     );
+  } finally {
+    s.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("仅收入与零收支月份的支出显示0点，昵称更新不改牌局快照", () => {
+  const dir = mkdtempSync(".local/test-data/profile-list-");
+  const file = path.join(dir, "db.sqlite");
+  let s = new Store(file);
+  try {
+    const a = s.session("旧昵称");
+    let r = s.create(a);
+    const before = s.raw(r.id);
+    s.updateProfile(a, "新昵称");
+    assert.deepEqual(s.list(a)[0].names, ["新昵称", "空位", "空位", "空位"]);
+    assert.deepEqual(s.raw(r.id), before);
+    for (let seat = 1; seat < 4; seat++)
+      r = s.join(s.session(`测试成员${seat}`), r.code, seat);
+    r = s.command(a, r.id, {
+      action: "record", version: r.version, nonce: "gain-only",
+      event: { kind: "win", method: "tsumo", winners: [{ seat: 0, fu: 30, han: 3 }] },
+    });
+    const raw = s.raw(r.id);
+    raw.history[0].createdAt = "2026-10-01T00:00:00.000Z";
+    s.save(raw);
+    assert.match(s.stats(a, "2026-10").summary, /最高支出0点/);
+    s.close();
+    s = new Store(file);
+    assert.equal(s.list(a)[0].names[0], "新昵称");
+    assert.match(s.stats(a, "2026-10").summary, /最高支出0点/);
+    s.command(a, r.id, { action: "undo", version: r.version, nonce: "undo-gain" });
+    const zero = s.command(a, r.id, {
+      action: "record", version: r.version + 1, nonce: "zero-draw",
+      event: { kind: "draw", tenpai: [] },
+    });
+    const zeroRaw = s.raw(zero.id);
+    zeroRaw.history[0].createdAt = "2026-10-01T00:00:00.000Z";
+    s.save(zeroRaw);
+    assert.equal(s.stats(a, "2026-10").maxLoss, 0);
+    assert.match(s.stats(a, "2026-10").summary, /最高支出0点/);
   } finally {
     s.close();
     rmSync(dir, { recursive: true, force: true });
