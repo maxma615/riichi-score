@@ -71,3 +71,22 @@ AppID与备案域名未提供，因此服务端微信配置为空，未发布微
 线上线下应用源1d333eb，镜像sha256:57ad50898eddd9cd25696ab687f5903949f72e1763a2eb3bcf1eafa9615d509b，current为/srv/riichi-score/releases/1d333eb。86项Linux容器测试通过，现有业务表内容不变、独立卷和0.25CPU/128MiB限制、禁备份及有归容器未改变均核对。公网手机两种浏览器检查通过。
 
 新源码入口为https://github.com/maxma615/riichi-score，独立根目录直接构建Docker上下文，不再从有归的mahjong-room取源码。提取ed0b2dd与有归1d333eb的应用文件一致，线上镜像仍标记原发布源，不伪称已从新修订重建。分仓后的维护继续使用同一独立记分卷，不创建备份、复制真实数据库或共享有归登录。原联机麻将服务待迁移，不属于本轮已部署功能。
+
+## 2026-10-12 独立联机生产迁移
+
+当前网页运行源`60eba12`，镜像`sha256:d9be7e1a19d5e07501d69883f4440c07892ecac7d8d19af61548df2a503749cd`，current为`/srv/riichi-score/releases/60eba12`。独立仓库已包含完整牌桌样式、Node子进程与Socket.IO；Docker多阶段构建前端和联机服务后仅保留生产依赖。最新原生绘牌／摸牌适配修正在`1d0f352`，该提交只改小程序和测试，网页构建与生产相同。
+
+运行总上限0.25 CPU／256 MiB，3200仍仅回环监听，使用同一独立SQLite卷。Node24／Linux受限镜像90项测试通过，原三张记分业务表更新前后内容哈希不变；有归容器ID与进程未变，禁备份策略保留。网页前端JS与CSS公网内容SHA-256均与本地构建一致。公网360／390px入口、匿名HTTP／Socket权限、拒绝有归Cookie，以及旧页面302、新记分200、旧接口410均实际检查。没有写真实测试牌桌。
+
+原表的透视、副露立体牌、飞牌、宣言、桌布、宝牌、横屏等独立样式按原导入顺序全部保留。本地Chromium／WebKit根路径和前缀4项手机横屏开桌／人机／牌面与字体加载通过，原线下8项浏览器流程通过。原生源码与HTTP适配已提交，微信平台验收未执行。
+
+网关注意：宿主路径的当前文件与运行容器既有bind inode可能不同。本次先验证宿主当前配置，再通过`docker exec -i ... caddy reload --config /dev/stdin --adapter caddyfile`传入当前配置；随后从公网检查实际跳转和接口退役，不能仅凭CLI退出0宣称生效。有归仓库两份网关配置均须保留以下规则：
+
+```caddyfile
+redir /mahjong /riichi/online/ 302
+redir /mahjong/ /riichi/online/ 302
+@retired_mahjong path /api/mahjong /mahjong/socket.io*
+respond @retired_mahjong "联机麻将已迁移至 /riichi/online/" 410
+@riichi_score path /riichi /riichi/*
+reverse_proxy @riichi_score yougui-riichi-score:3200
+```
