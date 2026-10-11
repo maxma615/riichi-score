@@ -48,6 +48,33 @@ for (const engine of [chromium, webkit])
         await page.screenshot({
           path: path.join(out, `${tag}-bottom-nav.png`),
         });
+        await expect(page.locator("#open-fu")).toHaveCount(0);
+        await expect(
+          page.locator('.point-matrix [data-fu="20"][data-han="1"]'),
+        ).toBeDisabled();
+        await page
+          .locator('.point-matrix [data-fu="40"][data-han="3"]')
+          .click();
+        await expect(page.locator("#quick .result")).toContainText("3番40符");
+        await expect(page.locator("#quick .result")).toContainText("5,200");
+        await expect(
+          page.locator('.point-matrix [data-fu="40"][data-han="3"]'),
+        ).toHaveAttribute("aria-pressed", "true");
+        const matrixBounds = await page.locator(".point-matrix").boundingBox();
+        assert.ok(matrixBounds.y < (mobile ? 440 : 500));
+        await page
+          .locator('.limit-matrix [data-han="5"][data-yakuman="0"]')
+          .click();
+        await expect(page.locator("#quick .result")).toContainText(
+          "5番 · 满贯",
+        );
+        await expect(page.locator("#quick .result")).toContainText("8,000");
+        await page.getByRole("button", { name: "庄家", exact: true }).click();
+        await expect(page.locator("#quick .result")).toContainText("12,000");
+        await page.getByRole("button", { name: "闲家", exact: true }).click();
+        await page
+          .locator('.point-matrix [data-fu="30"][data-han="1"]')
+          .click();
         await page.getByRole("button", { name: "算符", exact: true }).click();
         await expect(page.locator(".fu-result")).toContainText("30符");
         await expect(page.locator("#fu")).toContainText("门前清荣和");
@@ -68,7 +95,9 @@ for (const engine of [chromium, webkit])
         await page
           .getByRole("button", { name: "用这个符数查点", exact: true })
           .click();
-        await page.getByRole("button", { name: "30符", exact: true }).click();
+        await page
+          .locator('.point-matrix [data-fu="30"][data-han="3"]')
+          .click();
         await page.getByRole("button", { name: "荣和", exact: true }).click();
         await expect(
           page.getByRole("heading", {
@@ -82,11 +111,13 @@ for (const engine of [chromium, webkit])
         await expect(
           page.getByRole("row").filter({ hasText: "5番" }),
         ).toContainText("8,000");
-        await page.getByRole("button", { name: "3番", exact: true }).click();
+        await page
+          .locator('.point-matrix [data-fu="30"][data-han="3"]')
+          .click();
         await expect(page.locator("#quick .result")).toContainText("3,900");
         await page.getByRole("button", { name: "自摸", exact: true }).click();
         await expect(page.locator("#quick .result")).toContainText(
-          "庄家 2,000 点",
+          "庄家付 2,000 点",
         );
         assert.equal(
           await page.evaluate(

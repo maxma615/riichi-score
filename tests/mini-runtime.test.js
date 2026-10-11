@@ -135,3 +135,43 @@ test("扫码scene解析与每个原生页面可加载", () => {
   const config = JSON.parse(readFileSync("miniprogram/app.json"));
   assert.equal(config.pages.length, 6);
 });
+
+test("小程序交叉格点击、禁用组合、限界档位与算符回填清除役满", () => {
+  const wx = {
+    getStorageSync: () => ({ fu: 40, method: "ron" }),
+    removeStorageSync: () => {},
+  };
+  const p = page("quick", {}, wx);
+  p.onLoad();
+  const tap = (fu, han, yakuman = 0) =>
+    p.selectCell({ currentTarget: { dataset: { fu, han, yakuman } } });
+  tap(40, 3);
+  assert.equal(p.data.result.ron, 5200);
+  assert.equal(p.data.rows.find((r) => r.fu === 40).cells[2].selected, true);
+  tap(20, 1);
+  assert.equal(p.data.quick.fu, 40);
+  tap(30, 6);
+  assert.equal(p.data.result.ron, 12000);
+  assert.equal(p.data.limits[1].selected, true);
+  tap(30, 13, 2);
+  assert.equal(p.data.result.ron, 64000);
+  p.onShow();
+  assert.equal(p.data.quick.yakuman, 0);
+  assert.equal(p.data.quick.fu, 40);
+  p.choose({ currentTarget: { dataset: { key: "dealer", value: true } } });
+  p.choose({ currentTarget: { dataset: { key: "method", value: "tsumo" } } });
+  tap(40, 3);
+  assert.equal(p.data.result.child, 2600);
+  assert.equal(p.data.result.payment, "每家支付 2,600 点");
+});
+
+test("小程序从20符自摸切到荣和时回到合法30符", () => {
+  const p = page("quick", {});
+  p.onLoad();
+  p.choose({ currentTarget: { dataset: { key: "method", value: "tsumo" } } });
+  p.selectCell({ currentTarget: { dataset: { fu: 20, han: 2, yakuman: 0 } } });
+  assert.equal(p.data.quick.fu, 20);
+  p.choose({ currentTarget: { dataset: { key: "method", value: "ron" } } });
+  assert.equal(p.data.quick.fu, 30);
+  assert.equal(p.data.result.ron, 2000);
+});

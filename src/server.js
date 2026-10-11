@@ -230,6 +230,7 @@ export function createApp({
           "image/svg+xml",
         ],
         "/scoring.js": ["src/scoring.js", "text/javascript"],
+        "/lookup.js": ["src/lookup.js", "text/javascript"],
         "/fu.js": ["src/fu.js", "text/javascript"],
       };
       if (!files[url.pathname]) throw new HttpError(404, "页面不存在");

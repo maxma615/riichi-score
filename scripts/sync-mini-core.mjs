@@ -5,12 +5,17 @@ for (const [name, exports] of [
     ["ValidationError", "FU", "integer", "points", "defaults", "settle"],
   ],
   ["fu", ["calculateFu"]],
+  ["lookup", ["lookup"]],
 ]) {
   const source = readFileSync(
     new URL(`../src/${name}.js`, import.meta.url),
     "utf8",
   )
     .replace(/export /g, "")
+    .replace(
+      'import { FU, points } from "./scoring.js";',
+      "const { FU, points } = require('./scoring');",
+    )
     .replace("structuredClone(state)", "JSON.parse(JSON.stringify(state))");
   writeFileSync(
     new URL(`../miniprogram/utils/${name}.js`, import.meta.url),

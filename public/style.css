@@ -781,3 +781,220 @@ body {
 :root {
   scroll-padding-bottom: 100px;
 }
+
+/* 查点以交叉表为主体，选中项与支付结果保持在同一张纸页。 */
+#quick {
+  max-width: 740px;
+  margin: 0 auto;
+}
+.lookup-card {
+  padding: 22px;
+}
+.lookup-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.lookup-heading h2 {
+  margin: 0;
+}
+.lookup-mark {
+  font-family: var(--font-ink);
+  color: #993e31;
+  border: 1px solid #993e31;
+  padding: 4px 6px;
+  font-size: 14px;
+}
+.lookup-switches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.lookup-switches .choice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin: 0;
+}
+.lookup-switches button {
+  min-width: 0;
+  padding: 10px 6px;
+  border-radius: 0;
+}
+#quick .lookup-result {
+  margin: 16px 0;
+  padding: 16px 20px;
+  background: #293632;
+  color: #f5eddb;
+  border: 0;
+}
+#quick .lookup-result strong {
+  font-size: 38px;
+  line-height: 1.2;
+  display: block;
+  margin: 6px 0;
+  font-family: system-ui, sans-serif;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+#quick .lookup-result p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #ede4d2;
+}
+.selection-label {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+.table-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: #736b5d;
+  margin: 16px 0 8px;
+}
+.point-matrix {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.point-matrix th,
+.point-matrix td {
+  padding: 0;
+  border: 1px solid #c3b9a7;
+  text-align: center;
+}
+.point-matrix th:first-child {
+  width: 48px;
+}
+.point-matrix th {
+  height: 36px;
+  font-size: 13px;
+  color: #62594c;
+  background: #e3dbcb;
+  font-weight: 600;
+}
+.point-matrix td {
+  background: #f6f0e5;
+}
+.point-matrix .axis-selected {
+  background: #ead4c5;
+  color: #993e31;
+}
+.point-matrix .axis-tint {
+  background: #efe1d3;
+}
+#quick .point-cell {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  border: 0;
+  border-radius: 0;
+  padding: 7px 2px;
+  color: #292d2b;
+  background: transparent;
+  letter-spacing: 0;
+  font-family: system-ui, sans-serif;
+}
+#quick .point-cell:hover {
+  background: #993e3114;
+}
+#quick .point-cell.chosen {
+  background: #993e31;
+  color: #fff5e6;
+  box-shadow: inset 0 0 0 2px #b87660;
+}
+#quick .point-cell:disabled {
+  opacity: 1;
+  color: #aca293;
+  cursor: default;
+}
+.cell-main {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.cell-sub {
+  font-size: 12px;
+  line-height: 1.2;
+  opacity: 0.75;
+}
+.limit-heading {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 24px 0 10px;
+}
+.limit-matrix {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.limit-matrix th,
+.limit-matrix td {
+  padding: 0 8px;
+  border-bottom: 1px solid #c3b9a7;
+  font-size: 13px;
+  background: transparent;
+}
+.limit-matrix th {
+  text-align: left;
+  width: 34%;
+  font-weight: 500;
+}
+.limit-matrix td:last-child {
+  padding: 0;
+  width: 32%;
+}
+.limit-matrix .limit-selected {
+  background: #efe1d3;
+  color: #993e31;
+}
+.lookup-more {
+  border-top: 1px solid #c3b9a7;
+  margin-top: 16px;
+  font-size: 13px;
+}
+@media (max-width: 500px) {
+  .lookup-card {
+    padding: 14px 10px;
+    margin-top: 14px;
+  }
+  .lookup-heading {
+    padding: 0 4px;
+    margin-bottom: 14px;
+  }
+  .lookup-switches {
+    gap: 12px;
+  }
+  #quick .lookup-result {
+    padding: 14px;
+  }
+  .point-matrix th:first-child {
+    width: 44px;
+  }
+  .cell-main {
+    font-size: 13px;
+  }
+  .cell-sub {
+    font-size: 11px;
+  }
+  .limit-matrix th,
+  .limit-matrix td {
+    padding: 0 4px;
+    font-size: 12px;
+  }
+}
+
+#quick .lookup-result {
+  position: sticky;
+  top: 8px;
+  z-index: 2;
+  box-shadow: 0 4px 14px #292d2b26;
+}

@@ -1,3 +1,4 @@
+import { lookup } from "./lookup.js";
 import { calculateFu } from "./fu.js";
 import { points, FU, settle } from "./scoring.js";
 const base = document.querySelector("meta[name=app-base]").content;
@@ -94,7 +95,7 @@ function tab(name) {
   }
   $("#quick-tab").classList.toggle("active", name === "quick");
   $("#room-tab").classList.toggle("active", name === "room");
-  $(".hero").hidden = name !== "quick";
+  $(".hero").hidden = true;
   window.scrollTo(0, 0);
 }
 $("#quick-tab").onclick = () => tab("quick");
@@ -108,88 +109,62 @@ function chips(key, items) {
 function result(p, options) {
   return `${p.label ? `<p>${p.label}</p>` : ""}<strong>${p.total.toLocaleString()}<small> 点</small></strong><p>${options.method === "ron" ? `放铳者支付 ${p.ron.toLocaleString()} 点` : options.dealer ? `每家支付 ${p.child.toLocaleString()} 点` : `庄家 ${p.parent.toLocaleString()} 点 · 闲家 ${p.child.toLocaleString()} 点`}</p>`;
 }
-function limitTable() {
-  const rows = [
-    [5, "5番", "满贯"],
-    [6, "6–7番", "跳满"],
-    [8, "8–10番", "倍满"],
-    [11, "11–12番", "三倍满"],
-    [13, "13番及以上", "累计役满"],
-  ];
-  const payment = (x) =>
-    quick.method === "ron"
-      ? x.ron.toLocaleString()
-      : quick.dealer
-        ? `${x.child.toLocaleString()} ALL`
-        : `${x.child.toLocaleString()} / ${x.parent.toLocaleString()}`;
-  return `<div class="card"><h2>5番及以上 · 满贯与役满</h2><p class="muted">达到满贯后，点数按番数档位计算，不再随符数变化。${quick.players === 3 ? "三麻自摸损；显示每家支付额。" : ""}</p><div class="scroll"><table><thead><tr><th>番数 / 役</th><th>名称</th><th>${quick.dealer ? "庄家" : "闲家"}支付点数</th></tr></thead><tbody>${rows.map(([han, title, label]) => `<tr><th>${title}</th><td>${label}</td><td>${payment(points({ ...quick, fu: 30, han, yakuman: 0 }))}</td></tr>`).join("")}${[1, 2, 3, 4, 5, 6].map((yakuman) => `<tr><th>${yakuman === 1 ? "役满" : `${yakuman}倍役满`}</th><td>役满役</td><td>${payment(points({ ...quick, yakuman }))}</td></tr>`).join("")}</tbody></table></div><p class="muted">自摸“闲家 / 庄家”；ALL 表示每家。含 ${quick.honba} 本场，不含供托；累计役满按本工具速查默认规则。</p></div>`;
-}
 function renderQuick() {
-  let p, error;
-  try {
-    p = points(quick);
-  } catch (e) {
-    error = e.message;
-  }
+  const view = lookup(quick);
+  const amount = (c) =>
+    `<span class="cell-main">${c.main}</span>${c.sub ? `<span class="cell-sub">${c.sub}</span>` : ""}`;
+  const cellButton = (c) =>
+    `<button class="point-cell ${c.selected ? "chosen" : ""}" data-fu="${c.fu}" data-han="${c.han}" data-yakuman="${c.yakuman}" ${c.valid ? "" : "disabled"} aria-pressed="${c.selected}" aria-label="${c.yakuman ? c.title : `${c.han}番${c.fu}符`} ${c.main}${c.sub ? " / " + c.sub : ""}">${amount(c)}</button>`;
   $("#quick").innerHTML =
-    `<div class="grid"><div class="card"><h2>符番速查</h2><div class="result">${p ? result(p, quick) : `<p>${esc(error)}</p>`}</div><span class="muted">座位与和牌方式</span>${chips(
-      "players",
-      [
-        [4, "四人"],
-        [3, "三人"],
-      ],
-    )}${chips("dealer", [
+    `<div class="card lookup-card"><div class="lookup-heading"><h2>符番速查</h2><span class="lookup-mark" aria-hidden="true">点数</span></div>
+    <div class="lookup-switches">${chips("dealer", [
       [false, "闲家"],
       [true, "庄家"],
     ])}${chips("method", [
       ["ron", "荣和"],
       ["tsumo", "自摸"],
-    ])}<span class="muted">番数</span>${chips(
-      "han",
-      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((n) => [n, `${n}番`]),
-    )}<span class="muted">符数</span>${chips(
-      "fu",
-      FU.map((n) => [n, `${n}符`]),
-    )}<div class="grid"><label>本场<input id="quick-honba" type="number" min="0" max="100" value="${quick.honba}"></label><label>役满<select id="quick-yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${quick.yakuman === n ? "selected" : ""}>${n}倍役满</option>`).join("")}</select></label></div></div><div class="card"><h2>算符</h2><p>门前清荣和 +10符</p><p>自摸 +2符</p><p>边张 / 嵌张 / 单骑 +2符</p><p>七对子 25符 · 平和自摸 20符</p><button id="open-fu">选择牌型算符</button></div></div><div class="card"><h2>${quick.dealer ? "庄家" : "闲家"} · ${quick.method === "ron" ? "荣和支付" : "自摸支付"}速查表</h2><div class="scroll"><table><thead><tr><th>符 / 番</th>${[1, 2, 3, 4].map((n) => `<th>${n}番</th>`).join("")}</tr></thead><tbody>${FU.map(
-      (fu) =>
-        `<tr><th>${fu}符</th>${[1, 2, 3, 4]
-          .map((han) => {
-            try {
-              const x = points({ ...quick, fu, han, yakuman: 0 });
-              return `<td>${quick.method === "ron" ? x.ron : quick.dealer ? `${x.child} ALL` : `${x.child} / ${x.parent}`}</td>`;
-            } catch {
-              return "<td>—</td>";
-            }
-          })
-          .join("")}</tr>`,
-    ).join(
-      "",
-    )}</tbody></table></div><p class="muted">自摸：闲家 / 庄家；ALL：每家。本场 ${quick.honba}。</p></div>${limitTable()}`;
-  $("#open-fu").onclick = () => {
-    tab("fu");
-    renderFu();
-  };
+    ])}</div>
+    <div class="result lookup-result" aria-live="polite">${view.result ? `<div class="selection-label">${quick.dealer ? "庄家" : "闲家"} · ${view.result.selection}</div><strong>${view.result.totalText}<small> 点</small></strong><p>${view.result.payment}</p>` : `<p>${esc(view.error)}</p>`}</div>
+    <div class="table-caption"><span>${view.legend}</span><span>${quick.players}人 · ${quick.honba}本场</span></div>
+    <table class="point-matrix"><thead><tr><th>符 / 番</th>${view.columns.map((c) => `<th class="${c.selected ? "axis-selected" : ""}">${c.han}番</th>`).join("")}</tr></thead><tbody>${view.rows.map((row) => `<tr><th class="${row.selected ? "axis-selected" : ""}">${row.fu}符</th>${row.cells.map((c) => `<td class="${!quick.yakuman && quick.han <= 4 && (quick.fu === c.fu || quick.han === c.han) ? "axis-tint" : ""}">${cellButton(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>
+    <h3 class="limit-heading">5番及以上 · 满贯与役满</h3><table class="limit-matrix"><tbody>${view.limits.map((c) => `<tr class="${c.selected ? "limit-selected" : ""}"><th>${c.title}</th><td>${c.label}</td><td>${cellButton(c)}</td></tr>`).join("")}</tbody></table>
+    <details class="lookup-more" ${quick.yakuman ? "open" : ""}><summary>多倍役满</summary><table class="limit-matrix"><tbody>${view.yakumans.map((c) => `<tr class="${c.selected ? "limit-selected" : ""}"><th>${c.title}</th><td>${cellButton(c)}</td></tr>`).join("")}</tbody></table></details>
+    <details class="lookup-more"><summary>桌型与本场 · ${quick.players}人 / ${quick.honba}本场</summary>${chips(
+      "players",
+      [
+        [4, "四人"],
+        [3, "三人"],
+      ],
+    )}<label>本场<input id="quick-honba" type="number" min="0" max="100" value="${quick.honba}"></label></details></div>`;
   $("#quick")
     .querySelectorAll("[data-key]")
     .forEach(
       (b) =>
         (b.onclick = () => {
-          const key = b.dataset.key,
-            value = b.dataset.value;
-          quick[key] = ["fu", "han", "players"].includes(key)
-            ? Number(value)
-            : key === "dealer"
-              ? value === "true"
-              : value;
+          const { key, value } = b.dataset;
+          quick[key] =
+            key === "players"
+              ? Number(value)
+              : key === "dealer"
+                ? value === "true"
+                : value;
+          if (key === "method" && !lookup(quick).result) quick.fu = 30;
+          renderQuick();
+        }),
+    );
+  $("#quick")
+    .querySelectorAll("[data-han]")
+    .forEach(
+      (b) =>
+        (b.onclick = () => {
+          quick.fu = Number(b.dataset.fu);
+          quick.han = Number(b.dataset.han);
+          quick.yakuman = Number(b.dataset.yakuman);
           renderQuick();
         }),
     );
   $("#quick-honba").onchange = (e) => {
     quick.honba = Number(e.target.value);
-    renderQuick();
-  };
-  $("#quick-yakuman").onchange = (e) => {
-    quick.yakuman = Number(e.target.value);
     renderQuick();
   };
 }
@@ -605,6 +580,7 @@ function renderFu() {
   if (use)
     use.onclick = () => {
       quick.fu = r.fu;
+      quick.yakuman = 0;
       quick.method = fuForm.method;
       quick.han = Math.max(
         quick.han,

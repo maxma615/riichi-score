@@ -1,4 +1,4 @@
-const { points, FU } = require("../../utils/scoring");
+const { lookup } = require("../../utils/lookup");
 Page({
   data: {
     quick: {
@@ -10,8 +10,8 @@ Page({
       honba: 0,
       yakuman: 0,
     },
-    fu: FU,
-    han: Array.from({ length: 13 }, (_, i) => i + 1),
+    more: false,
+    settings: false,
   },
   onLoad() {
     this.refresh();
@@ -23,6 +23,7 @@ Page({
         "quick.fu": typeof fu === "number" ? fu : fu.fu,
         "quick.method": fu.method || this.data.quick.method,
         "quick.han": Math.max(this.data.quick.han, fu.minHan || 1),
+        "quick.yakuman": 0,
       });
       wx.removeStorageSync("calculatedFu");
     }
@@ -31,60 +32,32 @@ Page({
   choose(e) {
     const { key, value } = e.currentTarget.dataset;
     this.setData({ ["quick." + key]: value });
+    if (key === "method" && !lookup(this.data.quick).result)
+      this.setData({ "quick.fu": 30 });
     this.refresh();
+  },
+  selectCell(e) {
+    const { fu, han, yakuman } = e.currentTarget.dataset;
+    const q = {
+      ...this.data.quick,
+      fu: Number(fu),
+      han: Number(han),
+      yakuman: Number(yakuman || 0),
+    };
+    const view = lookup(q);
+    if (!view.result) return;
+    this.setData({ quick: q });
+    this.refresh();
+  },
+  toggle(e) {
+    const key = e.currentTarget.dataset.key;
+    this.setData({ [key]: !this.data[key] });
   },
   honba(e) {
     this.setData({ "quick.honba": Number(e.detail.value || 0) });
     this.refresh();
   },
   refresh() {
-    const q = this.data.quick;
-    let result,
-      error = "";
-    try {
-      result = points(q);
-      result.payment =
-        q.method === "ron"
-          ? `放铳者支付 ${result.ron}`
-          : q.dealer
-            ? `每家 ${result.child}`
-            : `闲家 ${result.child} / 庄家 ${result.parent}`;
-    } catch (e) {
-      error = e.message;
-    }
-    const rows = FU.map((fu) => ({
-      fu,
-      cells: [1, 2, 3, 4].map((han) => {
-        try {
-          return this.format(points({ ...q, fu, han, yakuman: 0 }));
-        } catch {
-          return "—";
-        }
-      }),
-    }));
-    const limits = [
-      [5, "5番 · 满贯"],
-      [6, "6–7番 · 跳满"],
-      [8, "8–10番 · 倍满"],
-      [11, "11–12番 · 三倍满"],
-      [13, "13番以上 · 累计役满"],
-    ].map(([han, label]) => ({
-      label,
-      value: this.format(points({ ...q, fu: 30, han, yakuman: 0 })),
-    }));
-    for (let n = 1; n <= 6; n++)
-      limits.push({
-        label: n === 1 ? "役满" : n + "倍役满",
-        value: this.format(points({ ...q, yakuman: n })),
-      });
-    this.setData({ result, error, rows, limits });
-  },
-  format(p) {
-    const q = this.data.quick;
-    return q.method === "ron"
-      ? String(p.ron)
-      : q.dealer
-        ? p.child + " ALL"
-        : p.child + " / " + p.parent;
+    this.setData(lookup(this.data.quick));
   },
 });
