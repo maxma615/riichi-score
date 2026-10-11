@@ -775,3 +775,38 @@
   .table-entry .join button { flex: 0 0 64px; }
   .table-lobby .line { padding: 4px 0; font-size: 13px; line-height: 16px; }
 }
+
+/* Scroll the result contents with the native component, keeping actions visible. */
+.result-panel {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 24px);
+  max-height: none;
+  padding: 12px;
+  overflow: hidden;
+}
+.result-scroll {
+  display: block;
+  height: calc(100vh - 108px);
+  flex: 1;
+  min-height: 0;
+}
+.result-footer {
+  position: static;
+  flex: 0 0 58px;
+  height: 58px;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.result-footer button {
+  margin: 0;
+  min-height: 44px;
+  height: 44px;
+  min-width: 132px;
+  padding: 0 16px;
+}
+.ranking-footer { gap: 8px; }
+.ranking-footer button { flex: 1; }

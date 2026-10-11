@@ -136,6 +136,9 @@ function presentation(
           art: callArt(win.winMethod === "ron" ? "荣和" : "自摸"),
         });
     }
+  const phaseKey = flow
+    ? `${flow.id}:${stage}:${flow.detailIndex}`
+    : game.decisionId;
   return {
     ...s,
     ...winning(s),
@@ -151,9 +154,9 @@ function presentation(
     autoAt: readyAt + AUTO_CONFIRM_MS + intro,
     intro,
     pointsVisible: stage !== "detail" || age >= detailValueAt(s),
-    phaseKey: flow
-      ? `${flow.id}:${stage}:${flow.detailIndex}`
-      : game.decisionId,
+    phaseKey,
+    anchor:
+      "result-" + String(phaseKey || "legacy").replace(/[^a-zA-Z0-9_-]/g, "-"),
     winner: seats.find((p) => p.seat === s.winnerSeat)?.name || "",
     hanLabel: totalYakuman
       ? hanLabel("*".repeat(totalYakuman))

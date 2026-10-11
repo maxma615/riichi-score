@@ -28,6 +28,36 @@ const result = {
   delta: [5200, -5200, 0, 0],
   uraIndicators: ["s4"],
 };
+test("原生多人结算的滚动锚点随赢家及收支阶段切换，计时更新不跳回顶部", () => {
+  const game = {
+    settlement: result,
+    settlementFlow: {
+      id: "real-flow",
+      stage: "detail",
+      detailIndex: 0,
+      detailCount: 2,
+      elapsedMs: 2000,
+      oldScores: [25000, 25000, 25000, 25000],
+      delta: [5200, -5200, 0, 0],
+      newScores: [30200, 19800, 25000, 25000],
+    },
+  };
+  const first = presentation(game, seats, 2000);
+  assert.equal(presentation(game, seats, 2500).anchor, first.anchor);
+  const next = presentation(
+    { ...game, settlementFlow: { ...game.settlementFlow, detailIndex: 1 } },
+    seats,
+    2000,
+  );
+  assert.notEqual(next.anchor, first.anchor);
+  const scores = presentation(
+    { ...game, settlementFlow: { ...game.settlementFlow, stage: "scores" } },
+    seats,
+    2000,
+  );
+  assert.notEqual(scores.anchor, next.anchor);
+  assert.match(first.anchor, /^[a-z][a-zA-Z0-9_-]*$/);
+});
 test("原生和牌张拆分保持四麻／三麻和赤牌的真实张数", () => {
   const yonma = winning(result);
   assert.equal(yonma.hand.length, 13);

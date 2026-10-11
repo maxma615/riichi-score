@@ -208,16 +208,14 @@
         class="result-overlay drag-exclusion"
       >
         <view class="result-panel">
+          <scroll-view class="result-scroll" scroll-y="{{true}}" scroll-into-view="{{game.ranking?'result-ranking':settlement.anchor}}">
+          <view id="{{game.ranking?'result-ranking':settlement.anchor}}"></view>
           <block wx:if="{{game.ranking}}"
             ><view class="heading">最终排名</view
             ><view wx:for="{{game.ranking}}" wx:key="seat" class="line"
               ><text>{{item.rank}}位 · {{seats[item.seat].name}}</text
               ><text>{{item.score}}</text></view
-            ><button wx:if="{{host}}" bindtap="rematch" disabled="{{busy}}">
-              再来一场</button
-            ><button bindtap="leave" disabled="{{busy}}">
-              返回大厅
-            </button></block
+            ></block
           >
           <block wx:else>
             <view class="result-title"><image wx:if="{{settlement.titleArt}}" src="{{settlement.titleArt}}" /><text wx:else>{{settlement.title}}</text></view
@@ -336,7 +334,9 @@
                 ><text class="balance-after">{{item.after}}</text></view
               ></view
             >
-            <view class="result-footer"
+          </block>
+          </scroll-view>
+            <view class="result-footer" wx:if="{{!game.ranking}}"
               ><button
                 wx:if="{{settlementAck}}"
                 class="primary"
@@ -347,7 +347,10 @@
                 '正在展示'}}</button
               ><text wx:else>等待其他玩家</text></view
             >
-          </block>
+          <view class="result-footer ranking-footer" wx:else>
+            <button wx:if="{{host}}" bindtap="rematch" disabled="{{busy}}">再来一场</button>
+            <button bindtap="leave" disabled="{{busy}}">返回大厅</button>
+          </view>
         </view>
       </view></block
     ></block

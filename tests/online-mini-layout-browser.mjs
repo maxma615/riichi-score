@@ -27,7 +27,7 @@ const output = ".local/browser/native-layout";
 mkdirSync(output, { recursive: true });
 const compiled = path.resolve(output, `fixtures-${process.pid}.mjs`);
 await build({
-  entryPoints: ["tests/online-interaction-fixtures.ts"],
+  entryPoints: ["tests/online-mini-layout-fixtures.ts"],
   bundle: true,
   platform: "node",
   target: "node24",
@@ -37,7 +37,7 @@ await build({
     js: "import {createRequire} from 'node:module';const require=createRequire(import.meta.url);",
   },
 });
-const { scenario } = await import(pathToFileURL(compiled));
+const { scenario, resultStates } = await import(pathToFileURL(compiled));
 const template = readFileSync("miniprogram/pages/online/index.wxml", "utf8");
 const css =
   readFileSync("miniprogram/app.wxss", "utf8") +
@@ -53,7 +53,7 @@ const normalized = (width) =>
       /(?<![.#\w-])(page|view|text|image|button|input|picker)(?![\w-])/g,
       (_, tag) => (tag === "page" ? "body" : "wx-" + tag),
     );
-function html(room) {
+function html(room, age) {
   const data = {
     variant: "yonma",
     mode: "east",
@@ -62,7 +62,8 @@ function html(room) {
     selected: -1,
     busy: false,
   };
-  data.settlement = presentation(data.game, data.seats);
+  data.settlement = presentation(data.game, data.seats, age);
+  data.settlementAck = data.game?.choices.find((c) => c.type === "ack") || null;
   const id = simulate.load({ template, data }),
     component = simulate.render(id);
   component.attach(document.body);
@@ -260,6 +261,91 @@ try {
         path: path.join(output, `${name}-${width}x${height}.png`),
       });
       results.push({ name, width, height, passed: true, boxes });
+      await page.close();
+    }
+  for (const { name, room } of resultStates())
+    for (const [width, height] of [
+      [568, 260],
+      [640, 280],
+      [740, 310],
+      [844, 340],
+    ]) {
+      const page = await browser.newPage({ viewport: { width, height } });
+      await page.route("**/*", (r) => r.abort());
+      // Native scroll-y is adapted to browser overflow only for this geometry check.
+      await page.setContent(
+          "<style>html,body{margin:0;padding:0}wx-view{display:block}wx-text{display:inline}wx-image{display:inline-block}wx-button{display:block;box-sizing:border-box;text-align:center;border:none}.result-scroll{overflow-y:auto}.result-overlay *{animation:none!important;transition:none!important}" +
+          normalized(width) +
+          "</style>" +
+          html(room, 10000),
+      );
+      const measure = () =>
+        page.evaluate(() => {
+          const rect = (el) => {
+            const r = el.getBoundingClientRect();
+            return {
+              left: r.left,
+              right: r.right,
+              top: r.top,
+              bottom: r.bottom,
+              height: r.height,
+            };
+          };
+          const scroll = document.querySelector(".result-scroll");
+          const rows = [
+            ...scroll.querySelectorAll(".line,.balance,.draw-player"),
+          ];
+          return {
+            panel: rect(document.querySelector(".result-panel")),
+            scroll: rect(scroll),
+            footer: rect(document.querySelector(".result-footer")),
+            buttons: [
+              ...document.querySelectorAll(".result-footer wx-button"),
+            ].map(rect),
+            contentHeight: scroll.scrollHeight,
+            viewportHeight: scroll.clientHeight,
+            scrollTop: scroll.scrollTop,
+            last: rect(rows.at(-1)),
+            pageHeight: document.documentElement.scrollHeight,
+            pageWidth: document.documentElement.scrollWidth,
+          };
+        });
+      const before = await measure();
+      assert.ok(
+        before.panel.top >= 0 &&
+          before.panel.bottom <= height + 1 &&
+          before.panel.left >= 0 &&
+          before.panel.right <= width + 1,
+        JSON.stringify({ name, width, height, before }),
+      );
+      assert.ok(before.scroll.bottom <= before.footer.top + 1);
+      for (const b of before.buttons)
+        assert.ok(b.height >= 44 && b.bottom <= height && b.top >= 0);
+      assert.ok(
+        before.pageHeight <= height + 1 && before.pageWidth <= width + 1,
+      );
+      await page.locator(".result-scroll").evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      });
+      const after = await measure();
+      assert.deepEqual(
+        after.footer,
+        before.footer,
+        "Footer must stay visible while result scrolls",
+      );
+      assert.ok(
+        after.last.bottom <= after.scroll.bottom + 1,
+        JSON.stringify({ name, width, height, after }),
+      );
+      if (before.contentHeight > before.viewportHeight + 1)
+        assert.ok(
+          after.scrollTop > 0,
+          "Long result must be scrollable in adapter",
+        );
+      await page.screenshot({
+        path: path.join(output, `${name}-${width}x${height}.png`),
+      });
+      results.push({ name, width, height, passed: true, before, after });
       await page.close();
     }
 } finally {

@@ -109,3 +109,5 @@ npm run check:mini:templates -- .local/mini-compiler/node_modules/miniprogram-co
 小程序牌面与书法字样已打包为本地PNG，与网页授权原素材同源；声明和结算标题使用同一书法字形。重建资源：`npm run sync:mini:assets`（先安装Chromium），来源／指纹见miniprogram/assets/README.md和manifest.json。图片随包加载，API与真实微信登录仍需服务器及正式配置。
 
 小程序联机页配置固定横屏，记分、查点、算符及统计保持竖屏。牌桌高度按页面视口分配，14张手牌在窄横屏留出两侧牌区；顶部操作与大厅改为紧凑尺寸，两侧玩家信息避开牌背。`test:mini:layout`覆盖三／四麻、开桌入口及大厅的16组视口布局，使用真实WXML与模型、浏览器CSS适配，不能代替微信方向锁定、原生图片渲染、拖牌和真机验收。
+
+原生结算使用固定高度scroll-view，继续／返回操作始终在滚动区外；换赢家或进入收支时更新顶部锚点。布局适配回归现覆盖44组，包括实际规则产生的和牌、双人荣和和自然流局；平台滚动、完整长牌河／多副露及真机效果继续待验收。

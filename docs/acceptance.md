@@ -222,3 +222,15 @@ Chromium／WebKit × 根路径／riichi前缀4个流程实际通过拖牌出牌�
 浏览器适配按宽度换算rpx并映射原生标签；模拟器不暴露image的src，仅给本人手牌按实际模型补入PNG供目视检查。此证据不证明微信原生图片绑定、拖牌、设备方向锁定，也未覆盖所有长牌河／多副露／结算布局。232项常规检查（125 Node＋107规则）通过，日志`.local/browser/native-landscape-tests.log`。网页运行源保持3e1c657，没有重启业务服务。当前微信工具／真机、正式登录扫码与发布仍待实际平台配置。
 
 最终100个原生文件（961795字节）在ECS隔离旧版官方Linux编译器中，8个WXML及4个WXSS无诊断通过，WXML工厂函数建立成功。源SHA256：47dcd1833cbfa307cd18a748f1b19659c119c7aee9be1650a24f980d502c969e；wcc输出27819aa813a707006f3fe520c094e8db08734b09a9690f4c831a9e735650cc22，wcsc输出8a934722c10b2d1dd5122b8f2b298a1fb3d55e1084e9121d90b956aa2cafa777。产物`.local/release-evidence/native-templates/native-landscape-candidate/remote-r02.json`；检查容器无网络、只读源、0.25CPU／128MiB且没有真实数据挂载。前后两套生产容器ID和启动时间相同，禁备份标记保留。编译器仍为2020年miniprogram-compiler@0.2.3，仅证明语法和生成函数，不代替当前微信工具／渲染／真机。
+
+## 原生结算滚动与固定操作区（2026-10-12）
+
+普通view的overflow-y替换为原生scroll-view，固定高度并设置scroll-y；和牌牌型、役种、宝牌、流局听牌及收支在内部滚动，继续按钮独立保留在底部，最终排名的再来／返回也移到固定操作区。符合微信[scroll-view说明](https://developers.weixin.qq.com/miniprogram/dev/component/scroll-view.html)中竖向滚动固定高度要求；页面内还有内容时可滚到最后一项，不依赖普通view实现原生滚动。
+
+滚动锚点随共享结算phaseKey生成，换到下一位赢家或收支页时改变，倒计时更新保持同一锚点。126项Node＋107项规则检查通过；新增测试检查两位赢家／收支阶段锚点不同及同阶段时钟变化保持锚点。保留原有合法选择、幂等确认及自动确认重试，不改变服务端时序与点数。
+
+布局回归从16组扩展到44组，新增自摸、第一／第二位荣和赢家、收支、三／四麻自然流局、排名在4种横屏视口的28组检查。和牌及多人阶段由RoomStore实际动作取得，流局由完整实体牌山及合法摸切／过推进，排名仅为明确的合成布局投影。浏览器将scroll-y适配为CSS滚动，检查内容末行能滚入视口、操作区不随内容移动、按钮至少44px、弹层和页面无溢出；关闭入场动画仅为稳定几何测量，不作为动画验收。产物`.local/browser/native-layout/`、日志native-result-layout-tests.log及native-result-scroll-tests.log。
+
+这次完成的是原生模板、模型及浏览器适配布局，不能证明微信实际滚动／scroll-into-view执行、图片绑定、手势或真机效果；完整长牌河与多副露布局继续待检。网页业务源及线上运行保持3e1c657，无须重启生产应用。正式微信AppID、备案域名未配置，不宣称微信版本上线。
+
+最终100个原生文件（962911字节）在隔离Linux旧版官方编译器中，8个WXML／4个WXSS无诊断通过，WXML工厂函数建立成功。源SHA256为babf2e193941d82975738338d4ff79b5804e2ff9821d6ab3839daa2f49742393；wcc输出1e87c53320988ac50acab3cb4ee3d6290479ffc6ff16e86373f66b239a67bd30，wcsc输出c4666df0c9f95a912d159bb3df9c13c0851d35bc36bba50f9c313e2bd70ac880。证据`.local/release-evidence/native-templates/native-result-scroll-candidate/remote-r01.json`；容器无网络、只读源、0.25CPU／128MiB，无真实数据挂载。两套生产容器ID及启动时间不变，禁备份标记保留。旧版2020年编译器仅证明语法和生成函数，实际微信工具／原生滚动／真机仍待验收。
