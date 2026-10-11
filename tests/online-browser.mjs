@@ -17,6 +17,7 @@ for(const engine of [chromium,webkit])for(const basePath of ['', '/riichi']){
   await page.getByRole('button',{name:'电脑补齐空位',exact:true}).click();await page.getByRole('button',{name:'准备好了',exact:true}).click();await page.getByRole('button',{name:'开始对局',exact:true}).click();
   await expect(page.locator('.mahjong-table')).toBeVisible();await expect(page.locator('.mahjong-link-state')).toHaveClass(/is-connected/);
   await expect.poll(async()=>page.locator('.mahjong-hand button').count()).toBeGreaterThan(0);
+  await expect.poll(async()=>page.locator('.mahjong-game').getAttribute('data-round-opening')).toBe(null);
   await page.screenshot({path:`.local/browser/online-${tag}.png`,fullPage:true});
   const images=await page.locator('.mahjong-table img').evaluateAll(images=>images.map(i=>({src:i.src,ok:i.complete&&i.naturalWidth>0})));assert.ok(images.length>10);assert.ok(images.every(i=>i.ok),JSON.stringify(images.filter(i=>!i.ok)));
   assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
