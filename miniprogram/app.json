@@ -1,0 +1,28 @@
+{
+  "pages": [
+    "pages/quick/index",
+    "pages/fu/index",
+    "pages/room/index",
+    "pages/record/index",
+    "pages/me/index",
+    "pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "日麻记分",
+    "navigationBarBackgroundColor": "#171b1b",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#ede6d7"
+  },
+  "tabBar": {
+    "color": "#817463",
+    "selectedColor": "#993e31",
+    "backgroundColor": "#f5eedf",
+    "list": [
+      { "pagePath": "pages/quick/index", "text": "符番" },
+      { "pagePath": "pages/fu/index", "text": "算符" },
+      { "pagePath": "pages/room/index", "text": "牌桌" },
+      { "pagePath": "pages/me/index", "text": "我的" }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}

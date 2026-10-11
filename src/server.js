@@ -3,12 +3,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdirSync, readFileSync } from "node:fs";
 import QRCode from "qrcode";
+import { Wechat } from "./wechat.js";
+import { randomBytes } from "node:crypto";
+import { writeFileSync, existsSync } from "node:fs";
 import { Store, HttpError } from "./store.js";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export function createApp({
   dataDir = path.resolve(root, ".local/data"),
   origin = "http://127.0.0.1:3200",
   basePath = "",
+  wechat = new Wechat(),
 } = {}) {
   origin = new URL(origin).origin;
   if (basePath && !/^\/[a-z0-9-]+$/.test(basePath))
@@ -35,10 +39,17 @@ export function createApp({
           throw new HttpError(404, "页面不存在");
         url.pathname = url.pathname.slice(basePath.length);
       }
-      const token = req.headers.cookie?.match(
-          /(?:^|;\s*)riichi_session=([a-f0-9]{64})(?:;|$)/,
-        )?.[1],
+      const bearer = req.headers.authorization?.match(
+        /^Bearer ([a-f0-9]{64})$/,
+      )?.[1];
+      const token =
+          bearer ??
+          req.headers.cookie?.match(
+            /(?:^|;\s*)riichi_session=([a-f0-9]{64})(?:;|$)/,
+          )?.[1],
         user = store.identity(token);
+      if (bearer && user?.channel !== "wechat")
+        throw new HttpError(401, "请重新登录");
       const json = (value, status = 200) => {
         res.writeHead(status, {
           "Content-Type": "application/json; charset=utf-8",
@@ -53,12 +64,46 @@ export function createApp({
         if (!user) throw new HttpError(401, "请先填写昵称");
         return json(store.list(user));
       }
+      if (req.method === "GET" && url.pathname === "/api/profile") {
+        if (!user) throw new HttpError(401, "请登录");
+        return json(store.profile(user.id));
+      }
+      if (req.method === "GET" && url.pathname === "/api/stats") {
+        if (!user) throw new HttpError(401, "请登录");
+        const month = url.searchParams.get("month");
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month ?? ""))
+          throw new HttpError(400, "月份无效");
+        return json(store.stats(user, month));
+      }
+      if (req.method === "GET" && url.pathname === "/api/invite") {
+        if (!user) throw new HttpError(401, "请登录");
+        return json(store.invitation(url.searchParams.get("code")));
+      }
+      const avatarMatch = url.pathname.match(
+        /^\/avatars\/([a-f0-9]{32}\.(?:png|jpg))$/,
+      );
+      if (req.method === "GET" && avatarMatch) {
+        const file = path.join(dataDir, "avatars", avatarMatch[1]);
+        if (!existsSync(file)) throw new HttpError(404, "头像不存在");
+        res.writeHead(200, {
+          "Content-Type": avatarMatch[1].endsWith(".png")
+            ? "image/png"
+            : "image/jpeg",
+        });
+        return res.end(readFileSync(file));
+      }
       const match = url.pathname.match(
-        /^\/api\/rooms\/([a-f0-9-]{36})(\/events|\/qr)?$/,
+        /^\/api\/rooms\/([a-f0-9-]{36})(\/events|\/qr|\/wxcode)?$/,
       );
       if (req.method === "GET" && match) {
         if (!user) throw new HttpError(401, "请填写昵称后加入");
         const room = store.get(match[1], user);
+        if (match[2] === "/wxcode") {
+          store.get(match[1], user);
+          const png = await wechat.qr(room.code);
+          res.writeHead(200, { "Content-Type": "image/png" });
+          return res.end(png);
+        }
         if (match[2] === "/qr") {
           const svg = await QRCode.toString(
             `${origin}${basePath}/?join=${room.code}`,
@@ -72,7 +117,9 @@ export function createApp({
       }
       if (req.method === "POST" && url.pathname.startsWith("/api/")) {
         if (
-          req.headers.origin !== origin ||
+          (req.headers.origin !== origin &&
+            !(bearer && user?.channel === "wechat") &&
+            !(url.pathname === "/api/wechat/login" && !req.headers.origin)) ||
           !req.headers["content-type"]?.startsWith("application/json")
         )
           throw new HttpError(403, "请求来源不匹配");
@@ -92,7 +139,8 @@ export function createApp({
           size = 0;
         for await (const chunk of req) {
           size += chunk.length;
-          if (size > 16384) throw new HttpError(413, "请求过大");
+          if (size > (url.pathname === "/api/profile" ? 200000 : 16384))
+            throw new HttpError(413, "请求过大");
           body += chunk;
         }
         let input;
@@ -103,6 +151,57 @@ export function createApp({
         }
         if (!input || typeof input !== "object" || Array.isArray(input))
           throw new HttpError(400, "请求格式无效");
+        if (url.pathname === "/api/wechat/login") {
+          const account = await wechat.login(input.code);
+          const s = store.wechatSession(account.appId, account.openid);
+          return json(
+            { token: s.token, user: { name: s.name, avatar: s.avatar } },
+            201,
+          );
+        }
+        if (url.pathname === "/api/profile") {
+          if (!user) throw new HttpError(401, "请登录");
+          let avatar;
+          if (input.avatarData) {
+            if (typeof input.avatarData !== "string")
+              throw new HttpError(400, "头像无效");
+            const m = input.avatarData.match(
+              /^data:image\/(png|jpeg);base64,([a-zA-Z0-9+/=]+)$/,
+            );
+            if (!m) throw new HttpError(400, "请选择PNG或JPEG头像");
+            const bytes = Buffer.from(m[2], "base64");
+            if (bytes.length > 128 * 1024 || bytes.length < 8)
+              throw new HttpError(400, "头像需小于128KB");
+            if (
+              m[1] === "png"
+                ? !bytes
+                    .subarray(0, 8)
+                    .equals(Buffer.from("89504e470d0a1a0a", "hex"))
+                : bytes[0] !== 255 || bytes[1] !== 216 || bytes[2] !== 255
+            )
+              throw new HttpError(400, "头像无效");
+            const file =
+              randomBytes(16).toString("hex") +
+              (m[1] === "png" ? ".png" : ".jpg");
+            // 先验证昵称，避免失败请求写入文件。
+            if (
+              typeof input.name !== "string" ||
+              input.name.trim().length < 1 ||
+              input.name.trim().length > 24
+            )
+              throw new HttpError(400, "请填写昵称");
+            mkdirSync(path.join(dataDir, "avatars"), {
+              recursive: true,
+              mode: 0o700,
+            });
+            writeFileSync(path.join(dataDir, "avatars", file), bytes, {
+              flag: "wx",
+              mode: 0o600,
+            });
+            avatar = basePath + "/avatars/" + file;
+          }
+          return json(store.updateProfile(user, input.name, avatar));
+        }
         if (url.pathname === "/api/session") {
           if (user) return json({ user: { name: user.name } });
           const s = store.session(input.name);
@@ -131,6 +230,7 @@ export function createApp({
           "image/svg+xml",
         ],
         "/scoring.js": ["src/scoring.js", "text/javascript"],
+        "/fu.js": ["src/fu.js", "text/javascript"],
       };
       if (!files[url.pathname]) throw new HttpError(404, "页面不存在");
       const [file, type] = files[url.pathname];

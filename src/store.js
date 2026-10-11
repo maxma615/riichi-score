@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { randomBytes, randomUUID, createHash } from "node:crypto";
+import { monthlyStats } from "./stats.js";
 import { defaults, settle, integer } from "./scoring.js";
 export class HttpError extends Error {
   constructor(status, message) {
@@ -19,6 +20,75 @@ export class Store {
     this.db.exec(
       "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=3000; CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY,id TEXT NOT NULL,name TEXT NOT NULL,expires INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS rooms (id TEXT PRIMARY KEY,code TEXT UNIQUE NOT NULL,state TEXT NOT NULL); CREATE TABLE IF NOT EXISTS commands (room TEXT NOT NULL,nonce TEXT NOT NULL, PRIMARY KEY(room,nonce));",
     );
+    this.db.exec(
+      "CREATE TABLE IF NOT EXISTS wechat_sessions(token TEXT PRIMARY KEY); CREATE TABLE IF NOT EXISTS profiles(id TEXT PRIMARY KEY,name TEXT NOT NULL,avatar TEXT NOT NULL DEFAULT ''); CREATE TABLE IF NOT EXISTS wechat_accounts(appid TEXT NOT NULL,openid TEXT NOT NULL,id TEXT NOT NULL,PRIMARY KEY(appid,openid)); INSERT OR IGNORE INTO profiles SELECT id,name,'' FROM sessions;",
+    );
+  }
+  profile(id) {
+    return this.db
+      .prepare("SELECT id,name,avatar FROM profiles WHERE id=?")
+      .get(id);
+  }
+  updateProfile(u, name, avatar) {
+    name = nickname(name);
+    const old = this.profile(u.id);
+    this.db
+      .prepare(
+        "INSERT INTO profiles(id,name,avatar) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,avatar=excluded.avatar",
+      )
+      .run(u.id, name, avatar ?? old?.avatar ?? "");
+    return this.profile(u.id);
+  }
+  wechatSession(appId, openid) {
+    return this.transaction(() => {
+      let bind = this.db
+        .prepare("SELECT id FROM wechat_accounts WHERE appid=? AND openid=?")
+        .get(appId, openid);
+      if (!bind) {
+        bind = { id: randomUUID() };
+        this.db
+          .prepare("INSERT INTO wechat_accounts VALUES(?,?,?)")
+          .run(appId, openid, bind.id);
+        this.db
+          .prepare("INSERT INTO profiles VALUES(?,?,?)")
+          .run(bind.id, "牌友", "");
+      }
+      const p = this.profile(bind.id),
+        token = randomBytes(32).toString("hex");
+      this.db
+        .prepare("INSERT INTO sessions(token,id,name,expires) VALUES(?,?,?,?)")
+        .run(hash(token), p.id, p.name, Date.now() + 30 * 86400000);
+      this.db.prepare("INSERT INTO wechat_sessions VALUES(?)").run(hash(token));
+      return { ...p, token };
+    });
+  }
+  invitation(code) {
+    if (!/^[a-f0-9]{32}$/.test(code ?? ""))
+      throw new HttpError(400, "邀请无效");
+    const row = this.db.prepare("SELECT id FROM rooms WHERE code=?").get(code);
+    if (!row) throw new HttpError(404, "牌桌不存在");
+    const s = this.raw(row.id);
+    return {
+      players: s.rules.players,
+      finished: s.finished,
+      seats: s.members.map((m, seat) => ({
+        seat,
+        occupied: !!m,
+        name: m ? (this.profile(m.id)?.name ?? m.name) : "空位",
+        avatar: m ? (this.profile(m.id)?.avatar ?? "") : "",
+      })),
+    };
+  }
+  stats(u, month) {
+    return monthlyStats(
+      this.db
+        .prepare("SELECT state FROM rooms")
+        .all()
+        .map((r) => JSON.parse(r.state)),
+      u.id,
+      month,
+      (id) => this.profile(id),
+    );
   }
   close() {
     this.db.close();
@@ -26,7 +96,9 @@ export class Store {
   identity(token) {
     return token
       ? this.db
-          .prepare("SELECT id,name FROM sessions WHERE token=? AND expires>?")
+          .prepare(
+            "SELECT s.id,COALESCE(p.name,s.name) AS name,COALESCE(p.avatar,'') AS avatar,CASE WHEN w.token IS NULL THEN 'web' ELSE 'wechat' END AS channel FROM sessions s LEFT JOIN profiles p ON p.id=s.id LEFT JOIN wechat_sessions w ON w.token=s.token WHERE s.token=? AND expires>?",
+          )
           .get(hash(token), Date.now())
       : null;
   }
@@ -35,8 +107,9 @@ export class Store {
     const token = randomBytes(32).toString("hex"),
       id = randomUUID();
     this.db
-      .prepare("INSERT INTO sessions VALUES(?,?,?,?)")
+      .prepare("INSERT INTO sessions(token,id,name,expires) VALUES(?,?,?,?)")
       .run(hash(token), id, name, Date.now() + 90 * 86400000);
+    this.updateProfile({ id }, name);
     return { token, id, name };
   }
   transaction(fn) {
@@ -69,7 +142,14 @@ export class Store {
     return {
       ...s,
       owner: undefined,
-      members: s.members.map((m) => (m ? { name: m.name } : null)),
+      members: s.members.map((m) =>
+        m
+          ? {
+              name: this.profile(m.id)?.name ?? m.name,
+              avatar: this.profile(m.id)?.avatar ?? "",
+            }
+          : null,
+      ),
       isOwner: s.owner === u.id,
       mySeat: s.members.findIndex((m) => m?.id === u.id),
     };

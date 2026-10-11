@@ -40,6 +40,36 @@ for (const engine of [chromium, webkit])
         await expect(
           page.getByRole("heading", { name: "符番速查", exact: true }),
         ).toBeVisible();
+        const bottomNav = page.getByRole("navigation", { name: "功能" });
+        await expect(bottomNav).toBeVisible();
+        const bounds = await bottomNav.boundingBox();
+        assert.ok(bounds.y + bounds.height <= page.viewportSize().height + 1);
+        assert.ok(bounds.y >= page.viewportSize().height - 120);
+        await page.screenshot({
+          path: path.join(out, `${tag}-bottom-nav.png`),
+        });
+        await page.getByRole("button", { name: "算符", exact: true }).click();
+        await expect(page.locator(".fu-result")).toContainText("30符");
+        await expect(page.locator("#fu")).toContainText("门前清荣和");
+        await page
+          .getByRole("button", { name: "自摸 +2符", exact: true })
+          .click();
+        await page
+          .getByRole("button", { name: "添加刻子 / 杠子", exact: true })
+          .click();
+        await page.locator('[data-meld="0"]').selectOption("closedKan");
+        await page.locator('[data-terminal="0"]').check();
+        await expect(page.locator(".fu-result")).toContainText("60符");
+        await page.getByRole("button", { name: "门前清", exact: true }).click();
+        await page
+          .getByRole("button", { name: "平和自摸 20符", exact: true })
+          .click();
+        await expect(page.locator(".fu-result")).toContainText("20符");
+        await page
+          .getByRole("button", { name: "用这个符数查点", exact: true })
+          .click();
+        await page.getByRole("button", { name: "30符", exact: true }).click();
+        await page.getByRole("button", { name: "荣和", exact: true }).click();
         await expect(
           page.getByRole("heading", {
             name: "5番及以上 · 满贯与役满",
@@ -53,9 +83,11 @@ for (const engine of [chromium, webkit])
           page.getByRole("row").filter({ hasText: "5番" }),
         ).toContainText("8,000");
         await page.getByRole("button", { name: "3番", exact: true }).click();
-        await expect(page.locator(".result")).toContainText("3,900");
+        await expect(page.locator("#quick .result")).toContainText("3,900");
         await page.getByRole("button", { name: "自摸", exact: true }).click();
-        await expect(page.locator(".result")).toContainText("庄家 2,000 点");
+        await expect(page.locator("#quick .result")).toContainText(
+          "庄家 2,000 点",
+        );
         assert.equal(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth,
@@ -201,6 +233,17 @@ for (const engine of [chromium, webkit])
           path: path.join(out, `${tag}-table.png`),
           fullPage: true,
         });
+        await page.getByRole("button", { name: "我的", exact: true }).click();
+        await expect(page.locator("#me")).toContainText("净点数");
+        await expect(page.locator("#me .seat").first()).toContainText("3,000");
+        await expect(page.locator("#me")).toContainText("同桌收支");
+        await page.screenshot({
+          path: path.join(out, `${tag}-stats.png`),
+          fullPage: true,
+        });
+        await page
+          .getByRole("button", { name: "线下牌桌", exact: true })
+          .click();
         await page
           .getByRole("button", { name: "结束牌局", exact: true })
           .click();

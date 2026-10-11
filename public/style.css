@@ -696,3 +696,88 @@ footer {
     font-size: 36px;
   }
 }
+
+.line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.fu-result {
+  background: #293632;
+  color: #f5eddb;
+  border-radius: 3px;
+}
+#add-meld {
+  margin-top: 16px;
+}
+@media (max-width: 500px) {
+  nav {
+    gap: 12px;
+  }
+  nav button {
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+}
+
+/* 四个功能固定在底部，兼容手机安全区；对话框保持原生顶层。 */
+body {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+.bottom-nav {
+  position: fixed;
+  z-index: 10;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  width: min(620px, 100%);
+  margin: 0 auto;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  background: #f3eddf;
+  border: 1px solid #b9ad96;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -8px 28px #00000025;
+}
+.bottom-nav button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 62px;
+  border: 0;
+  color: #756b5b;
+  padding: 5px 2px;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0;
+  background: transparent;
+}
+.bottom-nav button span:first-child {
+  font-family: var(--font-ink);
+  font-size: 23px;
+  line-height: 1.1;
+  padding: 3px 10px;
+  border-radius: 3px;
+}
+.bottom-nav button.active {
+  color: #993e31;
+  border: 0;
+}
+.bottom-nav button.active span:first-child {
+  background: #993e31;
+  color: #fff4df;
+}
+.bottom-nav button:hover {
+  background: #993e310a;
+}
+:root {
+  scroll-padding-bottom: 100px;
+}

@@ -25,15 +25,27 @@
         <h1>一局一记，<br />点数自明。</h1>
         <p>随手查符番，逐局记收支。扫码入桌，一起看分。</p>
       </section>
-      <nav aria-label="功能">
-        <button id="quick-tab" class="active">符番速查</button
-        ><button id="room-tab">线下牌桌</button>
-      </nav>
       <div id="notice" role="status" aria-live="polite"></div>
       <section id="quick"></section>
       <section id="room" hidden></section>
+      <section id="fu" hidden></section>
+      <section id="me" hidden></section>
     </main>
-    <footer>独立线下记分工具 · 不需要情侣空间账号</footer>
+    <nav class="bottom-nav" aria-label="功能">
+      <button id="quick-tab" class="active" aria-current="page">
+        <span aria-hidden="true">番</span><span>符番速查</span>
+      </button>
+      <button id="fu-tab">
+        <span aria-hidden="true">符</span><span>算符</span>
+      </button>
+      <button id="room-tab">
+        <span aria-hidden="true">桌</span><span>线下牌桌</span>
+      </button>
+      <button id="me-tab">
+        <span aria-hidden="true">我</span><span>我的</span>
+      </button>
+    </nav>
+    <footer>日麻记分 · 一局一记</footer>
     <dialog id="modal"><div id="modal-content"></div></dialog>
     <script type="module" src="./app.js"></script>
   </body>

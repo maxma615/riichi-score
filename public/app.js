@@ -1,3 +1,4 @@
+import { calculateFu } from "./fu.js";
 import { points, FU, settle } from "./scoring.js";
 const base = document.querySelector("meta[name=app-base]").content;
 const $ = (s) => document.querySelector(s),
@@ -84,11 +85,17 @@ async function task(fn) {
   }
 }
 function tab(name) {
-  $("#quick").hidden = name !== "quick";
-  $("#room").hidden = name !== "room";
+  for (const key of ["quick", "room", "fu", "me"]) {
+    $("#" + key).hidden = key !== name;
+    $("#" + key + "-tab").classList.toggle("active", key === name);
+    const button = $("#" + key + "-tab");
+    if (key === name) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  }
   $("#quick-tab").classList.toggle("active", name === "quick");
   $("#room-tab").classList.toggle("active", name === "room");
-  $(".hero").hidden = name === "room";
+  $(".hero").hidden = name !== "quick";
+  window.scrollTo(0, 0);
 }
 $("#quick-tab").onclick = () => tab("quick");
 $("#room-tab").onclick = () => {
@@ -143,7 +150,7 @@ function renderQuick() {
     )}<span class="muted">符数</span>${chips(
       "fu",
       FU.map((n) => [n, `${n}符`]),
-    )}<div class="grid"><label>本场<input id="quick-honba" type="number" min="0" max="100" value="${quick.honba}"></label><label>役满<select id="quick-yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${quick.yakuman === n ? "selected" : ""}>${n}倍役满</option>`).join("")}</select></label></div><p class="muted">结果含本场，不含立直供托。三麻采用自摸损；切上满贯关闭，累计役满开启。</p></div><div class="card"><h2>算符时看这里</h2><details open><summary>基本符与常见例外</summary><p>普通和牌以20符起算；门前荣和加10符，自摸加2符。最后向上取整到十符。平和自摸固定20符；七对子固定25符；副露平和形荣和至少30符。</p></details><details><summary>刻子与杠子</summary><p>明刻：中张2符、幺九字牌4符。暗刻：中张4符、幺九字牌8符。明杠：中张8符、幺九字牌16符。暗杠：中张16符、幺九字牌32符。荣和补成的刻子按明刻算符。</p></details><details><summary>雀头与等待</summary><p>三元牌、场风或自风雀头各加2符；连风雀头按约定确认2符或4符。嵌张、边张、单骑等待加2符，两面和双碰不加。输入已经确认的符番；本工具不自动判役，宝牌不能单独构成役。</p></details><p class="muted">规则可在开桌时固定。包牌、流局满贯与错和罚分暂不支持，请勿用普通和牌替代。</p></div></div><div class="card"><h2>${quick.dealer ? "庄家" : "闲家"} · ${quick.method === "ron" ? "荣和支付" : "自摸支付"}速查表</h2><div class="scroll"><table><thead><tr><th>符 / 番</th>${[1, 2, 3, 4].map((n) => `<th>${n}番</th>`).join("")}</tr></thead><tbody>${FU.map(
+    )}<div class="grid"><label>本场<input id="quick-honba" type="number" min="0" max="100" value="${quick.honba}"></label><label>役满<select id="quick-yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${quick.yakuman === n ? "selected" : ""}>${n}倍役满</option>`).join("")}</select></label></div></div><div class="card"><h2>算符</h2><p>门前清荣和 +10符</p><p>自摸 +2符</p><p>边张 / 嵌张 / 单骑 +2符</p><p>七对子 25符 · 平和自摸 20符</p><button id="open-fu">选择牌型算符</button></div></div><div class="card"><h2>${quick.dealer ? "庄家" : "闲家"} · ${quick.method === "ron" ? "荣和支付" : "自摸支付"}速查表</h2><div class="scroll"><table><thead><tr><th>符 / 番</th>${[1, 2, 3, 4].map((n) => `<th>${n}番</th>`).join("")}</tr></thead><tbody>${FU.map(
       (fu) =>
         `<tr><th>${fu}符</th>${[1, 2, 3, 4]
           .map((han) => {
@@ -157,7 +164,11 @@ function renderQuick() {
           .join("")}</tr>`,
     ).join(
       "",
-    )}</tbody></table></div><p class="muted">自摸“闲家 / 庄家”；ALL 表示每家。当前本场：${quick.honba}。</p></div>${limitTable()}`;
+    )}</tbody></table></div><p class="muted">自摸：闲家 / 庄家；ALL：每家。本场 ${quick.honba}。</p></div>${limitTable()}`;
+  $("#open-fu").onclick = () => {
+    tab("fu");
+    renderFu();
+  };
   $("#quick")
     .querySelectorAll("[data-key]")
     .forEach(
@@ -204,7 +215,7 @@ function renderRoom() {
   if (!room) {
     const join = new URLSearchParams(location.search).get("join");
     $("#room").innerHTML =
-      `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">不需要注册，填写昵称即可。成员用自己的手机扫码加入，或者由桌主填写线下玩家。</p><form id="entry"><div class="grid"><label>你的昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '<label>选择座位<select id="join-seat"><option value="1">初始南家</option><option value="2">初始西家</option><option value="3">初始北家（四人桌）</option></select></label>' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<label class="check"><input id="kiriage" type="checkbox">切上满贯（4番30符 / 3番60符）</label><label class="check"><input id="kazoe" type="checkbox" checked>累计役满（13番起）</label>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
+      `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">填写昵称，开桌或扫码入桌。</p><form id="entry"><div class="grid"><label>你的昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '<label>选择座位<select id="join-seat"><option value="1">初始南家</option><option value="2">初始西家</option><option value="3">初始北家（四人桌）</option></select></label>' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<label class="check"><input id="kiriage" type="checkbox">切上满贯（4番30符 / 3番60符）</label><label class="check"><input id="kazoe" type="checkbox" checked>累计役满（13番起）</label>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
     $("#entry").onsubmit = (e) => {
       e.preventDefault();
       task(async () => {
@@ -479,3 +490,170 @@ setInterval(async () => {
     if (latest.version !== room.version) remember(latest);
   } catch {}
 }, 5000);
+
+let fuForm = {
+  closed: true,
+  method: "ron",
+  special: "normal",
+  pair: 0,
+  wait: 0,
+  melds: [],
+};
+$("#fu-tab").onclick = () => {
+  tab("fu");
+  renderFu();
+};
+function renderFu() {
+  let r, error;
+  try {
+    r = calculateFu(fuForm);
+  } catch (e) {
+    error = e.message;
+  }
+  const choices = (key, values) =>
+    `<div class="choice-row">${values.map(([v, label]) => `<button data-fu-key="${key}" data-fu-value='${JSON.stringify(v)}' class="${fuForm[key] === v ? "selected" : ""}" aria-pressed="${fuForm[key] === v}">${label}</button>`).join("")}</div>`;
+  $("#fu").innerHTML =
+    `<div class="grid"><div class="card"><h2>选择牌型</h2>${choices("method", [
+      ["ron", "荣和"],
+      ["tsumo", "自摸 +2符"],
+    ])}${choices("closed", [
+      [true, fuForm.method === "ron" ? "门前清荣和 +10符" : "门前清"],
+      [false, "副露"],
+    ])}${choices("special", [
+      ["normal", "普通牌型"],
+      ["chiitoitsu", "七对子 25符"],
+      ["pinfu", fuForm.method === "tsumo" ? "平和自摸 20符" : "平和荣和 30符"],
+    ])}${
+      fuForm.special === "normal"
+        ? `<h3>雀头</h3>${choices("pair", [
+            [0, "非役牌 +0"],
+            [2, "役牌 +2"],
+            [4, "连风 +4"],
+          ])}<h3>等待</h3>${choices("wait", [
+            [0, "两面 / 双碰 +0"],
+            [2, "边张 / 嵌张 / 单骑 +2"],
+          ])}<h3>刻子与杠子</h3>${fuForm.melds
+            .map(
+              (m, i) =>
+                `<div class="row"><label>面子<select data-meld="${i}">${[
+                  ["openTriplet", "明刻 2/4符"],
+                  ["closedTriplet", "暗刻 4/8符"],
+                  ["openKan", "明杠 8/16符"],
+                  ["closedKan", "暗杠 16/32符"],
+                ]
+                  .map(
+                    ([v, l]) =>
+                      `<option value="${v}" ${m.type === v ? "selected" : ""}>${l}</option>`,
+                  )
+                  .join(
+                    "",
+                  )}</select></label><label class="check"><input type="checkbox" data-terminal="${i}" ${m.terminal ? "checked" : ""}>幺九字牌</label><button data-remove="${i}">移除</button></div>`,
+            )
+            .join(
+              "",
+            )}<button id="add-meld" ${fuForm.melds.length === 4 ? "disabled" : ""}>添加刻子 / 杠子</button>`
+        : ""
+    }</div><div class="card"><h2>符数明细</h2>${r ? `${r.items.map((x) => `<div class="line"><span>${x.label}</span><strong>+${x.value}符</strong></div>`).join("")}<div class="result fu-result"><p>${r.raw}符 · ${fuForm.special === "normal" ? "向上取整" : "固定符数"}</p><strong>${r.fu}符</strong></div><button id="use-fu" class="primary">用这个符数查点</button>` : esc(error)}</div></div>`;
+  $("#fu")
+    .querySelectorAll("[data-fu-key]")
+    .forEach(
+      (b) =>
+        (b.onclick = () => {
+          fuForm[b.dataset.fuKey] = JSON.parse(b.dataset.fuValue);
+          renderFu();
+        }),
+    );
+  $("#fu")
+    .querySelectorAll("[data-meld]")
+    .forEach(
+      (b) =>
+        (b.onchange = () => {
+          fuForm.melds[Number(b.dataset.meld)].type = b.value;
+          if (["openTriplet", "openKan"].includes(b.value))
+            fuForm.closed = false;
+          renderFu();
+        }),
+    );
+  $("#fu")
+    .querySelectorAll("[data-terminal]")
+    .forEach(
+      (b) =>
+        (b.onchange = () => {
+          fuForm.melds[Number(b.dataset.terminal)].terminal = b.checked;
+          renderFu();
+        }),
+    );
+  $("#fu")
+    .querySelectorAll("[data-remove]")
+    .forEach(
+      (b) =>
+        (b.onclick = () => {
+          fuForm.melds.splice(Number(b.dataset.remove), 1);
+          renderFu();
+        }),
+    );
+  const add = $("#add-meld");
+  if (add)
+    add.onclick = () => {
+      if (fuForm.melds.length < 4) {
+        fuForm.closed = false;
+        fuForm.melds.push({ type: "openTriplet", terminal: false });
+      }
+      renderFu();
+    };
+  const use = $("#use-fu");
+  if (use)
+    use.onclick = () => {
+      quick.fu = r.fu;
+      quick.method = fuForm.method;
+      quick.han = Math.max(
+        quick.han,
+        r.fu === 25 ? (fuForm.method === "tsumo" ? 3 : 2) : r.fu === 20 ? 2 : 1,
+      );
+      tab("quick");
+      renderQuick();
+    };
+}
+$("#me-tab").onclick = () => {
+  tab("me");
+  task(() => renderMe());
+};
+async function renderMe(
+  month = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+  }).format(new Date()),
+) {
+  if (!user) {
+    $("#me").innerHTML =
+      '<div class="card"><h2>我的牌谱</h2><p>开桌或扫码入桌后，查看每月记录。</p><button id="me-entry">进入牌桌</button></div>';
+    $("#me-entry").onclick = () => {
+      tab("room");
+      renderRoom();
+    };
+    return;
+  }
+  const [p, s] = await Promise.all([
+    api("/api/profile"),
+    api("/api/stats?month=" + month),
+  ]);
+  $("#me").innerHTML =
+    `<div class="card"><h2>${esc(p.name)} · 我的牌谱</h2><label>月份<input id="stats-month" type="month" value="${month}"></label><div class="score-grid">${[
+      ["净点数", s.net],
+      ["参与局数", s.hands],
+      ["和牌次数", s.wins],
+      ["被胡次数", s.hit],
+      ["放铳局数", s.dealin],
+    ]
+      .map(
+        ([label, n]) =>
+          `<div class="seat"><p>${label}</p><strong>${n.toLocaleString()}</strong></div>`,
+      )
+      .join(
+        "",
+      )}</div></div><div class="card"><h2>同桌收支</h2>${s.best ? `<p>赢得最多 · ${esc(s.best.name)} <strong class="positive">+${s.best.net.toLocaleString()}</strong></p>` : ""}${s.worst ? `<p>输得最多 · ${esc(s.worst.name)} <strong class="negative">${s.worst.net.toLocaleString()}</strong></p>` : ""}${s.peers.map((p) => `<div class="line"><span>${esc(p.name)} · ${p.hands}局</span><strong class="${p.net >= 0 ? "positive" : "negative"}">${p.net >= 0 ? "+" : ""}${p.net.toLocaleString()}</strong></div>`).join("") || "<p>这个月还没有牌局</p>"}</div>`;
+  $("#stats-month").onchange = (e) => {
+    if (e.target.value) task(() => renderMe(e.target.value));
+  };
+}

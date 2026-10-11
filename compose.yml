@@ -7,6 +7,9 @@ services:
     environment:
       APP_ORIGIN: ${APP_ORIGIN:-http://127.0.0.1:3200}
       APP_BASE_PATH: ${APP_BASE_PATH:-}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      WECHAT_ENV_VERSION: ${WECHAT_ENV_VERSION:-release}
     volumes: ["score_data:/data"]
     cpus: 0.25
     mem_limit: 128m

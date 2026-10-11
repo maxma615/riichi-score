@@ -1,0 +1,7 @@
+{
+  "appid": "touristappid",
+  "projectname": "日麻记分",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./",
+  "setting": { "es6": true, "minified": true, "urlCheck": true }
+}
