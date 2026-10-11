@@ -5,6 +5,8 @@ const { api, error } = require("../../utils/api");
 const { uuid, snapshot, feedback, callArt } = require("../../utils/online");
 const { presentation } = require("../../utils/online-settlement");
 const { presentationBoundaries } = require("../../utils/online-timing");
+const { rankingBoundaries, rankingReadyAt } = require("../../utils/online-ranking-timing");
+const { rankingPresentation } = require("../../utils/online-ranking");
 const {
   acceptedRoundOpening,
   openingKey,
@@ -36,12 +38,14 @@ Page({
     openingHolding: false,
     doraVisible: true,
     ownMeldCount: 0,
+    ranking: null,
     safeInsets: { left: 0, right: 0 },
   },
   onShow() {
     this.active = true;
     this.liveReady = false;
     this.setData({ busy: false });
+    this.tickRanking();
     this.updateSafeArea();
     this.refresh();
     this.timer = setInterval(() => {
@@ -58,6 +62,7 @@ Page({
     clearInterval(this.timer);
     clearTimeout(this.feedbackTimer);
     clearTimeout(this.resultTimer);
+    clearTimeout(this.rankingTimer);
     this.cancelOpening();
     this.openingIntent = null;
     this.drag = null;
@@ -202,6 +207,7 @@ Page({
       },
     );
     this.tickResult();
+    this.acceptRanking();
     this.tickOpening();
     if (
       !r.room?.game ||
@@ -327,6 +333,36 @@ Page({
         next === undefined ? 250 : Math.max(1, next - age),
       );
   },
+  acceptRanking() {
+    const game = this.data.game;
+    if (!game?.ranking) {
+      clearTimeout(this.rankingTimer);
+      this.rankingAnchor = null;
+      this.setData({ ranking: null });
+      return;
+    }
+    const key = `${this.data.room.id}:${game.rankingFlow?.id || game.gameInstanceId || "legacy"}`;
+    const time = Date.now(), previous = this.rankingAnchor;
+    const serverAge = game.rankingFlow?.elapsedMs ?? rankingReadyAt(game.ranking.length);
+    const age = previous?.key === key
+      ? Math.max(serverAge, previous.lastAge || 0, previous.age + Math.max(0, time - previous.time))
+      : serverAge;
+    this.rankingAnchor = { key, time, age };
+    this.tickRanking();
+  },
+  tickRanking() {
+    clearTimeout(this.rankingTimer);
+    const anchor = this.rankingAnchor, game = this.data.game;
+    if (!this.active || !anchor || !game?.ranking) return;
+    const age = Math.max(anchor.lastAge || 0, anchor.age + Math.max(0, Date.now() - anchor.time));
+    anchor.lastAge = age;
+    this.setData({ ranking: rankingPresentation(game, this.data.seats, this.data.room.mySeat, age) });
+    const next = rankingBoundaries(game.ranking.length).find((boundary) => boundary > age);
+    if (next !== undefined)
+      this.rankingTimer = setTimeout(() => {
+        if (this.rankingAnchor?.key === anchor.key) this.tickRanking();
+      }, Math.max(1, next - age));
+  },
   choose(e) {
     if (!this.data.busy)
       this.setData({
@@ -388,6 +424,7 @@ Page({
     return this.send({ action: "start" });
   },
   leave() {
+    if (this.data.game?.ranking && !this.data.ranking?.ready) return;
     return this.send({ action: "leave" });
   },
   finish() {
@@ -400,6 +437,7 @@ Page({
     });
   },
   rematch() {
+    if (this.data.game?.ranking && !this.data.ranking?.ready) return;
     return this.send({ action: "rematch" });
   },
   respond(e) {

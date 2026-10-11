@@ -23,6 +23,8 @@ Object.assign(globalThis, {
 const simulate = require("miniprogram-simulate");
 const { snapshot } = require("../miniprogram/utils/online");
 const { presentation } = require("../miniprogram/utils/online-settlement");
+const { rankingPresentation } = require("../miniprogram/utils/online-ranking");
+const { rankingReadyAt } = require("../miniprogram/utils/online-ranking-timing");
 const output = ".local/browser/native-layout";
 mkdirSync(output, { recursive: true });
 const compiled = path.resolve(output, `fixtures-${process.pid}.mjs`);
@@ -66,6 +68,7 @@ function html(room, age, safeInsets = { left: 0, right: 0 }) {
     busy: false,
   };
   data.settlement = presentation(data.game, data.seats, age);
+  data.ranking = rankingPresentation(data.game, data.seats, room?.mySeat, age);
   if (data.settlement)
     data.actions = data.actions.filter((c) => c.type !== "ack");
   data.settlementAck = data.game?.choices.find((c) => c.type === "ack") || null;
@@ -390,7 +393,7 @@ try {
               room.members.find((m) => m.seat === rank.seat).displayName,
             ),
           );
-          assert.ok(rows[index].includes(String(rank.score)));
+          assert.ok(rows[index].includes(String(rank.score).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " 点"));
         });
         const labels = (
           await page.locator(".ranking-footer wx-button").allTextContents()
@@ -405,6 +408,23 @@ try {
         );
       }
       const before = await measure();
+      const phaseChecks = [];
+      if (room.game?.ranking) {
+        const rows = room.game.ranking.length;
+        for (const age of [0, 1799, 1800, 2600, rankingReadyAt(rows) - 1]) {
+          await page.evaluate((markup) => { document.body.innerHTML = markup; }, html(room, age, cutout ? { left: 47, right: 47 } : undefined));
+          const phase = await measure();
+          assert.deepEqual(phase.footer, before.footer, "Ranking reveal keeps footer space stable");
+          assert.deepEqual(phase.panel, before.panel, "Ranking reveal does not resize the panel");
+          assert.equal(phase.buttons.length, 0, "No actions before all ranks are revealed");
+          const opacities = await page.locator(".ranking-row").evaluateAll((elements) => elements.map((el) => Number(getComputedStyle(el).opacity)));
+          assert.equal(opacities.filter((opacity) => opacity === 1).length, Math.min(rows, Math.max(0, 1 + Math.floor((age - 1800) / 800))));
+          phaseChecks.push({ age, visible: opacities.filter((opacity) => opacity === 1).length });
+          if (width === 568 && age === 2600 && room.mySeat === 0 && !cutout)
+            await page.screenshot({ path: path.join(output, `${name}-reveal-${age}-${width}x${height}.png`) });
+        }
+        await page.evaluate((markup) => { document.body.innerHTML = markup; }, html(room, 10000, cutout ? { left: 47, right: 47 } : undefined));
+      }
       if (cutout)
         assert.ok(
           before.panel.left >= 47 && before.panel.right <= width - 47,
@@ -446,7 +466,7 @@ try {
       await page.screenshot({
         path: path.join(output, `${name}-${width}x${height}.png`),
       });
-      results.push({ name, width, height, passed: true, before, after });
+      results.push({ name, width, height, passed: true, before, after, phaseChecks });
       await page.close();
     }
   for (const { name, room } of tableStates())

@@ -208,9 +208,9 @@
           <view id="{{game.ranking?'result-ranking':settlement.anchor}}"></view>
           <block wx:if="{{game.ranking}}"
             ><view class="heading">最终排名</view
-            ><view wx:for="{{game.ranking}}" wx:key="seat" class="line"
-              ><text>{{item.rank}}位 · {{seats[item.seat].name}}</text
-              ><text>{{item.score}}</text></view
+            ><view wx:for="{{ranking.rows}}" wx:key="seat" class="line ranking-row {{item.visible?'is-visible':'is-pending'}} {{item.self?'is-own':''}}"
+              ><text>{{item.rank}}位 · {{item.name}}{{item.self?' · 你':''}}</text
+              ><text>{{item.scoreLabel}} 点</text></view
             ></block
           >
           <block wx:else>
@@ -343,8 +343,8 @@
               ><text wx:else>等待其他玩家</text></view
             >
           <view class="result-footer ranking-footer" wx:else>
-            <button wx:if="{{host}}" bindtap="rematch" disabled="{{busy}}">再来一场</button>
-            <button bindtap="leave" disabled="{{busy}}">返回大厅</button>
+            <button wx:if="{{host && ranking.ready}}" bindtap="rematch" disabled="{{busy}}">再来一场</button>
+            <button wx:if="{{ranking.ready}}" bindtap="leave" disabled="{{busy}}">返回大厅</button>
           </view>
         </view>
       </view></block

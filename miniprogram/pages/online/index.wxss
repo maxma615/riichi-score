@@ -832,6 +832,9 @@
 }
 .ranking-footer { gap: 8px; }
 .ranking-footer button { flex: 1; }
+.ranking-row { opacity: 0; transform: translateY(6px); transition: opacity 180ms ease, transform 180ms ease; }
+.ranking-row.is-visible { opacity: 1; transform: none; }
+.ranking-row.is-own { color: #903c2d; font-weight: 600; }
 
 @media (orientation: landscape) {
   .row .dora-tray { position: static; padding: 2px 4px; font-size: 9px; }
