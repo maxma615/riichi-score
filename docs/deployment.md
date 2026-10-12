@@ -2,12 +2,12 @@
 
 手机入口：**https://8.133.186.15/riichi/**。原情侣空间和联机麻将保持各自入口；不需要情侣空间账号。网页二维码是浏览器入桌链接，不是微信小程序码。
 
-当前网页运行源为 `c08e23f`，运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/c08e23f`。后续小程序／测试／文档提交不改变网页运行版本。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`。
+当前网页运行源为 `07a07be`，运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/07a07be`。后续小程序／测试／文档提交不改变网页运行版本。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`。
 
 ## 进程与资料
 
 - Compose项目 `yougui-riichi`，容器 `yougui-riichi-score`，Node24 普通用户运行。
-- 生产镜像 `sha256:df34449ad84d7414699159512a6910913bcd7b9e3a49da250863fe29797414d1`。
+- 生产镜像 `sha256:b2a3eeba9a1ce05daf8d869eb76fd71151b05acd5f6456e8676a99992ed6bdd4`。
 - 独立持久化卷 `yougui-riichi_score_data` 挂载 `/data`；SQLite文件 `score.sqlite`。不共享有归的PostgreSQL、账号或照片卷。
 - 运行限制0.25CPU、256MiB内存、64进程，所有capability撤销。3200仅绑定127.0.0.1；Caddy经私有 `yougui_default` 网络转发。
 - `.env`：`APP_ORIGIN=https://8.133.186.15`、`APP_BASE_PATH=/riichi`。不存放密码；不要提交环境文件或真实数据。
@@ -115,3 +115,10 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 238项本地常规检查、18组Chromium／WebKit特殊动作流程、168组原生布局适配通过。生产镜像0.25CPU／256MiB下97项服务检查通过，同源开发检查镜像0.25CPU／384MiB下107项规则回归通过，实际服务仍为256MiB。六张业务表升级前后内容摘要一致，有归容器ID及启动时间、禁备份标记、独立卷、node用户、64进程、全部capability撤销及回环3200均核对。没有写生产测试牌桌或复制／备份真实数据。
 
 公网健康200、匿名牌桌401及有归200；client.js和client.css内容哈希匹配本地构建，部署中共享术语源码哈希fdd162ff3c2d993df83cbf38f05462f90889c14cf0ff554a55b56915ae4c0cda匹配。发布证据在旧工具工作目录.local/ecs-deploy/late-response-remote-captures/late-response-c08e23f-terms-*，公网资源记录在本仓库.local/devtools-synthetic/terms-production-assets.json。小程序源码同步并在当前工具直接看到中文一气通贯；正式微信配置仍为空，未发布小程序。
+
+
+## 开桌规则开关与加载保留（2026-10-12）
+
+源07a07be已上线：切上满贯／累计役满采用纸页内紧凑朱砂开关，整行可点；首次身份请求结束时保留已填昵称、桌型与规则，避免重建表单还原默认值。原生同步按钮与状态样式，正式微信发布仍未执行。
+
+本地242项常规及8组完整浏览器流程通过，浏览器增加受控延迟身份请求回归。Linux实际运行镜像内97项服务检查及107项规则通过。发布后六张业务表摘要一致；有归容器ID及启动时间未变，256MiB／0.25CPU、普通用户、独立卷、回环端口与禁备份标记再次核对。证据在旧工具工作目录.local/ecs-deploy/late-response-remote-captures/late-response-07a07be-switch-*。
