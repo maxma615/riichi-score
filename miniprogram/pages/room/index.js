@@ -145,7 +145,9 @@ Page({
       .finally(() => this.setData({ loading: false }));
   },
   rule(e) {
-    this.setData({ [e.currentTarget.dataset.key]: e.detail.value });
+    const key = e.currentTarget.dataset.key;
+    if (!this.data.loading && ["kiriage", "kazoe"].includes(key))
+      this.setData({ [key]: !this.data[key] });
   },
   scan() {
     wx.scanCode({

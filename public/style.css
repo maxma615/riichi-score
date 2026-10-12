@@ -1466,3 +1466,22 @@ footer {
 .winner-picker button {
   transition: transform 0.18s;
 }
+
+/* Compact rule switches on the paper page; the whole row stays tappable. */
+.rule-options { margin: 10px 0; }
+.rule-option { position: relative; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 8px 0; border-bottom: 1px solid #c0b29766; color: #292d2b; cursor: pointer; }
+.rule-option:last-child { border-bottom: 0; }
+.rule-copy { display: flex; flex-direction: column; gap: 2px; }
+.rule-name { font-size: 14px; font-weight: 500; }
+.rule-note { font-size: 11px; color: #817463; }
+.rule-switch { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 11px; color: #817463; }
+.rule-option input[type="checkbox"] { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 44px; margin: 0; padding: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.switch-track { display: inline-block; position: relative; width: 36px; height: 22px; border-radius: 12px; background: #c2b8a7; transition: background 160ms ease; }
+.switch-track::before { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #faf5ea; box-shadow: 0 1px 3px #292d2b26; transition: transform 160ms ease; }
+.rule-on { display: none; }
+.rule-option input:checked ~ .rule-switch .rule-on { display: inline; color: #993e31; }
+.rule-option input:checked ~ .rule-switch .rule-off { display: none; }
+.rule-option input:checked ~ .rule-switch .switch-track { background: #993e31; }
+.rule-option input:checked ~ .rule-switch .switch-track::before { transform: translateX(14px); }
+.rule-option input:focus-visible ~ .rule-switch .switch-track { outline: 2px solid #993e31; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .switch-track, .switch-track::before { transition: none; } }
