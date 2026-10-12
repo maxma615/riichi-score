@@ -36,7 +36,26 @@ for (const engine of [chromium, webkit])
           page = await host.newPage(),
           errors = [];
         page.on("pageerror", (e) => errors.push(e.message));
-        await page.goto(entry);
+        let releaseSession;
+        const sessionGate = new Promise((resolve) => { releaseSession = resolve; });
+        await page.route("**/api/session", async (route) => {
+          if (route.request().method() === "GET") await sessionGate;
+          await route.continue();
+        });
+        await page.goto(entry, { waitUntil: "commit" });
+        await page.locator("#entry").waitFor();
+        await page.locator("#entry").evaluate((form) => { form.dataset.ruleDraftCheck = "pending"; });
+        await page.locator("#name").fill("先填写的昵称");
+        await page.locator("#kiriage").check();
+        await page.locator("#kazoe").uncheck();
+        releaseSession();
+        await expect(page.locator("#entry")).not.toHaveAttribute("data-rule-draft-check", "pending");
+        await expect(page.locator("#name")).toHaveValue("先填写的昵称");
+        await expect(page.locator("#kiriage")).toBeChecked();
+        await expect(page.locator("#kazoe")).not.toBeChecked();
+        await page.locator("#name").fill("");
+        await page.locator("#kiriage").uncheck();
+        await page.locator("#kazoe").check();
         await expect(page.locator("#room")).toBeVisible();
         await expect(page.locator("#quick")).not.toBeVisible();
         assert.equal(

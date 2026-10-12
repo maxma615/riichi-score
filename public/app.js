@@ -228,8 +228,21 @@ function remember(r) {
 function renderRoom() {
   if (!room) {
     const join = new URLSearchParams(location.search).get("join");
+    const previousEntry = $("#entry");
+    const draft = previousEntry ? Object.fromEntries(
+      ["name", "players", "join-seat", "kiriage", "kazoe"].map((id) => {
+        const input = previousEntry.querySelector("#" + id);
+        return [id, input?.type === "checkbox" ? input.checked : input?.value];
+      }),
+    ) : null;
     $("#room").innerHTML =
       `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">填写昵称，开桌或扫码入桌。</p><form id="entry"><div class="grid"><label>你的昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '<label>选择座位<select id="join-seat"><option value="1">初始南家</option><option value="2">初始西家</option><option value="3">初始北家（四人桌）</option></select></label>' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<div class="rule-options"><label class="rule-option"><input id="kiriage" type="checkbox"><span class="rule-copy"><span class="rule-name">切上满贯</span><span class="rule-note">4番30符 / 3番60符</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label><label class="rule-option"><input id="kazoe" type="checkbox" checked><span class="rule-copy"><span class="rule-name">累计役满</span><span class="rule-note">13番起</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label></div>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
+    if (draft) for (const [id, value] of Object.entries(draft)) {
+      const input = $("#" + id);
+      if (!input || value === undefined || (id === "name" && user)) continue;
+      if (input.type === "checkbox") input.checked = value;
+      else input.value = value;
+    }
     $("#entry").onsubmit = (e) => {
       e.preventDefault();
       task(async () => {
