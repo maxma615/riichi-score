@@ -4,7 +4,7 @@ import vm from "node:vm";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 const require = createRequire(
-  new URL("../miniprogram/pages/online/index.js", import.meta.url),
+  new URL("../archive/native-online/pages/online/index.js", import.meta.url),
 );
 const { dropOnTable, touchPoint } = require("../../utils/online-gesture");
 const table = { left: 10, top: 20, right: 610, bottom: 420 };
@@ -36,7 +36,7 @@ function page({ delayed = false, missing = false, throws = false, flushFrames = 
     },
   };
   vm.runInNewContext(
-    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    readFileSync("archive/native-online/pages/online/index.js", "utf8"),
     {
       Page: (v) => {
         p = v;
@@ -192,7 +192,7 @@ test("新手指、多指或缺少测量结果不提交；拖动产生的tap不�
 });
 
 test("WXML阻止手牌拖动带动页面滚动，实测排除按钮与浮层", () => {
-  const wxml = readFileSync("miniprogram/pages/online/index.wxml", "utf8");
+  const wxml = readFileSync("archive/native-online/pages/online/index.wxml", "utf8");
   assert.match(wxml, /catchtouchmove="touchMove"/);
   assert.match(wxml, /class="result-overlay drag-exclusion"/);
   assert.match(wxml, /class="hand drag-exclusion {{draggingId>=0\?/);

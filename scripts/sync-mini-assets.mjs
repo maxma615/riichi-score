@@ -14,7 +14,7 @@ import path from "node:path";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const hash = (x) => createHash("sha256").update(x).digest("hex");
 const source = path.join(root, "public/online/assets");
-const output = path.join(root, "miniprogram/assets");
+const output = path.join(root, "archive/native-online/assets");
 for (const dir of ["tiles", "calligraphy", "licenses"])
   mkdirSync(path.join(output, dir), { recursive: true });
 const files = [];

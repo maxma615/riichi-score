@@ -1,5 +1,7 @@
 # Native WeChat geometric table implementation plan
 
+> 2026-10-19范围变更：原生联机已移出微信记分发布包，本文件中的原生联机实现／验收为历史记录。当前miniprogram/只包含线下记分工具；联机仅保留网站。历史原生源与资源见archive/native-online/。
+
 **Goal:** Port the existing real three-dimensional online table to native WeChat Canvas, retaining touch discard, calls, nuki, automatic riichi, and settlement.
 
 **Architecture:** Reuse table3d-layout and rounded geometry dimensions. Tencent's scoped Three.js r108 backend supports native WebGL1; browser Three.js r186 stays unchanged. Merge identical tile body/material geometry to reduce draw calls. Original WXML hand, actions and results remain native controls; hidden public proxies are measured only as fallback. Actual projected meshes supply flight endpoints and discard hit polygons.

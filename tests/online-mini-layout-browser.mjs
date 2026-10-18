@@ -21,10 +21,10 @@ Object.assign(globalThis, {
   getComputedStyle: dom.window.getComputedStyle,
 });
 const simulate = require("miniprogram-simulate");
-const { snapshot } = require("../miniprogram/utils/online");
-const { presentation } = require("../miniprogram/utils/online-settlement");
-const { rankingPresentation } = require("../miniprogram/utils/online-ranking");
-const { rankingReadyAt } = require("../miniprogram/utils/online-ranking-timing");
+const { snapshot } = require("../archive/native-online/utils/online");
+const { presentation } = require("../archive/native-online/utils/online-settlement");
+const { rankingPresentation } = require("../archive/native-online/utils/online-ranking");
+const { rankingReadyAt } = require("../archive/native-online/utils/online-ranking-timing");
 const output = ".local/browser/native-layout";
 mkdirSync(output, { recursive: true });
 const compiled = path.resolve(output, `fixtures-${process.pid}.mjs`);
@@ -42,11 +42,11 @@ await build({
 const { scenario, resultStates, tableStates } = await import(
   pathToFileURL(compiled)
 );
-const template = readFileSync("miniprogram/pages/online/index.wxml", "utf8");
+const template = readFileSync("archive/native-online/pages/online/index.wxml", "utf8");
 const css =
-  readFileSync("miniprogram/app.wxss", "utf8") +
+  readFileSync("archive/native-online/app.wxss", "utf8") +
   "\n" +
-  readFileSync("miniprogram/pages/online/index.wxss", "utf8");
+  readFileSync("archive/native-online/pages/online/index.wxss", "utf8");
 const normalized = (width) =>
   css
     .replace(
@@ -83,7 +83,7 @@ function html(room, age, safeInsets = { left: 0, right: 0 }) {
       img.style = "width:100%;height:100%;display:block";
       img.src =
         "data:image/png;base64," +
-        readFileSync("miniprogram" + tiles[i].src).toString("base64");
+        readFileSync("archive/native-online" + tiles[i].src).toString("base64");
       image.append(img);
     });
   paint(".hand .tile wx-image", data.hand);

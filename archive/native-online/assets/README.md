@@ -8,8 +8,8 @@ Generated PNG exports of the application's existing licensed web assets. Tile id
 
 The native client uses `/assets/...` paths. API/login/online play still need the configured server and WeChat credentials; bundled image loading does not need a separate network request or font download.
 
-From the repository root: `npm ci`, `npx playwright install chromium`, then `npm run sync:mini:assets`. The build reads local licensed sources, blocks external browser requests and exports all resources. `npm test` verifies resource coverage, source/output hashes, PNG decoding, red tile differences, transparency, licenses and a project-specific 1.5 MiB source/asset budget. Browser raster export and these checks do not prove current WeChat rendering or device acceptance.
+From the repository root: `npm ci`, `npx playwright install chromium`, then `npm run sync:archive:assets`. The build reads local licensed sources, blocks external browser requests and exports all resources. `npm test` verifies resource coverage, source/output hashes, PNG decoding, red tile differences, transparency, licenses and a project-specific 1.5 MiB source/asset budget. Browser raster export and these checks do not prove current WeChat rendering or device acceptance.
 
 ## Settlement audio
 
-`audio/yaku.wav`, `audio/hand-value.wav`, and `audio/score-roll.wav` are original synthesized cues from `src/online/client/table-audio.ts`, shared with the web table. They contain no game recording or third-party voice sample. Rebuild with `npm run sync:mini:audio`; output is mono 16-bit PCM WAV at 22,050 Hz. Device playback starts after a real tap, respects mute, and cancels pending cues when the page hides or loses continuity.
+`audio/yaku.wav`, `audio/hand-value.wav`, and `audio/score-roll.wav` are original synthesized cues from `src/online/client/table-audio.ts`, shared with the web table. They contain no game recording or third-party voice sample. Rebuild with `npm run sync:archive:audio`; output is mono 16-bit PCM WAV at 22,050 Hz. Device playback starts after a real tap, respects mute, and cancels pending cues when the page hides or loses continuity.

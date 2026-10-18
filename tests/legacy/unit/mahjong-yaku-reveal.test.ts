@@ -18,9 +18,9 @@ const players = flow.oldScores.map((score,seat)=>({seat,score,discards:[],melds:
 const before = {id:'room',variant:'yonma',mySeat:0,status:'playing',version:10,members:[],game:{gameInstanceId:'match',handId:1,decisionId:'before',players}} as unknown as RoomView;
 function room(age=0):RoomView {return {...before,version:11,game:{...before.game!,decisionId:'result',settlement,settlementFlow:{...flow,elapsedMs:age},choices:[{type:'ack',id:'ack'}],doraIndicators:[]}};}
 function html(age:number) { const r=room(age);return renderToStaticMarkup(createElement(MahjongSettlementPanel,{game:r.game!,room:r,connected:true,busy:false,onChoice:()=>{}})); }
-const miniRequire=createRequire(resolve('miniprogram/utils/online-settlement.js'));
+const miniRequire=createRequire(resolve('archive/native-online/utils/online-settlement.js'));
 const module={exports:{} as {presentation:(game:unknown,seats:unknown,age:number)=>any}};
-vm.runInNewContext(readFileSync(resolve('miniprogram/utils/online-settlement.js'),'utf8'),{module,require:(s:string)=>s==='./online-timing'?timing:miniRequire(s)});
+vm.runInNewContext(readFileSync(resolve('archive/native-online/utils/online-settlement.js'),'utf8'),{module,require:(s:string)=>s==='./online-timing'?timing:miniRequire(s)});
 
 describe('readable sequential win breakdown',()=>{
  it('keeps every row distinct beyond fifteen roles and delays the total until the final row has had time to read',()=>{

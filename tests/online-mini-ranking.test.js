@@ -24,7 +24,7 @@ await build({
 const { scenario } = await import(pathToFileURL(compiled));
 after(() => rmSync(compiled, { force: true }));
 const req = createRequire(
-  new URL("../miniprogram/pages/online/index.js", import.meta.url),
+  new URL("../archive/native-online/pages/online/index.js", import.meta.url),
 );
 const { rankingPresentation } = req("../../utils/online-ranking");
 const timing = req("../../utils/online-ranking-timing");
@@ -41,7 +41,7 @@ function page(fixture) {
   const sent = [],
     errors = [];
   vm.runInNewContext(
-    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    readFileSync("archive/native-online/pages/online/index.js", "utf8"),
     {
       Page: (value) => (p = value),
       Date: Clock,

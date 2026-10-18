@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 const { horizontalInsets } = createRequire(import.meta.url)(
-  "../miniprogram/utils/online-safe-area.js",
+  "../archive/native-online/utils/online-safe-area.js",
 );
 
 test("native landscape cutouts and portrait-info rotation fit the measured page", () => {
@@ -69,7 +69,7 @@ test("native page discards stale safe-area measurements after a resize or hide",
         exec() {},
       }),
     };
-    createRequire(import.meta.url)("../miniprogram/pages/online/index.js");
+    createRequire(import.meta.url)("../archive/native-online/pages/online/index.js");
     const instance = {
       ...definition,
       active: true,

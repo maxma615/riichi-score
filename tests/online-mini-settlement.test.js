@@ -8,7 +8,7 @@ const {
   hanLabel,
   winning,
   presentation,
-} = require("../miniprogram/utils/online-settlement");
+} = require("../archive/native-online/utils/online-settlement");
 const seats = Array.from({ length: 4 }, (_, seat) => ({
   seat,
   name: "玩家" + seat,
@@ -215,10 +215,10 @@ test("原生结算继续按钮提交当前合法ack，新阶段和解散清掉�
   let page;
   const commands = [];
   const req = createRequire(
-    new URL("../miniprogram/pages/online/index.js", import.meta.url),
+    new URL("../archive/native-online/pages/online/index.js", import.meta.url),
   );
   vm.runInNewContext(
-    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    readFileSync("archive/native-online/pages/online/index.js", "utf8"),
     {
       Page: (p) => (page = p),
       require: (s) =>
@@ -334,7 +334,7 @@ test("原生结算时钟不重放旧阶段，后台停止且自动确认失败�
     commands = [],
     errors = [];
   const req = createRequire(
-    new URL("../miniprogram/pages/online/index.js", import.meta.url),
+    new URL("../archive/native-online/pages/online/index.js", import.meta.url),
   );
   class TestDate extends Date {
     static now() {
@@ -342,7 +342,7 @@ test("原生结算时钟不重放旧阶段，后台停止且自动确认失败�
     }
   }
   vm.runInNewContext(
-    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    readFileSync("archive/native-online/pages/online/index.js", "utf8"),
     {
       Page: (v) => (p = v),
       Date: TestDate,

@@ -1,5 +1,7 @@
 # 原生微信小程序：接手与发布
 
+> 当前范围更新（2026-10-19）：微信「雀叙牌谱」只保留线下记分、扫码入桌、符番／役种速查、算符和统计。联机麻将仅在网站 `/riichi/online/` 提供。历史原生联机代码及资源已移至 `archive/native-online/`，完全在 `miniprogram/` 发布目录之外；`sync:mini`也不再生成联机代码。下文原生联机开发／同步／发布计划为历史记录，不再作为当前上线范围。
+
 ## 当前配置（2026-10-18）
 
 正式 AppID 仅写入本机被 Git 忽略的 `miniprogram/project.private.config.json`；公开的 `miniprogram/project.config.json` 使用 `touristappid` 占位，项目名及默认导航标题为「雀叙牌谱」。下文游客模式及缺少 AppID 的描述保留为历史验证记录。 新设备可复制 `miniprogram/project.private.config.json.example` 为 `project.private.config.json`，再仅在本机填写真实 AppID。AppSecret 始终仅配置在服务端环境文件。

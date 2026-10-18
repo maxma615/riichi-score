@@ -79,7 +79,7 @@ const server = createServer((req, res) => {
       const name = path.basename(u.pathname);
       assert.equal(u.pathname, "/assets/tiles/" + name);
       const bytes = readFileSync(
-        path.join(root, "miniprogram/assets/tiles", name),
+        path.join(root, "archive/native-online/assets/tiles", name),
       );
       assetRequests.push(name);
       res.setHeader("Content-Type", "image/png");

@@ -10,8 +10,8 @@ const {
   NativeFlights,
   pathFor,
   FLIGHT_MS,
-} = require("../miniprogram/utils/online-flight");
-const { snapshot, tile } = require("../miniprogram/utils/online");
+} = require("../archive/native-online/utils/online-flight");
+const { snapshot, tile } = require("../archive/native-online/utils/online");
 mkdirSync(".local/test-data", { recursive: true });
 const compiled = path.resolve(
   `.local/test-data/native-flight-${process.pid}.mjs`,
@@ -407,7 +407,7 @@ test("真实吃碰明杠从被鸣走的牌河飞到对应横牌；暗杠与加�
 });
 
 test("两端副露解析同源：鸣牌来源、赤五、加杠叠放和无效编码", () => {
-  const { meld } = require("../miniprogram/utils/online");
+  const { meld } = require("../archive/native-online/utils/online");
   for (const [marker, index] of [
     ["-", 0],
     ["=", 1],

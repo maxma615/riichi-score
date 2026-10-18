@@ -4,7 +4,9 @@
 
 **手机直接访问：[日麻记分](https://yougui.online/riichi/)**。无需情侣空间账号，填写昵称后开桌，通过“扫码入桌”邀请朋友。
 
-这是独立运行的应用，有自己的进程、端口、SQLite 数据库和成员身份；**不需要启动情侣空间，不读取情侣空间账号或资料**。源码独立仓库：[maxma615/riichi-score](https://github.com/maxma615/riichi-score)。有归保留自己的源码与部署。网页版三／四人联机与电脑牌桌已经迁入，右上角进入[联机牌桌](https://yougui.online/riichi/online/)。原生联机源码已加入围桌布局、实体拔北与副露、动作提示及分阶段和牌／收支／名次面板，开局发牌／理牌与结算时间规则与网页同源；当前官方微信开发者工具已在游客模式实测主要记分流程及合成联机操作；正式AppID及备案域名已配置，仍等小程序备案及真实身份／扫码／真机验收后发布。
+这是独立运行的应用，有自己的进程、端口、SQLite 数据库和成员身份；**不需要启动情侣空间，不读取情侣空间账号或资料**。源码：[maxma615/riichi-score](https://github.com/maxma615/riichi-score)。
+
+**当前发布边界（2026-10-19）：微信「雀叙牌谱」只提供线下记分、扫码入桌、符番速查、算符、役种与统计，不包含联机页面、入口、三维运行时、打牌音效或素材。三／四人联机与人机只保留在[网站联机牌桌](https://yougui.online/riichi/online/)。** 原生联机的历史源码已移到发布目录之外的 `archive/native-online/`，供回归与留档，不作为微信游戏发布项目。
 
 ## 中国风界面
 
@@ -66,7 +68,7 @@ docker compose up -d --build
 npm test # 自动先构建联机服务和前端，再运行服务与规则检查
 npx playwright install chromium webkit
 npm run test:browser
-npm run test:mini:layout # 实际WXML与样式的浏览器布局适配检查；不是微信真机
+npm run test:mini:layout # 仅历史原生牌桌档案布局回归，不属于记分发布包
 ```
 
 测试只用合成昵称和临时数据库。浏览器截图在 `.local/browser/`，不提交运行数据。测试覆盖真实 HTTP 权限、来源校验、数据库重启、并发、幂等、计分与撤回，浏览器流程还将二维码截图解码后在另一个独立会话加入。
@@ -85,13 +87,7 @@ npm run test:mini:layout # 实际WXML与样式的浏览器布局适配检查；�
 
 ![真实三维网页版牌桌](docs/screenshots/webgl-table-desktop.png)
 
-npm run test:online:webgl 验证真实WebGL深度缓冲、手机／桌面物件、碰牌／拔北、空闲绘制与context恢复；test:online:depth现指向同一验证。原生微信也已接入真实WebGL1：同源牌桌布局、圆角实体几何与统一相机；小程序使用离屏WebGL绘制、Canvas2D呈现，手牌／操作／结算保留原生控件。开发者工具的原生Canvas覆盖问题有单独的位图呈现兼容分支，手机端不使用该分支。`npm run test:mini:webgl`运行原生后端的真实WebGL检查；它与微信工具交互实测、安卓真机验收分别记录。
-
-安卓优化（2026-10-19）：实体牌使用可复用几何缓冲，只更新移动或隐藏的牌；拖牌合并触摸采样，一次只更新活动牌，并等待原生渲染回调。飞牌的起止步骤合为一次原生动画提交；结算逐项更新役种与分数，暂停被结算面板遮住的三维场景。Android 连续测得画布拷贝较慢时，将三维画布像素比降至1，保留相机、实体几何和原生文字／手牌尺寸。浏览器和微信工具的性能记录见验收文档，仍需安卓新版预览复测。
-
-微信用户主动选择头像、填写昵称；后台用 OpenID 关联身份及历史，不需要手机号或密码。线下记分已有扫码入桌、选座及小程序码接口；联机牌桌目前使用房间码和微信邀请链接。外部微信扫描小程序码还受目标版本可用性影响，未完成正式版本扫码验收，不能把普通网页码当作已发布的小程序码。
-
-本轮更新：立直后普通摸牌自动摸切，暗杠／拔北／和牌留给玩家选择；放大对手手牌、牌河和副露，立直横牌保持原尺寸；结算按役逐项显示番数、播放提示音，再显示合计与收支。网页版和原生小程序源码同步。素材使用原有授权牌面与原创合成音效。
+`npm run test:online:webgl` 验证网页真实WebGL深度缓冲、手机／桌面物件、碰牌／拔北、空闲绘制与context恢复；`test:online:depth`运行同一验证。网页保留立直自动摸切、拖牌、吃碰杠、逐役结算和原创合成音效。
 
 `/online/`提供三人／四人日本麻将和电脑补位，使用本应用的昵称身份。规则、原有牌面、桌面动效和结算组件已经移入本仓库；不再调用有归的登录、数据库或联机接口。记分仍是首页，右上角进入联机牌桌。
 
@@ -101,16 +97,12 @@ npm run test:online:webgl 验证真实WebGL深度缓冲、手机／桌面物件�
 
 验证命令：`npm test`（当前项数见docs/acceptance.md，包含独立服务／小程序逻辑检查及规则回归）、`npm run test:browser`、`npm run test:online:browser`。规则回归也可单独运行`npm run test:rules`，包含四麻／三麻、立直、拔北、听牌、人数／房主权限及多人结算。新增真实进程测试覆盖双人入桌、三／四麻电脑补位、独立身份、私有手牌、非房主权限、请求幂等、解散同步、按需停止和异常退出后线下服务可用。
 
-网页版联机已实现，原生小程序新增联机页面，使用微信独立身份，可开桌、邀请、电脑补位、操作合法动作、查看拔北与结算；HTTP交互已作合成身份验证，当前微信工具已实测三／四麻电脑桌、出牌、拔北、主要鸣牌和结算；完整阶段动画、终局排名及真实安卓／微信身份扫码仍待平台验收。现有原生线下记分独立保留。正式AppID和域名已配置，小程序备案审核中；真实微信／安卓验收和正式发布待完成。
-
 ## 小程序开发与验证
 
-原生项目在`miniprogram/`，公开配置使用游客占位值，正式 AppID 仅保存在被 Git 忽略的 `miniprogram/project.private.config.json` 中，API前缀为`https://yougui.online/riichi`。当前微信开发者工具preview编译成功（1,746,850字节），详见[开发者工具记录](docs/devtools-current.md)；尚未提交新版审核或正式发布。备案审核期间保持网页入口可用。编译、浏览器适配和合成身份检查不能替代真实微信登录／扫码、安卓拖牌、音效与滚动验收。
+原生发布项目在 `miniprogram/`，只包含7个线下工具页面。公开配置使用游客占位值，正式 AppID 只保存在 Git 忽略的 `miniprogram/project.private.config.json` 中，API前缀为 `https://yougui.online/riichi`。当前小程序备案审核中，预览不等于提交审核或正式发布。
 
-`npm run sync:mini`同步计分、番种、联机自动操作、结算时刻和三维运行时。原生后端固定Tencent threejs-miniprogram 0.0.8／Three r108以兼容WebGL1；生成脚本把事件方法改为实例作用域，并附带MIT许可，避免污染应用原型。`npm run sync:mini:assets`导出原有授权牌面和书法PNG；`npm run sync:mini:audio`导出原创合成结算音效。来源和重建说明见[miniprogram/assets/README.md](miniprogram/assets/README.md)。
+`npm run sync:mini` 只同步线下计分、算符、役种、速查和支付明细，不生成联机代码。微信用户主动选择头像、填写昵称；后台用 OpenID 关联身份和历史，不需要手机号或密码。线下扫码、选座及小程序码接口保留；外部微信扫码仍需核对目标版本可用性。
 
-![原生小程序三维牌桌：微信开发者工具截图](docs/screenshots/native-webgl-devtools.png)
+`tests/mini-score-only.test.js` 扫描完整发布目录，检查没有隐藏联机路由、联机API调用、WebGL运行时或打牌资源，并保留扫码记分入口。`npm test` 还继续运行移出发布目录的历史原生联机回归；`test:mini:layout`和`test:mini:webgl`仅检查该档案，不代表当前记分小程序包含联机功能。重建档案的独立命令见[原生牌桌档案](archive/native-online/README.md)。
 
-当前`npm test`通过343项检查（156项Node、187项规则／客户端）；`npm run test:mini:layout`检查204组原生横屏布局，覆盖长牌河、多副露、拔北、和牌详情、流局及终局排名。`npm run test:online:depth`检查网页牌体材质、桌面四角及实际点击坐标。浏览器截图和编译产物保存在忽略目录`.local/`。
-
-当前微信工具实测、历史旧编译器范围与尚缺的平台验收见[开发者工具记录](docs/devtools-current.md)和[小程序接手](docs/wechat-plan.md)。服务器密钥仅保存在受保护环境文件中，勿提交到仓库。
+平台编译、预览及尚缺验收见[开发者工具记录](docs/devtools-current.md)和[小程序接手](docs/wechat-plan.md)。服务器密钥仅保存在受保护环境文件中，勿提交到仓库。

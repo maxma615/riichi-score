@@ -4,7 +4,7 @@ import vm from "node:vm";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
-const require = createRequire(new URL("../miniprogram/pages/online/index.js", import.meta.url));
+const require = createRequire(new URL("../archive/native-online/pages/online/index.js", import.meta.url));
 const flush = () => new Promise(setImmediate);
 function harness() {
   let page;
@@ -15,7 +15,7 @@ function harness() {
     dispose() { log.push("dispose"); }
     resize() { log.push("resize"); }
   }
-  vm.runInNewContext(readFileSync("miniprogram/pages/online/index.js", "utf8"), {
+  vm.runInNewContext(readFileSync("archive/native-online/pages/online/index.js", "utf8"), {
     Page: p => { page = p; },
     require: name => name === "../../utils/online-table3d" ? { NativeTable3D }
       : name === "../../utils/api" ? {} : require(name),
@@ -65,8 +65,8 @@ test("异步三维同步后已换桌或已后台的回调不能启动旧飞牌",
 });
 
 test("WXML保持真实WebGL画布与测量代理，三维就绪时只隐藏旧牌体", () => {
-  const wxml = readFileSync("miniprogram/pages/online/index.wxml", "utf8");
-  const css = readFileSync("miniprogram/pages/online/index.wxss", "utf8");
+  const wxml = readFileSync("archive/native-online/pages/online/index.wxml", "utf8");
+  const css = readFileSync("archive/native-online/pages/online/index.wxss", "utf8");
   assert.match(wxml, /<canvas[^>]*id="table-webgl"[^>]*type="2d"/);
   assert.match(wxml, /class="table[^\n]*table3dReady/);
   assert.match(css, /\.table\.is-webgl \.north-slot \{ opacity: 0; \}/);

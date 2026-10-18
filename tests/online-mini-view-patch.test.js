@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { patchView } = require("../miniprogram/utils/online-view-patch");
+const { patchView } = require("../archive/native-online/utils/online-view-patch");
 
 test("原生收支滚动只传四个点数叶子，不重发新建的相同役种与手牌数组", () => {
   const host = {

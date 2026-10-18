@@ -6,8 +6,7 @@
     "pages/record/index",
     "pages/me/index",
     "pages/profile/index",
-    "pages/yaku/index",
-    "pages/online/index"
+    "pages/yaku/index"
   ],
   "window": {
     "navigationBarTitleText": "雀叙牌谱",

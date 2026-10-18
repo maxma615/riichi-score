@@ -4,8 +4,8 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 const require = createRequire(import.meta.url);
-const { snapshot } = require("../miniprogram/utils/online");
-const { acceptedRoundOpening } = require("../miniprogram/utils/online-opening");
+const { snapshot } = require("../archive/native-online/utils/online");
+const { acceptedRoundOpening } = require("../archive/native-online/utils/online-opening");
 const closed = [
   "m1",
   "m2",
@@ -121,7 +121,7 @@ function pageHarness() {
   const tasks = new Map(),
     sent = [];
   const req = createRequire(
-    new URL("../miniprogram/pages/online/index.js", import.meta.url),
+    new URL("../archive/native-online/pages/online/index.js", import.meta.url),
   );
   class Clock extends Date {
     static now() {
@@ -129,7 +129,7 @@ function pageHarness() {
     }
   }
   vm.runInNewContext(
-    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    readFileSync("archive/native-online/pages/online/index.js", "utf8"),
     {
       Page: (v) => (p = v),
       Date: Clock,

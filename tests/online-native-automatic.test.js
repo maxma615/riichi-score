@@ -1,7 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 function fixture(){let definition;const timers=new Map();let serial=0;
-vm.runInNewContext(fs.readFileSync('miniprogram/pages/online/index.js','utf8'),{Page:p=>definition=p,require:p=>p==='../../utils/api'?{api:async()=>{},error:()=>{}}:require('../miniprogram/'+p.replace('../../','')),setTimeout:(f,ms)=>{const id=++serial;timers.set(id,{f:()=>{timers.delete(id);f()},ms});return id},clearTimeout:id=>timers.delete(id),setInterval:()=>0,clearInterval:()=>{},Date,console});
+vm.runInNewContext(fs.readFileSync('archive/native-online/pages/online/index.js','utf8'),{Page:p=>definition=p,require:p=>p==='../../utils/api'?{api:async()=>{},error:()=>{}}:require('../archive/native-online/'+p.replace('../../','')),setTimeout:(f,ms)=>{const id=++serial;timers.set(id,{f:()=>{timers.delete(id);f()},ms});return id},clearTimeout:id=>timers.delete(id),setInterval:()=>0,clearInterval:()=>{},Date,console});
 const choice={id:'draw',type:'discard',value:'p3_'};const page={...definition,data:{busy:false,openingHolding:false,room:{id:'room',status:'playing',mySeat:0,game:{gameInstanceId:'instance',handId:1,decisionId:'d1',ownRiichi:{han:1},drawnTile:'p3',choices:[choice]}}},active:true,sent:[],send:async function(c){this.sent.push(c)}};return{page,timers,choice};}
 test('原生立直自动摸切只提交当前引擎选项，并给摸牌留出阅读时间',()=>{const{page,timers}=fixture();assert.equal(typeof page.scheduleAutomatic,'function');page.scheduleAutomatic();assert.equal(timers.size,1);const t=[...timers.values()][0];assert.equal(t.ms,650);t.f();assert.equal(page.sent.length,1);assert.equal(page.sent[0].choiceId,'draw');page.scheduleAutomatic();assert.equal(timers.size,0);});
 test('原生自动摸切的旧回调不能跨决策、隐藏页或手动提交生效',()=>{for(const change of ['decision','hidden','busy']){const{page,timers}=fixture();assert.equal(typeof page.scheduleAutomatic,'function');page.scheduleAutomatic();const t=[...timers.values()][0];if(change==='decision')page.data.room.game.decisionId='d2';if(change==='hidden')page.active=false;if(change==='busy')page.data.busy=true;t.f();assert.equal(page.sent.length,0);}});
@@ -12,7 +12,7 @@ function requestFixture() {
   const timers = new Map(), requests = [];
   let getFails = false;
   const room = structuredClone(fixture().page.data.room);
-  vm.runInNewContext(fs.readFileSync('miniprogram/pages/online/index.js', 'utf8'), {
+  vm.runInNewContext(fs.readFileSync('archive/native-online/pages/online/index.js', 'utf8'), {
     Page: p => definition = p,
     require: p => p === '../../utils/api' ? {
       api: async (_path, method, body) => {
@@ -20,7 +20,7 @@ function requestFixture() {
         if (getFails) throw Error('refresh unavailable');
         return { room: structuredClone(room) };
       }, error: () => {},
-    } : require('../miniprogram/' + p.replace('../../', '')),
+    } : require('../archive/native-online/' + p.replace('../../', '')),
     setTimeout: (run, ms) => { const id = ++serial; timers.set(id, { run, ms }); return id; },
     clearTimeout: id => timers.delete(id), setInterval: () => 0, clearInterval: () => {}, Date,
   });

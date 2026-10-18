@@ -6,7 +6,7 @@ const {
   pointInPolygon,
   nativePieceNode,
   nativeQuality,
-} = require("../miniprogram/utils/online-table3d.js");
+} = require("../archive/native-online/utils/online-table3d.js");
 test("native geometric drop uses camera polygons, not rectangle approximations", () => {
   const felt = [
     { x: 40, y: 20 },
@@ -33,7 +33,7 @@ test("native quality caps framebuffer area and device pixel ratio", () => {
   assert.ok(nativeQuality(2600, 1400, 3).dpr <= 1);
 });
 test("scoped Three adapter cannot pollute application Object.prototype", () => {
-  const { scopedThree } = require("../miniprogram/utils/online-table3d.js");
+  const { scopedThree } = require("../archive/native-online/utils/online-table3d.js");
   assert.equal(typeof scopedThree, "function");
   const canvas = {},
     baseline = Object.getOwnPropertyNames(Object.prototype);
@@ -58,7 +58,7 @@ test("scoped Three adapter cannot pollute application Object.prototype", () => {
 });
 
 test("scoped native events survive without modifying another canvas prototype", () => {
-  const { scopedThree } = require("../miniprogram/utils/online-table3d.js");
+  const { scopedThree } = require("../archive/native-online/utils/online-table3d.js");
   class Canvas {
     addEventListener() {
       return "native";
@@ -81,7 +81,7 @@ test("scoped native events survive without modifying another canvas prototype", 
 });
 
 test("missing native canvas suspends rendering and stale selector cannot reactivate it", async () => {
-  const { NativeTable3D } = require("../miniprogram/utils/online-table3d.js");
+  const { NativeTable3D } = require("../archive/native-online/utils/online-table3d.js");
   const callbacks = [],
     h = {
       active: true,

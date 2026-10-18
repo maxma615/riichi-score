@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url),
     river,
     uuid,
     feedback,
-  } = require("../miniprogram/utils/online.js");
+  } = require("../archive/native-online/utils/online.js");
 test("原生联机牌面、合法动作、拔北与解散状态", () => {
   assert.match(
     uuid(),
@@ -131,10 +131,10 @@ test("原生小程序真实独立HTTP开桌、重试同nonce、人机准备及�
     },
   };
   const req = createRequire(
-    new URL("../miniprogram/pages/online/index.js", import.meta.url),
+    new URL("../archive/native-online/pages/online/index.js", import.meta.url),
   );
   vm.runInNewContext(
-    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    readFileSync("archive/native-online/pages/online/index.js", "utf8"),
     {
       Page: (v) => (p = v),
       require: (s) => (s === "../../utils/api" ? api : req(s)),
@@ -217,11 +217,11 @@ test("原生拖牌取消、过期选择和忙碌中不提交切牌", async () =>
   let p;
   const sent = [];
   vm.runInNewContext(
-    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    readFileSync("archive/native-online/pages/online/index.js", "utf8"),
     {
       Page: (v) => (p = v),
       require: (s) =>
-        s === "../../utils/api" ? {} : require("../miniprogram/utils/" + s.split("/").pop() + ".js"),
+        s === "../../utils/api" ? {} : require("../archive/native-online/utils/" + s.split("/").pop() + ".js"),
     },
   );
   p.data = {
@@ -353,10 +353,10 @@ test("原生立直模式只开放宣言牌，区分同张摸牌和赤五", () =>
 test("原生立直可取消，轮询保持选择模式，换决策与解散清除模式", async () => {
   let p;
   const req = createRequire(
-    new URL("../miniprogram/pages/online/index.js", import.meta.url),
+    new URL("../archive/native-online/pages/online/index.js", import.meta.url),
   );
   vm.runInNewContext(
-    readFileSync("miniprogram/pages/online/index.js", "utf8"),
+    readFileSync("archive/native-online/pages/online/index.js", "utf8"),
     {
       Page: (v) => (p = v),
       require: (s) => (s === "../../utils/api" ? {} : req(s)),

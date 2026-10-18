@@ -5,9 +5,9 @@ import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { PNG } from "pngjs";
 const require = createRequire(import.meta.url);
-const { tile, callArt } = require("../miniprogram/utils/online");
+const { tile, callArt } = require("../archive/native-online/utils/online");
 const hash = (x) => createHash("sha256").update(x).digest("hex");
-const root = new URL("../miniprogram/", import.meta.url);
+const root = new URL("../archive/native-online/", import.meta.url);
 const assetPath = new URL("assets/", root);
 const manifest = JSON.parse(readFileSync(new URL("manifest.json", assetPath)));
 test("原生牌面资源覆盖全部牌种及赤五，PNG与授权源绑定且无需图片网络请求", () => {
@@ -70,7 +70,7 @@ test("声明与和牌标题使用本地书法PNG，透明边缘与字体来源�
     assert.equal(png.data[3], 0);
     assert.ok(png.data.some((v, i) => i % 4 === 3 && v > 0));
   }
-  const { presentation } = require("../miniprogram/utils/online-settlement");
+  const { presentation } = require("../archive/native-online/utils/online-settlement");
   const result = presentation(
     {
       settlement: {
