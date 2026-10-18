@@ -1,6 +1,7 @@
 node_modules/
 .local/
 .env
+env.md
 .env.*
 !.env.example
 *.sqlite

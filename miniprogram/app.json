@@ -10,7 +10,7 @@
     "pages/online/index"
   ],
   "window": {
-    "navigationBarTitleText": "日麻记分",
+    "navigationBarTitleText": "雀叙牌谱",
     "navigationBarBackgroundColor": "#171b1b",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#ede6d7",

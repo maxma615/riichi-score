@@ -1,6 +1,6 @@
 {
-  "appid": "touristappid",
-  "projectname": "日麻记分",
+  "appid": "wx96a4805151b838f6",
+  "projectname": "雀叙牌谱",
   "compileType": "miniprogram",
   "miniprogramRoot": "./",
   "setting": { "es6": true, "minified": true, "urlCheck": true }
