@@ -88,7 +88,7 @@ function meld(value) {
         called: false,
         back: false,
         added: true,
-        stackStyle: `left:${index * 18}px;`,
+        stackStyle: `left:calc(var(--public-w, 17px) * ${index} + ${index}px);`,
       });
     } else
       out.push({

@@ -9,7 +9,10 @@ export const drawRevealAt = (settlement: Settlement) => settlement.drawInfo?.kin
 export const drawSummaryAt = (settlement: Settlement) => settlement.drawInfo?.kind === "abort" ? abortBaseAt(settlement) + (settlement.name === "三家和" ? 2500 : settlement.name === "四家立直" ? 1000 : 500) : 2000;
 export const NAGASHI_YAKU_MS = 600;
 export const NAGASHI_TITLE_MS = 2500;
-export const detailValueAt = (settlement: Settlement) => settlement.drawInfo?.kind === "nagashi" ? 1800 : 300 + Math.min(15, settlement.yaku.length) * 180;
+export const YAKU_START_MS = 300;
+export const YAKU_STEP_MS = 600;
+export const yakuRevealAt = (index: number) => YAKU_START_MS + index * YAKU_STEP_MS;
+export const detailValueAt = (settlement: Settlement) => settlement.drawInfo?.kind === "nagashi" ? 1800 : yakuRevealAt(settlement.yaku.length);
 export function confirmationAt(flow: SettlementFlow, settlement: Settlement) {
   return flow.stage === "draw" ? drawSummaryAt(settlement) + 1000 : flow.stage === "detail" ? settlement.drawInfo?.kind === "nagashi" ? 2800 : detailValueAt(settlement) + 600 : flow.delta.some(delta => delta !== 0) ? 4500 : 1200;
 }
@@ -21,7 +24,7 @@ export function displayedScores(flow: SettlementFlow, elapsed: number, reducedMo
 export function presentationBoundaries(flow: SettlementFlow, settlement: Settlement) {
   const ready = confirmationAt(flow, settlement);
   const reveal = flow.stage === "draw" ? [drawRevealAt(settlement),drawRevealAt(settlement)+300,drawSummaryAt(settlement)] : flow.stage === "detail"
-    ? Array.from({ length: Math.min(15, settlement.yaku.length) + 1 }, (_, i) => 300 + i * 180)
+    ? Array.from({ length: settlement.yaku.length }, (_, i) => yakuRevealAt(i))
     : Array.from({ length: SCORE_STEPS }, (_, i) => SCORE_START_MS + i * SCORE_STEP_MS);
   const abort = flow.stage === "draw" && settlement.drawInfo?.kind === "abort";
   const declarations = abort ? [...(settlement.drawInfo?.abortPresentation?.riichiSeat !== undefined ? [300,500,1000] : []), ...(settlement.name === "三家和" ? [abortBaseAt(settlement)+300,abortBaseAt(settlement)+500,abortBaseAt(settlement)+1200] : []), drawSummaryAt(settlement)+500] : [];

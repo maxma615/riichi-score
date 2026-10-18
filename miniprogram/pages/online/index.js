@@ -1,3 +1,5 @@
+const { automaticChoice, automaticOff, automaticChoiceDelay } = require('../../utils/online-automatic');
+const { NativeSettlementAudio } = require('../../utils/online-settlement-audio');
 const { NativeFlights } = require("../../utils/online-flight");
 const { dropOnTable, touchPoint } = require("../../utils/online-gesture");
 const { horizontalInsets } = require("../../utils/online-safe-area");
@@ -13,8 +15,10 @@ const {
   isUndealtRound,
   ROUND_OPENING,
 } = require("../../utils/online-opening");
+const automaticDecisionKey = room => JSON.stringify([room?.id, room?.mySeat, room?.game?.gameInstanceId, room?.game?.handId, room?.game?.decisionId]);
 Page({
   data: {
+    soundEnabled: true,
     room: null,
     game: null,
     variant: "yonma",
@@ -56,6 +60,9 @@ Page({
     this.flights?.cancel(true);
     this.touchCancel();
     this.active = false;
+    this.cancelAutomatic();
+    this.clearAutomaticRetry();
+    this.resultAudio?.invalidate();
     if (this.resultAnchor) this.resultAnchor.baselineAge = Infinity;
     this.setData({ riichiMode: false });
     this.revision = (this.revision || 0) + 1;
@@ -69,6 +76,7 @@ Page({
     this.setData({ announcement: null, selected: -1, riichiMode: false });
   },
   onResize(event) {
+    this.resultAudio?.invalidate();
     this.updateSafeArea(event?.size);
     this.flights?.cancel();
     this.touchCancel();
@@ -96,17 +104,19 @@ Page({
   },
   onUnload() {
     this.onHide();
+    this.resultAudio?.dispose();
   },
   async refresh() {
     const revision = (this.revision = (this.revision || 0) + 1);
     try {
       const r = await api("/api/online");
       if (this.active && revision === this.revision) {
+        this.confirmAutomaticRetry(r.room);
         this.accept(r, this.liveReady);
         this.liveReady = true;
       }
     } catch (e) {
-      if (this.active && revision === this.revision) error(e);
+      if (this.active && revision === this.revision) { this.cancelAutomatic(); this.resultAudio?.invalidate(); this.liveReady = false; error(e); }
     }
   },
   nativeFlights() {
@@ -118,6 +128,7 @@ Page({
     return this.flights;
   },
   accept(r, live = false) {
+    this.nativeAudio()?.update(r.room, true, this.active, live);
     const flights = this.nativeFlights();
     const flightPlan = flights.prepare(
       this.data.room,
@@ -230,10 +241,74 @@ Page({
         if (this.active) this.setData({ announcement: null });
       }, 1500);
     }
+    this.scheduleAutomatic();
     if (!sameDecision) {
       this.touchCancel();
       this.setData({ selected: -1 });
     }
+  },
+  nativeAudio() {
+    if (!this.resultAudio && typeof wx !== 'undefined' && typeof wx.createInnerAudioContext === 'function')
+      this.resultAudio = new NativeSettlementAudio({
+        sources: { yaku: '/assets/audio/yaku.wav', 'hand-value': '/assets/audio/hand-value.wav', 'score-roll': '/assets/audio/score-roll.wav' },
+        createInnerAudioContext: () => wx.createInnerAudioContext(),
+      });
+    return this.resultAudio;
+  },
+  activateSound() { this.nativeAudio()?.activateFromGesture(); },
+  toggleSound() {
+    const enabled = !this.data.soundEnabled;
+    this.setData({ soundEnabled: enabled });
+    this.nativeAudio()?.setEnabled(enabled);
+    this.activateSound();
+  },
+  cancelAutomatic() {
+    clearTimeout(this.autoTimer);
+    this.autoTimer = null;
+    this.autoGeneration = (this.autoGeneration || 0) + 1;
+  },
+  clearAutomaticRetry() {
+    const retry = this.autoRetry;
+    if (!retry) return;
+    this.autoConsumed = retry.key;
+    if (this.pending === retry.pending) this.pending = null;
+    this.autoRetry = null;
+  },
+  confirmAutomaticRetry(room) {
+    const retry = this.autoRetry;
+    if (!retry) return;
+    const choice = room?.status === 'playing' && room.game ? automaticChoice(room.game, automaticOff) : null;
+    if (automaticDecisionKey(room) !== retry.key || choice?.id !== retry.choiceId || this.pending !== retry.pending) {
+      this.clearAutomaticRetry();
+      return;
+    }
+    // A failed POST is ambiguous. Only a fresh successful GET may release one
+    // retry, with the same nonce, and at most two retries for this decision.
+    if (retry.waiting && retry.attempts < 3) {
+      retry.waiting = false;
+      this.autoConsumed = null;
+    }
+  },
+  scheduleAutomatic() {
+    this.cancelAutomatic();
+    const room = this.data.room, game = room?.game;
+    const key = automaticDecisionKey(room);
+    if (this.autoRetry && this.autoRetry.key !== key) this.clearAutomaticRetry();
+    if (!this.active || this.data.busy || this.data.openingHolding || room?.status !== 'playing' || !game) return;
+    if (this.autoConsumed === key) return;
+    const choice = automaticChoice(game, automaticOff);
+    if (!choice) return;
+    const generation = this.autoGeneration;
+    this.autoTimer = setTimeout(() => {
+      this.autoTimer = null;
+      const current = this.data.room, next = current?.game;
+      if (generation !== this.autoGeneration || !this.active || this.data.busy || this.data.openingHolding || current?.status !== 'playing' || !next || this.autoConsumed === key) return;
+      if (automaticDecisionKey(current) !== key || automaticChoice(next, automaticOff)?.id !== choice.id) return;
+      this.autoConsumed = key;
+      const retry = this.autoRetry || (this.autoRetry = { key, choiceId: choice.id, attempts: 0 });
+      retry.attempts++;
+      this.send({ action: 'respond', decisionId: next.decisionId, choiceId: choice.id }, retry);
+    }, automaticChoiceDelay(choice));
   },
   cancelOpening() {
     clearTimeout(this.openingTimer);
@@ -372,14 +447,21 @@ Page({
   code(e) {
     this.setData({ code: e.detail.value.trim().toUpperCase() });
   },
-  async send(command) {
+  async send(command, automatic = null) {
+    this.cancelAutomatic();
     if (this.data.busy) return;
+    if (!automatic && this.autoRetry) {
+      this.autoConsumed = this.autoRetry.key;
+      this.autoRetry = null;
+    }
     const body = { ...command };
     if (body.action !== "create" && body.action !== "join")
       body.roomId = this.data.room?.id;
     const key = JSON.stringify(body);
     if (!this.pending || this.pending.key !== key)
       this.pending = { key, body: { ...body, nonce: uuid() } };
+    const request = this.pending;
+    if (automatic) automatic.pending = request;
     const revision = (this.revision = (this.revision || 0) + 1);
     this.motionRequest =
       command.action === "respond" && this.chosenMotion
@@ -393,18 +475,23 @@ Page({
     this.touchCancel();
     this.setData({ busy: true });
     try {
-      const r = await api("/api/online", "POST", this.pending.body);
-      this.pending = null;
+      const r = await api("/api/online", "POST", request.body);
+      if (this.pending === request) this.pending = null;
+      if (this.autoRetry === automatic) this.autoRetry = null;
       if (this.active && revision === this.revision) this.accept(r, true);
     } catch (e) {
-      if (e.status >= 400 && e.status < 500) this.pending = null;
+      if (e.status >= 400 && e.status < 500) {
+        if (this.pending === request) this.pending = null;
+        if (this.autoRetry === automatic) this.autoRetry = null;
+      } else if (automatic && this.autoRetry === automatic && this.pending === request) automatic.waiting = true;
       if (this.active) error(e);
     } finally {
       if (this.active && revision === this.revision)
-        this.setData({ busy: false });
+        { this.setData({ busy: false }); this.scheduleAutomatic(); }
     }
   },
   create() {
+    this.activateSound();
     return this.send({
       action: "create",
       variant: this.data.variant,
@@ -412,15 +499,19 @@ Page({
     });
   },
   join() {
+    this.activateSound();
     return this.send({ action: "join", code: this.data.code });
   },
   ready() {
+    this.activateSound();
     return this.send({ action: "ready", ready: !this.data.ready });
   },
   fill() {
+    this.activateSound();
     return this.send({ action: "fill-bots" });
   },
   start() {
+    this.activateSound();
     return this.send({ action: "start" });
   },
   leave() {
@@ -441,6 +532,7 @@ Page({
     return this.send({ action: "rematch" });
   },
   respond(e) {
+    if (e?.type) this.activateSound();
     const choices = this.data.settlementAck
       ? [...this.data.actions, this.data.settlementAck]
       : this.data.actions;
@@ -482,6 +574,7 @@ Page({
     );
   },
   discard(e) {
+    if (e?.type) this.activateSound();
     if (!this.active || Date.now() < (this.ignoreTapUntil || 0)) return;
     this.touchCancel();
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];
@@ -497,6 +590,7 @@ Page({
     this.setData({ selected: t.id }, () => this.flights?.capture());
   },
   touchStart(e) {
+    if (e?.type) this.activateSound();
     this.touchCancel();
     this.ignoreTapUntil = 0;
     const t = this.data.hand[Number(e.currentTarget.dataset.index)];

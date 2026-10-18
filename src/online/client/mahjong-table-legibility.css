@@ -1,0 +1,89 @@
+/* Public pieces share the existing camera; their bodies are never filtered or
+   scaled down independently from the face, including the riichi sideways tile. */
+.mahjong-page .mahjong-game .mahjong-table__surface {
+  transform: perspective(160cqh) rotateX(38deg) scale(.84);
+  perspective: 160cqh;
+}
+.mahjong-page .mahjong-game .mahjong-player__hidden > i.mahjong-standing-tile {
+  --standing-w: min(3.15cqw, 6.8cqh, 46px);
+  --standing-h: min(4.41cqw, 9.52cqh, 64px);
+}
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-player__hidden > i.mahjong-standing-tile,
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-player__hidden > i.mahjong-standing-tile {
+  --standing-w: min(2.45cqw, 5.5cqh, 36px);
+  --standing-h: min(3.43cqw, 7.7cqh, 50px);
+}
+.mahjong-page .mahjong-game .mahjong-opponent-rack {
+  --rack-height: min(4.41cqw, 9.52cqh, 64px);
+}
+.mahjong-page .mahjong-game .mahjong-table__position--west .mahjong-opponent-rack,
+.mahjong-page .mahjong-game .mahjong-table__position--east .mahjong-opponent-rack {
+  --rack-height: min(3.43cqw, 7.7cqh, 50px);
+}
+.mahjong-page .mahjong-game .mahjong-standing-tile__face--back {
+  background: linear-gradient(100deg, #efb76e, #d78b43 58%, #b76a32);
+  box-shadow: inset 1px 1px #ffe8b9, inset -2px -1px #995c30;
+}
+.mahjong-page .mahjong-game .mahjong-standing-tile__face--top {
+  background: linear-gradient(110deg, #fffdf0, #e9e1c9);
+  box-shadow: inset 0 1px #fffdf6;
+}
+/* Preproject the concealed body before the shared table camera. This keeps
+   its full orange back and ivory depth visible when a renderer flattens nested
+   3D contexts; its existing rack footprint, foot and interaction targets stay. */
+.mahjong-page .mahjong-game .mahjong-player__hidden > i.mahjong-standing-tile > .mahjong-standing-tile__body {
+  height: var(--standing-h);
+  transform: none;
+  transform-style: flat;
+}
+.mahjong-page .mahjong-game .mahjong-standing-tile__face {
+  backface-visibility: visible;
+}
+.mahjong-page .mahjong-game .mahjong-standing-tile__face--back {
+  transform: none;
+}
+.mahjong-page .mahjong-game .mahjong-standing-tile__face--top {
+  height: calc(var(--standing-d) * .22);
+  transform: translateY(-100%) skewX(-18deg);
+  transform-origin: 0 100%;
+}
+.mahjong-page .mahjong-game .mahjong-standing-tile__face--right {
+  left: 100%;
+  width: calc(var(--standing-d) * .12);
+  transform: skewY(-18deg);
+  background: #eee7cf;
+}
+.mahjong-page .mahjong-game .mahjong-standing-tile__face--front,
+.mahjong-page .mahjong-game .mahjong-standing-tile__face--left,
+.mahjong-page .mahjong-game .mahjong-standing-tile__face--bottom {
+  display: none;
+}
+.mahjong-page .mahjong-game .mahjong-river { --river-w: min(3.6cqw, 7cqh, 40px); }
+.mahjong-page .mahjong-game .mahjong-river.is-long { --river-w: min(3cqw, 5.8cqh, 34px); }
+.mahjong-page .mahjong-game .mahjong-river--rows .mahjong-river__tile.is-riichi > .mahjong-river__volume {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+.mahjong-page .mahjong-game .mahjong-river__tile .mahjong-river__cap > .mahjong-tile {
+  border-color: #bfb69c;
+  box-shadow: inset 1px 1px #fffef6, inset -2px -2px 2px #a2977b60,
+    0 2px 0 #e5d6b4, 0 5px 0 #ab8f5d, 0 6px 2px #07131c80;
+}
+/* Paint the material rim on the cap itself, so flattened 3D side planes cannot
+   erase public-tile thickness. A sideways tile rotates this same complete rim. */
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__face.mahjong-tile,
+.mahjong-page .mahjong-game .mahjong-table__surface .mahjong-meld__back-cap {
+  box-shadow: inset 1px 1px #fffef6, inset -2px -2px 2px #a2977b60,
+    0 2px 0 #e5d6b4, 0 5px 0 #ab8f5d, 0 6px 2px #07131c80;
+}
+.mahjong-page .mahjong-game .mahjong-river__side--bottom,
+.mahjong-page .mahjong-game .mahjong-meld__side--bottom {
+  background: linear-gradient(#eee5cf 0 24%, #c7ad7e 25% 76%, #8f7854 77%);
+}
+.mahjong-page .mahjong-game .mahjong-player__melds .mahjong-meld--public {
+  --meld-tile-w: min(2.6cqw, 5.8cqh, 35px);
+  --meld-tile-h: min(3.64cqw, 8.12cqh, 49px);
+}
+.mahjong-page .mahjong-game .mahjong-hand-public-melds .mahjong-meld--public {
+  --meld-tile-w: min(3.4cqw, 7.6cqh, 42px);
+  --meld-tile-h: min(4.76cqw, 10.64cqh, 59px);
+}

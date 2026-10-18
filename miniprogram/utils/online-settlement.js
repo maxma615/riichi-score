@@ -38,6 +38,9 @@ function winning(settlement) {
 const {
   confirmationAt,
   detailValueAt,
+  yakuRevealAt,
+  YAKU_START_MS,
+  YAKU_STEP_MS,
   drawSummaryAt,
   drawRevealAt,
   abortBaseAt,
@@ -154,8 +157,12 @@ function presentation(
     countdown: Math.max(0, Math.ceil((readyAt + AUTO_CONFIRM_MS - age) / 1000)),
     autoAt: readyAt + AUTO_CONFIRM_MS + intro,
     intro,
+    summaryVisible: stage !== "detail" || age >= detailValueAt(s),
     pointsVisible: stage !== "detail" || age >= detailValueAt(s),
     phaseKey,
+    scrollAnchor: stage === 'detail' && s.yaku.length && age >= YAKU_START_MS
+      ? age >= detailValueAt(s) ? 'result-yaku-summary' : 'result-yaku-' + Math.min(s.yaku.length - 1, Math.floor((age - YAKU_START_MS) / YAKU_STEP_MS))
+      : 'result-' + String(phaseKey || 'legacy').replace(/[^a-zA-Z0-9_-]/g, '-'),
     anchor:
       "result-" + String(phaseKey || "legacy").replace(/[^a-zA-Z0-9_-]/g, "-"),
     winner: seats.find((p) => p.seat === s.winnerSeat)?.name || "",
@@ -170,7 +177,8 @@ function presentation(
       ...y,
       name: mahjongTerm(y.name),
       label: hanLabel(y.han),
-      visible: stage !== "detail" || age >= 300 + Math.min(i, 14) * 180,
+      visible: stage !== "detail" || age >= yakuRevealAt(i),
+      current: stage === "detail" && age >= yakuRevealAt(i) && age < yakuRevealAt(i + 1),
     })),
     dora: (game.doraIndicators || []).map(tile),
     ura: (s.uraIndicators || []).map(tile),

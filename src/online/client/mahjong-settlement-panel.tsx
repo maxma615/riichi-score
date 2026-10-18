@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useSettlementPresentation } from "./use-settlement-presentation";
-import { detailValueAt, drawSummaryAt, NAGASHI_YAKU_MS, NAGASHI_TITLE_MS } from "./settlement-presentation";
+import { detailValueAt, yakuRevealAt, YAKU_STEP_MS, drawSummaryAt, NAGASHI_YAKU_MS, NAGASHI_TITLE_MS } from "./settlement-presentation";
 import { MahjongDrawSummary } from "./mahjong-draw-summary";
 import type { Choice, GameView, RoomView } from "../domain/types";
 import { winningHand, settlementTitle } from "./mahjong-winning-hand";
@@ -20,6 +20,19 @@ export function MahjongSettlementPanel({ game, room, connected, busy, onChoice, 
   const [maximum,setMaximum]=useState({key:phaseKey,elapsed:presentation.elapsed});
   const age=maximum.key===phaseKey ? Math.max(maximum.elapsed,presentation.elapsed) : presentation.elapsed;
   useEffect(()=>setMaximum({key:phaseKey,elapsed:age}),[phaseKey,age]);
+  const summaryVisible = !flow || flow.stage !== "detail" || !settlement || presentation.elapsed >= detailValueAt(settlement);
+  const content = useRef<HTMLDivElement>(null);
+  const lastReveal = useRef<Element | null>(null);
+  useEffect(() => {
+    if (flow?.stage !== "detail") { lastReveal.current = null; return; }
+    const target = content.current?.querySelector(".mahjong-settlement-panel__summary.is-revealed, .mahjong-settlement-panel__yaku .is-current");
+    if (target && target !== lastReveal.current) {
+      lastReveal.current = target;
+      // The result body owns scrolling; the confirmation footer stays visible.
+      // Keep each newly named role in view, including unusually long breakdowns.
+      target.scrollIntoView?.({block: "nearest", behavior: "instant"});
+    }
+  }, [phaseKey, flow?.stage, presentation.elapsed]);
   const mountedFade=useRef<{key:string;delay:number}|null>(null);
   if (!settlement || game.ranking) {mountedFade.current=null;return null;}
   if(winIntro&&presentation.rawElapsed<winIntro){mountedFade.current=null;return null;}
@@ -38,8 +51,8 @@ export function MahjongSettlementPanel({ game, room, connected, busy, onChoice, 
   const winning = winningHand(settlement);
   const winner = settlement.winnerSeat === undefined ? null : room.members.find((member) => member.seat === settlement.winnerSeat);
   return <section key={phaseKey} style={abort ? {"--abort-cause-age":`${mountedFade.current!.delay}ms`} as CSSProperties : undefined} className={`mahjong-settlement-panel${flow ? ` is-${flow.stage}` : ""}${abort ? " is-abort" : ""}`} data-settlement-stage={flow?.stage} aria-label={scoresStage ? "本局收支" : nagashiDetail ? "流满贯详情" : detailStage ? "和牌详情" : drawStage ? abort ? "流局原因" : "听牌结果" : "本局结算"}>
-    <div key={game.decisionId} className="mahjong-settlement-panel__content">
-      <header key={game.decisionId} className="mahjong-settlement-panel__heading"><p className="mahjong-kicker">{scoresStage ? "本局收支" : "本局结算"}</p>{detailStage ? <small className="mahjong-settlement-panel__page">第 {flow.detailIndex + 1} / 共 {flow.detailCount} 位</small> : null}<h2 className={!scoresStage && settlement.kind === "win" ? "mahjong-settlement-panel__win-title" : undefined}>{scoresStage ? "点数结算" : nagashiDetail ? "流满贯" : drawStage ? abort ? "途中流局" : "荒牌流局" : settlementTitle(settlement)}</h2>{!scoresStage && (settlement.kind === "win" || nagashiDetail) ? <strong className="mahjong-settlement-panel__winner">{winner?.displayName || `座位 ${(settlement.winnerSeat ?? 0) + 1}`} {nagashiDetail ? "" : `· ${settlementTitle(settlement)}`}</strong> : null}<p>{scoresStage ? "本局各席收支" : nagashiDetail ? <span data-testid="nagashi-mangan-title" className={presentation.elapsed >= NAGASHI_TITLE_MS ? "is-revealed" : "is-pending"}>满贯</span> : drawStage ? abort ? "" : "听牌结果" : settlement.kind === "win" ? `${hanLabel}${settlement.fu ? ` · ${settlement.fu} 符` : ""}` : settlement.name}</p>{!scoresStage && (settlement.kind === "win" || nagashiDetail) && settlement.points !== undefined ? <div className={`mahjong-settlement-panel__value${detailStage ? presentation.elapsed >= detailValueAt(settlement) ? " is-revealed" : " is-pending" : ""}`}><small>牌型点数</small><b>{number(settlement.points)} 点</b></div> : null}</header>
+    <div ref={content} key={game.decisionId} className="mahjong-settlement-panel__content">
+      <header key={game.decisionId} className="mahjong-settlement-panel__heading"><p className="mahjong-kicker">{scoresStage ? "本局收支" : "本局结算"}</p>{detailStage ? <small className="mahjong-settlement-panel__page">第 {flow.detailIndex + 1} / 共 {flow.detailCount} 位</small> : null}<h2 className={!scoresStage && settlement.kind === "win" ? "mahjong-settlement-panel__win-title" : undefined}>{scoresStage ? "点数结算" : nagashiDetail ? "流满贯" : drawStage ? abort ? "途中流局" : "荒牌流局" : settlementTitle(settlement)}</h2>{!scoresStage && (settlement.kind === "win" || nagashiDetail) ? <strong className="mahjong-settlement-panel__winner">{winner?.displayName || `座位 ${(settlement.winnerSeat ?? 0) + 1}`} {nagashiDetail ? "" : `· ${settlementTitle(settlement)}`}</strong> : null}<p>{scoresStage ? "本局各席收支" : nagashiDetail ? <span data-testid="nagashi-mangan-title" className={presentation.elapsed >= NAGASHI_TITLE_MS ? "is-revealed" : "is-pending"}>满贯</span> : drawStage ? abort ? "" : "听牌结果" : settlement.kind === "win" ? null : settlement.name}</p>{!scoresStage && nagashiDetail && settlement.points !== undefined ? <div className={`mahjong-settlement-panel__value${detailStage ? presentation.elapsed >= detailValueAt(settlement) ? " is-revealed" : " is-pending" : ""}`}><small>牌型点数</small><b>{number(settlement.points)} 点</b></div> : null}</header>
       {drawStage && settlement.drawInfo ? <MahjongDrawSummary game={game} room={room}/> : null}
       {!detailStage && !drawStage ? <div className={`mahjong-settlement-panel__delta${room.variant === "sanma" ? " is-sanma" : ""}`} aria-label="本次各席收支">{game.players.slice().sort((a,b) => a.seat - b.seat).map(player => {
         const delta = (scoresStage ? flow.delta[player.seat] : settlement.delta[player.seat]) ?? 0;
@@ -60,10 +73,14 @@ export function MahjongSettlementPanel({ game, room, connected, busy, onChoice, 
         </div>)}
       </div> : null}
       {nagashiDetail ? <ul><li data-testid="nagashi-yaku" className={presentation.elapsed >= NAGASHI_YAKU_MS ? "is-revealed" : "is-pending"}><span>流满贯</span></li></ul> : null}
-      {!scoresStage && settlement.yaku.length ? <ul>{settlement.yaku.map((yaku, index) => {
+      {!scoresStage && settlement.yaku.length ? <ul className="mahjong-settlement-panel__yaku">{settlement.yaku.map((yaku, index) => {
         const units = String(yaku.han).match(/\*+/)?.[0].length || 0;
-        return <li key={`${game.decisionId}:${index}:${yaku.name}`} className={detailStage ? presentation.elapsed >= 300 + Math.min(index,14) * 180 ? "is-revealed" : "is-pending" : undefined} style={detailStage ? {"--reveal-index": Math.min(index,14)} as CSSProperties : undefined}><span>{mahjongTerm(yaku.name)}</span><b>{units ? `${units > 1 ? `${units}倍` : ""}役满` : `${yaku.han} 番`}</b></li>;
+        return <li key={`${game.decisionId}:${index}:${yaku.name}`} className={detailStage ? presentation.elapsed >= yakuRevealAt(index) ? `is-revealed${presentation.elapsed < yakuRevealAt(index) + YAKU_STEP_MS ? " is-current" : ""}` : "is-pending" : undefined} aria-hidden={detailStage && presentation.elapsed < yakuRevealAt(index)}><span>{mahjongTerm(yaku.name)}</span><b>{units ? `${units > 1 ? `${units}倍` : ""}役满` : `${yaku.han} 番`}</b></li>;
       })}</ul> : null}
+      {!scoresStage && settlement.kind === "win" ? <div className={`mahjong-settlement-panel__summary${detailStage ? summaryVisible ? " is-revealed" : " is-pending" : ""}`} aria-hidden={!summaryVisible}>
+        <p><small>合计</small> <strong>{hanLabel}{settlement.fu ? ` · ${settlement.fu} 符` : ""}</strong></p>
+        {settlement.points !== undefined ? <div className={`mahjong-settlement-panel__value${detailStage ? summaryVisible ? " is-revealed" : " is-pending" : ""}`}><small>牌型点数</small><b>{number(settlement.points)} 点</b></div> : null}
+      </div> : null}
     </div>
     {ack || flow ? <footer className="mahjong-settlement-panel__actions">{flow ? <small role="status">{!ack ? "等待其他玩家" : !connected ? "正在重连" : !presentation.ready ? "正在展示" : busy || !presentation.canConfirm ? "正在确认" : `${presentation.countdown} 秒后继续`}</small> : null}{ack ? <button type="button" className="mahjong-button mahjong-button--gold" data-choice-id={ack.id} data-choice-type={ack.type} disabled={!presentation.canConfirm} onClick={presentation.submit}>继续{flow && presentation.ready && presentation.canConfirm ? ` · ${presentation.countdown}` : ""}</button> : null}</footer> : null}
   </section>;

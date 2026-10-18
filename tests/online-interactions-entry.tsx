@@ -21,6 +21,8 @@ import "../src/online/client/mahjong-tablecloth.css";
 import "../src/online/client/mahjong-round-opening.css";
 import "../src/online/client/mahjong-table-screen.css";
 import "../src/online/client/theme.css";
+import '../src/online/client/mahjong-table-legibility.css';
+import '../src/online/client/mahjong-yaku-reveal.css';
 const query = location.search;
 function Harness() {
   const [room, setRoom] = useState<any>(null),

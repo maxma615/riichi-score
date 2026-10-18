@@ -26,13 +26,16 @@ __export(settlement_presentation_exports, {
   SCORE_START_MS: () => SCORE_START_MS,
   SCORE_STEPS: () => SCORE_STEPS,
   SCORE_STEP_MS: () => SCORE_STEP_MS,
+  YAKU_START_MS: () => YAKU_START_MS,
+  YAKU_STEP_MS: () => YAKU_STEP_MS,
   abortBaseAt: () => abortBaseAt,
   confirmationAt: () => confirmationAt,
   detailValueAt: () => detailValueAt,
   displayedScores: () => displayedScores,
   drawRevealAt: () => drawRevealAt,
   drawSummaryAt: () => drawSummaryAt,
-  presentationBoundaries: () => presentationBoundaries
+  presentationBoundaries: () => presentationBoundaries,
+  yakuRevealAt: () => yakuRevealAt
 });
 module.exports = __toCommonJS(settlement_presentation_exports);
 var SCORE_START_MS = 1200;
@@ -53,9 +56,12 @@ var drawSummaryAt = (settlement) => {
 };
 var NAGASHI_YAKU_MS = 600;
 var NAGASHI_TITLE_MS = 2500;
+var YAKU_START_MS = 300;
+var YAKU_STEP_MS = 600;
+var yakuRevealAt = (index) => YAKU_START_MS + index * YAKU_STEP_MS;
 var detailValueAt = (settlement) => {
   var _a;
-  return ((_a = settlement.drawInfo) == null ? void 0 : _a.kind) === "nagashi" ? 1800 : 300 + Math.min(15, settlement.yaku.length) * 180;
+  return ((_a = settlement.drawInfo) == null ? void 0 : _a.kind) === "nagashi" ? 1800 : yakuRevealAt(settlement.yaku.length);
 };
 function confirmationAt(flow, settlement) {
   var _a;
@@ -69,7 +75,7 @@ function displayedScores(flow, elapsed, reducedMotion) {
 function presentationBoundaries(flow, settlement) {
   var _a, _b, _c, _d;
   const ready = confirmationAt(flow, settlement);
-  const reveal = flow.stage === "draw" ? [drawRevealAt(settlement), drawRevealAt(settlement) + 300, drawSummaryAt(settlement)] : flow.stage === "detail" ? Array.from({ length: Math.min(15, settlement.yaku.length) + 1 }, (_, i) => 300 + i * 180) : Array.from({ length: SCORE_STEPS }, (_, i) => SCORE_START_MS + i * SCORE_STEP_MS);
+  const reveal = flow.stage === "draw" ? [drawRevealAt(settlement), drawRevealAt(settlement) + 300, drawSummaryAt(settlement)] : flow.stage === "detail" ? Array.from({ length: settlement.yaku.length }, (_, i) => yakuRevealAt(i)) : Array.from({ length: SCORE_STEPS }, (_, i) => SCORE_START_MS + i * SCORE_STEP_MS);
   const abort = flow.stage === "draw" && ((_a = settlement.drawInfo) == null ? void 0 : _a.kind) === "abort";
   const declarations = abort ? [...((_c = (_b = settlement.drawInfo) == null ? void 0 : _b.abortPresentation) == null ? void 0 : _c.riichiSeat) !== void 0 ? [300, 500, 1e3] : [], ...settlement.name === "\u4E09\u5BB6\u548C" ? [abortBaseAt(settlement) + 300, abortBaseAt(settlement) + 500, abortBaseAt(settlement) + 1200] : [], drawSummaryAt(settlement) + 500] : [];
   return [.../* @__PURE__ */ new Set([...reveal, ...declarations, ...flow.stage === "detail" ? [detailValueAt(settlement), ...((_d = settlement.drawInfo) == null ? void 0 : _d.kind) === "nagashi" ? [NAGASHI_YAKU_MS, NAGASHI_TITLE_MS] : []] : [], ready, ready + 1e3, ready + 2e3, ready + AUTO_CONFIRM_MS])].sort((a, b) => a - b);

@@ -19,7 +19,9 @@
     "check:mini:templates": "node scripts/check-mini-templates.mjs",
     "test:online:interactions": "node tests/online-interactions-browser.mjs",
     "sync:mini:assets": "node scripts/sync-mini-assets.mjs",
-    "test:mini:layout": "node tests/online-mini-layout-browser.mjs"
+    "test:mini:layout": "node tests/online-mini-layout-browser.mjs",
+    "sync:mini:audio": "node scripts/sync-mini-audio.mjs",
+    "test:online:depth": "node tests/online-table-depth-browser.mjs"
   },
   "dependencies": {
     "@kobalab/majiang-core": "1.4.1",

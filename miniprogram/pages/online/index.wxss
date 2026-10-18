@@ -916,3 +916,59 @@
 @media (orientation: landscape) and (min-height: 280px) and (max-height: 309px) {
   .exposed-left.meld-count-2.has-kan .melds, .exposed-right.meld-count-2.has-kan .melds { transform: scale(.8); }
 }
+
+/* Concealed tiles and calls now form one physical row on each table edge. */
+.seat-rack { position: absolute; display: flex; align-items: flex-end; gap: 8px; width: max-content; }
+.seat-rack .opponent, .seat-rack .exposed {
+  position: static; width: auto; margin: 0; transform: none; flex-shrink: 0;
+}
+.seat-rack .backs { gap: 1px; }
+.seat-rack-top { top: 7px; left: 50%; transform: translateX(-50%) rotate(180deg); }
+.seat-rack-left { left: 18px; top: 49%; transform: translate(-50%, -50%) rotate(90deg); }
+.seat-rack-right { right: 18px; top: 49%; transform: translate(50%, -50%) rotate(-90deg); }
+.seat-rack-bottom { display: contents; }
+.seat-rack-bottom .exposed { position: absolute; right: 8px; bottom: 16px; }
+.seat-rack .back {
+  width: max(10px, calc((100vh - 20px) / 25));
+  height: max(24px, calc((100vh - 20px) / 10));
+  box-sizing: border-box; border: 1px solid #a66b39; border-radius: 3px;
+  background: linear-gradient(100deg, #ffd490, #d48a42 65%, #aa642e);
+  box-shadow: inset 1px 2px #fff2cb, inset -1px -2px #ac6c36, 0 3px 0 #eee4ca, 0 5px 0 #9c8d71, 1px 7px 4px #071614a0;
+}
+.seat-rack .melds { gap: 4px; transform: none; }
+.seat-rack .exposed .melds { transform: none; }
+.seat-rack { --public-w: max(12px, calc((100vh - 60px) / 16)); --public-h: calc(var(--public-w) * 1.45); }
+.seat-rack.meld-count-3, .seat-rack.meld-count-4 { --public-w: max(9px, calc((100vh - 100px) / 18)); }
+.seat-rack-bottom { --public-w: 21px; --public-h: 30px; }
+.seat-rack .meld-tile, .seat-rack .meld-tile.back,
+.seat-rack .meld-tile .tile-small { width: var(--public-w); height: var(--public-h); }
+.seat-rack .meld-tile {
+  border-radius: 3px; border: 1px solid #c7bea7; box-sizing: border-box;
+  background: linear-gradient(110deg, #fffdf3, #e9e1c9);
+  box-shadow: inset 1px 1px #fffef7, 0 2px 0 #fff0c9, 0 4px 0 #b8a177, 1px 6px 4px #071614a0;
+}
+.seat-rack .meld-tile.back { background: linear-gradient(100deg, #ffd490, #c07937); }
+.seat-rack .meld-tile.called, .seat-rack .meld-tile.added { width: var(--public-h); height: var(--public-w); }
+.seat-rack .meld-tile.called image, .seat-rack .meld-tile.added image { transform: translateX(var(--public-h)) rotate(90deg); }
+.seat-rack .meld-tile.added { bottom: calc(var(--public-w) + 2px); }
+@media (orientation: landscape) {
+  .river { --discard-w: calc((100vh - 90px) / 18); --discard-h: calc(var(--discard-w) * 1.45); width: calc(var(--discard-w) * 6 + 12px); }
+  .river.is-long { --discard-w: calc((100vh - 120px) / 18); }
+  .river-row { height: calc(var(--discard-h) + 1px); }
+  .river .river-slot, .river .tile-small { width: var(--discard-w); height: var(--discard-h); }
+  .river .river-slot.sideways { width: var(--discard-h); height: var(--discard-w); }
+  .river .river-slot.sideways image { transform: translateX(var(--discard-h)) rotate(90deg); }
+  .river .tile-small { border-radius: 2px; background: linear-gradient(100deg, #fffdf1, #e7dfca); box-shadow: inset 1px 1px #fffef7, 0 2px 0 #eee1bc, 0 4px 0 #a68b60, 1px 5px 3px #071614a0; }
+}
+.result-panel .result-yaku { min-height: 34px; padding: 6px 10px; margin: 3px 0; border: 1px solid #b2aa9640; border-radius: 4px; font-size: 15px; box-sizing: border-box; }
+.result-panel .result-yaku.is-current { border-color: #ac8045; background: #cba76825; box-shadow: inset 3px 0 #ac8045; }
+.result-panel .result-yaku.is-visible { animation: role-reveal 340ms ease-out both; }
+.result-panel .result-points { margin-top: 10px; border-top: 1px solid #b2aa9660; padding-top: 8px; }
+@keyframes role-reveal { from { opacity: 0; transform: translateX(12px) scale(.97); } to { opacity: 1; transform: none; } }
+/* Edge rotation reverses the direction of the far end of the row. */
+.seat-rack-left { top: 47%; }
+.seat-rack-right { top: 51%; }
+@media (orientation: landscape) {
+  .river-bottom.is-long { --discard-w: calc((100vh - 136px) / 18); }
+}
+.online .row button { color: #292d2b; }

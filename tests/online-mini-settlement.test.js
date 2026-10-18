@@ -302,12 +302,12 @@ test("原生结算先展示役种再显示点数，分数变化只用共同时�
   assert.equal(first.yaku[0].visible, true);
   assert.equal(first.pointsVisible, false);
   assert.equal(first.ready, false);
-  const revealed = presentation(game, seats, 1680);
+  const revealed = presentation(game, seats, 2100);
   assert.equal(revealed.pointsVisible, true);
   assert.equal(revealed.ready, false);
-  assert.equal(presentation(game, seats, 2280).ready, true);
-  assert.equal(presentation(game, seats, 2280).countdown, 3);
-  assert.equal(presentation(game, seats, 5280).countdown, 0);
+  assert.equal(presentation(game, seats, 2700).ready, true);
+  assert.equal(presentation(game, seats, 2700).countdown, 3);
+  assert.equal(presentation(game, seats, 5700).countdown, 0);
   const scores = { ...game, settlementFlow: { ...flow, stage: "scores" } };
   assert.deepEqual(
     presentation(scores, seats, 1199).changes.map((p) => p.after),

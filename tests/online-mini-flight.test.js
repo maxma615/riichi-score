@@ -424,7 +424,7 @@ test("两端副露解析同源：鸣牌来源、赤五、加杠叠放和无效�
       kan.findIndex((t) => t.called),
       index,
     );
-    assert.equal(kan[3].stackStyle, `left:${index * 18}px;`);
+    assert.equal(kan[3].stackStyle, `left:calc(var(--public-w, 17px) * ${index} + ${index}px);`);
     assert.ok(kan[3].added);
   }
   const chi = meld("m34-5");

@@ -52,7 +52,7 @@
       <view wx:if="{{game && doraVisible}}" class="dora-tray drag-exclusion">
         <text>宝牌指示牌</text><view><image wx:for="{{dora}}" wx:key="index" src="{{item.src}}" class="tile-small" /></view>
       </view><text>{{room.code}}</text
-      ><button
+      ><button size="mini" bindtap="toggleSound">{{soundEnabled?'声音 开':'声音 关'}}</button><button
         wx:if="{{host}}"
         size="mini"
         bindtap="finish"
@@ -110,6 +110,7 @@
             </view
             ><text wx:if="{{player.riichi}}" class="call">立直</text></view
           >
+          <view class="seat-rack seat-rack-{{player.edge}} meld-count-{{player.melds.length}}">
           <view
             wx:if="{{!player.self}}"
             class="drag-exclusion opponent opponent-{{player.edge}}"
@@ -120,19 +121,6 @@
                 wx:for="{{player.hidden}}"
                 wx:key="*this"
                 class="back {{item>=player.visibleCount?'deal-pending':openingHolding?'dealt':''}}" /></view
-          ></view>
-          <view class="river river-{{player.edge}}"
-            ><view
-              wx:for="{{player.riverRows}}"
-              wx:for-item="row"
-              wx:key="index"
-              class="river-row"
-              ><view
-                wx:for="{{row}}"
-                wx:key="index"
-                id="{{item.nodeId}}"
-                class="river-slot {{motionTarget===item.nodeId && flight?'arrival-held':''}} {{item.sideways?'sideways':''}}"
-                ><image src="{{item.src}}" class="tile-small" /></view></view
           ></view>
           <view class="drag-exclusion exposed exposed-{{player.edge}} meld-count-{{player.melds.length}} {{player.hasKan?'has-kan':''}}">
             <view class="melds"
@@ -153,6 +141,20 @@
             ></view>
 
           </view>
+          </view>
+          <view class="river river-{{player.edge}} {{player.river.length>18?'is-long':''}}"
+            ><view
+              wx:for="{{player.riverRows}}"
+              wx:for-item="row"
+              wx:key="index"
+              class="river-row"
+              ><view
+                wx:for="{{row}}"
+                wx:key="index"
+                id="{{item.nodeId}}"
+                class="river-slot {{motionTarget===item.nodeId && flight?'arrival-held':''}} {{item.sideways?'sideways':''}}"
+                ><image src="{{item.src}}" class="tile-small" /></view></view
+          ></view>
         </block>
         <view class="hand drag-exclusion {{draggingId>=0?'has-drag':''}}"
           ><view
@@ -204,7 +206,7 @@
         class="result-overlay drag-exclusion"
       >
         <view class="result-panel {{settlement.kind==='win' && settlement.stage!=='scores'?'is-win-detail':''}}">
-          <scroll-view class="result-scroll" scroll-y="{{true}}" scroll-into-view="{{game.ranking?'result-ranking':settlement.anchor}}">
+          <scroll-view class="result-scroll" scroll-y="{{true}}" scroll-into-view="{{game.ranking?'result-ranking':settlement.scrollAnchor}}">
           <view id="{{game.ranking?'result-ranking':settlement.anchor}}"></view>
           <block wx:if="{{game.ranking}}"
             ><view class="heading">最终排名</view
@@ -219,13 +221,6 @@
               >{{settlement.winner}} {{settlement.progress}}</view
             >
             <block wx:if="{{settlement.stage!=='scores'}}">
-              <view
-                wx:if="{{settlement.kind==='win' || settlement.drawInfo.kind==='nagashi'}}"
-                class="result-points {{settlement.pointsVisible?'is-visible':'is-pending'}}"
-                ><text class="result-value-meta">{{settlement.kind==='win' ? settlement.hanLabel : '满贯'}}{{settlement.fu ? ' · '+settlement.fu+'符' : ''}}</text><text class="result-value-total"
-                  >{{settlement.points}}点</text
-                ></view
-              >
               <view wx:if="{{settlement.hand.length}}" class="winning-rack"
                 ><image
                   wx:for="{{settlement.hand}}"
@@ -271,8 +266,15 @@
               <view
                 wx:for="{{settlement.yaku}}"
                 wx:key="index"
-                class="line result-yaku {{item.visible?'is-visible':'is-pending'}}"
+                id="result-yaku-{{index}}" class="line result-yaku {{item.current?'is-current':''}} {{item.visible?'is-visible':'is-pending'}}"
                 ><text>{{item.name}}</text><text>{{item.label}}</text></view
+              >
+              <view
+                wx:if="{{settlement.kind==='win' || settlement.drawInfo.kind==='nagashi'}}"
+                id="result-yaku-summary" class="result-points {{settlement.summaryVisible?'is-visible':'is-pending'}}"
+                ><text class="result-value-meta">{{settlement.kind==='win' ? settlement.hanLabel : '满贯'}}{{settlement.fu ? ' · '+settlement.fu+'符' : ''}}</text><text class="result-value-total"
+                  >{{settlement.points}}点</text
+                ></view
               >
               <view
                 wx:if="{{settlement.stage==='draw' && settlement.drawInfo.kind==='exhaustive'}}"

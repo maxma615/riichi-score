@@ -20,4 +20,6 @@ import "./mahjong-tablecloth.css";
 import "./mahjong-round-opening.css";
 import "./mahjong-table-screen.css";
 import './theme.css';
+import './mahjong-table-legibility.css';
+import './mahjong-yaku-reveal.css';
 createRoot(document.getElementById('online-root')!).render(<MahjongClient/>);
