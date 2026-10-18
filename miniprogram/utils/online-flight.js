@@ -64,6 +64,7 @@ class NativeFlights {
     this.timer = null;
     this.plan = null;
     this.sources = null;
+    this.host.table3d?.hideTarget(null);
     if (reset) this.tracker.reset();
     if (this.host.data.flight || this.host.data.motionTarget)
       this.host.setData({
@@ -165,7 +166,8 @@ class NativeFlights {
           target: `river-${event.seat}-${event.index}`,
           face: event.tile,
           from,
-          fromAngle: f.source === "own" ? 0 : angles[edge],
+          fromAngle: f.source === "own" ? 0 :
+            Number.isFinite(from.angle) ? from.angle : angles[edge],
           toAngle:
             angles[edge] +
             (river(
@@ -258,8 +260,8 @@ class NativeFlights {
         let offset = 0;
         for (const seat of seats) {
           const end = offset + seat.hidden.length;
-          if (validRect(rects[1][end - 1]))
-            opponents[seat.seat] = rects[1][end - 1];
+          const from = host.table3d?.opponentRect(seat.seat) || rects[1][end - 1];
+          if (validRect(from)) opponents[seat.seat] = from;
           offset = end;
         }
         if (offset !== rects[1].length) return;
@@ -272,8 +274,12 @@ class NativeFlights {
         if (!Array.isArray(rects[2]) || rects[2].length !== cells.length)
           return;
         cells.forEach((t, i) => {
-          if (validRect(rects[2][i]))
-            rivers[t.nodeId] = { rect: rects[2][i], angle: t.angle };
+          const rect = host.table3d?.rectForNode(t.nodeId) || rects[2][i];
+          if (validRect(rect))
+            rivers[t.nodeId] = {
+              rect,
+              angle: Number.isFinite(rect.angle) ? rect.angle : t.angle,
+            };
         });
         this.sources = { context: key, own, opponents, rivers };
       });
@@ -294,12 +300,9 @@ class NativeFlights {
   start(plan) {
     if (!plan || !this.current(plan)) return;
     try {
-      const q = this.api.createSelectorQuery().in(this.host);
-      q.select("#" + plan.target).boundingClientRect();
-      q.exec((rects) => {
+      const arrive = (to) => {
         try {
           if (!this.current(plan)) return;
-          const to = rects?.[0];
           if (!validRect(to)) {
             this.cancel();
             return;
@@ -314,7 +317,10 @@ class NativeFlights {
               () => this.schedule(plan),
             );
           } else {
-            const path = pathFor(plan.from, to, plan.fromAngle, plan.toAngle);
+            const path = pathFor(
+              plan.from, to, plan.fromAngle,
+              Number.isFinite(to.angle) ? to.angle : plan.toAngle,
+            );
             if (!path) {
               this.cancel();
               return;
@@ -333,6 +339,7 @@ class NativeFlights {
               src: tile(plan.face).src,
               style: path.style,
             };
+            this.host.table3d?.hideTarget(plan.target);
             this.host.setData(
               {
                 flight,
@@ -358,7 +365,14 @@ class NativeFlights {
         } catch (_) {
           this.cancel();
         }
-      });
+      };
+      const projected = this.host.table3d?.rectForNode(plan.target);
+      if (validRect(projected)) arrive(projected);
+      else {
+        const q = this.api.createSelectorQuery().in(this.host);
+        q.select("#" + plan.target).boundingClientRect();
+        q.exec((rects) => arrive(rects?.[0]));
+      }
     } catch (_) {
       this.cancel();
     }

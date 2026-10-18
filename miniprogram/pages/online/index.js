@@ -1,6 +1,7 @@
 const { automaticChoice, automaticOff, automaticChoiceDelay } = require('../../utils/online-automatic');
 const { NativeSettlementAudio } = require('../../utils/online-settlement-audio');
 const { NativeFlights } = require("../../utils/online-flight");
+const { NativeTable3D } = require("../../utils/online-table3d");
 const { dropOnTable, touchPoint } = require("../../utils/online-gesture");
 const { horizontalInsets } = require("../../utils/online-safe-area");
 const { api, error } = require("../../utils/api");
@@ -36,6 +37,8 @@ Page({
     flight: null,
     flightAnimation: {},
     motionTarget: "",
+    table3dReady: false,
+    table3dCenterStyle: "",
     announcement: null,
     riichiMode: false,
     canRiichi: false,
@@ -47,8 +50,9 @@ Page({
   },
   onShow() {
     this.active = true;
+    this.tableActivity = (this.tableActivity || 0) + 1;
     this.liveReady = false;
-    this.setData({ busy: false });
+    this.setData({ busy: false }, () => this.syncTable3D());
     this.tickRanking();
     this.updateSafeArea();
     this.refresh();
@@ -60,6 +64,8 @@ Page({
     this.flights?.cancel(true);
     this.touchCancel();
     this.active = false;
+    this.tableActivity = (this.tableActivity || 0) + 1;
+    this.table3d?.suspend();
     this.cancelAutomatic();
     this.clearAutomaticRetry();
     this.resultAudio?.invalidate();
@@ -81,6 +87,7 @@ Page({
     this.flights?.cancel();
     this.touchCancel();
     this.cancelOpening();
+    this.table3d?.resize();
   },
   updateSafeArea(size) {
     if (typeof wx === "undefined") return;
@@ -91,7 +98,7 @@ Page({
     const revision = this.safeRevision = (this.safeRevision || 0) + 1;
     const apply = (width) => {
       if (this.active && revision === this.safeRevision)
-        this.setData({ safeInsets: horizontalInsets(info, width) });
+        this.setData({ safeInsets: horizontalInsets(info, width) }, () => this.syncTable3D());
     };
     if (Number.isFinite(size?.windowWidth)) apply(size.windowWidth);
     else if (typeof wx.createSelectorQuery === "function")
@@ -101,10 +108,13 @@ Page({
   onPageScroll() {
     this.flights?.cancel();
     this.touchCancel();
+    this.syncTable3D();
   },
   onUnload() {
     this.onHide();
     this.resultAudio?.dispose();
+    this.table3d?.dispose();
+    this.table3d = null;
   },
   async refresh() {
     const revision = (this.revision = (this.revision || 0) + 1);
@@ -126,6 +136,22 @@ Page({
         typeof wx === "undefined" ? null : wx,
       );
     return this.flights;
+  },
+  nativeTable3D() {
+    if (!this.table3d && typeof wx !== "undefined")
+      this.table3d = new NativeTable3D(this, wx);
+    return this.table3d;
+  },
+  async syncTable3D() {
+    const room = this.data.room, activity = this.tableActivity;
+    if (!this.active) return false;
+    try {
+      await this.nativeTable3D()?.sync();
+    } catch (_) {
+      if (this.active && this.data.room === room && activity === this.tableActivity)
+        this.setData({ table3dReady: false });
+    }
+    return this.active && this.data.room === room && activity === this.tableActivity;
   },
   accept(r, live = false) {
     this.nativeAudio()?.update(r.room, true, this.active, live);
@@ -212,7 +238,8 @@ Page({
           ? next.actions.filter((c) => c.type !== "ack")
           : next.actions,
       },
-      () => {
+      async () => {
+        if (!(await this.syncTable3D())) return;
         flights.start(flightPlan);
         flights.capture();
       },
@@ -325,7 +352,7 @@ Page({
         seats: next.seats,
         openingHolding: false,
         doraVisible: true,
-      });
+      }, () => this.syncTable3D());
     }
   },
   tickOpening() {
@@ -348,7 +375,8 @@ Page({
         openingHolding: next.openingHolding,
         doraVisible: next.doraVisible,
       },
-      () => {
+      async () => {
+        if (!(await this.syncTable3D())) return;
         if (done) this.flights?.capture();
       },
     );
@@ -384,7 +412,7 @@ Page({
       age,
       anchor.baselineAge ?? anchor.age,
     );
-    this.setData({ settlement: result });
+    this.setData({ settlement: result }, () => this.syncTable3D());
     const key = anchor.key;
     const due =
       age >= result.autoAt && this.data.settlementAck && this.autoPhase !== key;
@@ -646,7 +674,10 @@ Page({
     const dy = Math.round(d.point.y - d.start.y) - (d.raised ? 12 : 0);
     const dragStyle = `transform:translate(${dx}px,${dy}px);`;
     const dropTarget =
-      d.start.y - d.point.y >= 40 && dropOnTable(d.point, d.geometry);
+      d.start.y - d.point.y >= 40 &&
+      dropOnTable(d.point, d.geometry, this.table3d?.dropOnTable(d.point));
+    if (this.data.dropTarget !== dropTarget)
+      this.table3d?.setDropTarget?.(dropTarget);
     if (
       this.data.dragStyle !== dragStyle ||
       this.data.dropTarget !== dropTarget ||
@@ -655,6 +686,7 @@ Page({
       this.setData({ draggingId: d.tile.id, dragStyle, dropTarget });
   },
   clearDragPreview() {
+    if (this.data.dropTarget) this.table3d?.setDropTarget?.(false);
     if (
       this.data.draggingId !== -1 ||
       this.data.dragStyle ||
@@ -685,7 +717,8 @@ Page({
       return;
     // Query the current viewport geometry at release; never reuse pre-scroll bounds.
     const geometry = await this.dropGeometry();
-    if (!this.currentDrag(d) || !dropOnTable(point, geometry)) return;
+    if (!this.currentDrag(d) ||
+        !dropOnTable(point, geometry, this.table3d?.dropOnTable(point))) return;
     this.chosenMotion = {
       key: d.tile.physicalKey,
       shift: { x: point.x - d.start.x, y: point.y - d.start.y },

@@ -972,3 +972,35 @@
   .river-bottom.is-long { --discard-w: calc((100vh - 136px) / 18); }
 }
 .online .row button { color: #292d2b; }
+
+/* Keep semantic/measurement proxies mounted while the real meshes own the table. */
+.table-webgl {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.table.is-webgl .table-webgl { opacity: 1; }
+.table.is-webgl .river,
+.table.is-webgl .seat-rack .opponent,
+.table.is-webgl .seat-rack .exposed,
+.table.is-webgl .north-slot { opacity: 0; }
+.table.is-webgl .table-center {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transform: none;
+  z-index: 1;
+}
+
+.table.is-webgl { border-color: transparent; box-shadow: none; background: #101920; }
+.hand .tile-face { width: 100%; height: 100%; }
+.table-center .round { font-size: 13px; line-height: 16px; }
+.table.is-webgl .table-center { padding: 0; font-size: 8px; line-height: 10px; }
+.table.is-webgl .remaining { font-size: 10px; margin: 0; }
+
+.table-webgl-buffer { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; pointer-events: none; }

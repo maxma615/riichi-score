@@ -85,7 +85,7 @@ npm run test:mini:layout # 实际WXML与样式的浏览器布局适配检查；�
 
 ![真实三维网页版牌桌](docs/screenshots/webgl-table-desktop.png)
 
-npm run test:online:webgl 验证真实WebGL深度缓冲、手机／桌面物件、碰牌／拔北、空闲绘制与context恢复；test:online:depth现指向同一验证。原生微信仍使用现有WXML渲染，没有将网页WebGL成果当作原生三维验收。
+npm run test:online:webgl 验证真实WebGL深度缓冲、手机／桌面物件、碰牌／拔北、空闲绘制与context恢复；test:online:depth现指向同一验证。原生微信也已接入真实WebGL1：同源牌桌布局、圆角实体几何与统一相机；小程序使用离屏WebGL绘制、Canvas2D呈现，手牌／操作／结算保留原生控件。开发者工具的原生Canvas覆盖问题有单独的位图呈现兼容分支，手机端不使用该分支。`npm run test:mini:webgl`运行原生后端的真实WebGL检查；它与微信工具交互实测、安卓真机验收分别记录。
 
 本轮更新：立直后普通摸牌自动摸切，暗杠／拔北／和牌留给玩家选择；放大对手手牌、牌河和副露，立直横牌保持原尺寸；结算按役逐项显示番数、播放提示音，再显示合计与收支。网页版和原生小程序源码同步。素材使用原有授权牌面与原创合成音效。
 
@@ -101,10 +101,12 @@ npm run test:online:webgl 验证真实WebGL深度缓冲、手机／桌面物件�
 
 ## 小程序开发与验证
 
-原生项目在`miniprogram/`，公开配置使用游客占位值，正式 AppID 仅保存在被 Git 忽略的 `miniprogram/project.private.config.json` 中，API前缀为`https://yougui.online/riichi`。本轮已通过当前微信开发者工具的preview编译（969,795字节）；尚未提交新版审核或正式发布。备案审核期间保持网页入口可用。编译、浏览器适配和合成身份检查不能替代真实微信登录／扫码、安卓拖牌、音效与滚动验收。
+原生项目在`miniprogram/`，公开配置使用游客占位值，正式 AppID 仅保存在被 Git 忽略的 `miniprogram/project.private.config.json` 中，API前缀为`https://yougui.online/riichi`。当前微信开发者工具preview编译成功（1,746,850字节），详见[开发者工具记录](docs/devtools-current.md)；尚未提交新版审核或正式发布。备案审核期间保持网页入口可用。编译、浏览器适配和合成身份检查不能替代真实微信登录／扫码、安卓拖牌、音效与滚动验收。
 
-`npm run sync:mini`同步计分、番种、联机自动操作及结算时刻。`npm run sync:mini:assets`导出原有授权牌面和书法PNG；`npm run sync:mini:audio`导出原创合成结算音效。来源和重建说明见[miniprogram/assets/README.md](miniprogram/assets/README.md)。
+`npm run sync:mini`同步计分、番种、联机自动操作、结算时刻和三维运行时。原生后端固定Tencent threejs-miniprogram 0.0.8／Three r108以兼容WebGL1；生成脚本把事件方法改为实例作用域，并附带MIT许可，避免污染应用原型。`npm run sync:mini:assets`导出原有授权牌面和书法PNG；`npm run sync:mini:audio`导出原创合成结算音效。来源和重建说明见[miniprogram/assets/README.md](miniprogram/assets/README.md)。
 
-当前`npm test`通过330项检查（143项Node、187项规则／客户端）；`npm run test:mini:layout`检查204组原生横屏布局，覆盖长牌河、多副露、拔北、和牌详情、流局及终局排名。`npm run test:online:depth`检查网页牌体材质、桌面四角及实际点击坐标。浏览器截图和编译产物保存在忽略目录`.local/`。
+![原生小程序三维牌桌：微信开发者工具截图](docs/screenshots/native-webgl-devtools.png)
+
+当前`npm test`通过343项检查（156项Node、187项规则／客户端）；`npm run test:mini:layout`检查204组原生横屏布局，覆盖长牌河、多副露、拔北、和牌详情、流局及终局排名。`npm run test:online:depth`检查网页牌体材质、桌面四角及实际点击坐标。浏览器截图和编译产物保存在忽略目录`.local/`。
 
 当前微信工具实测、历史旧编译器范围与尚缺的平台验收见[开发者工具记录](docs/devtools-current.md)和[小程序接手](docs/wechat-plan.md)。服务器密钥仅保存在受保护环境文件中，勿提交到仓库。

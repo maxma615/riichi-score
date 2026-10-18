@@ -21,11 +21,11 @@ function contains(p, r, inset = 0) {
     p.y <= r.bottom - inset
   );
 }
-function dropOnTable(point, geometry) {
+function dropOnTable(point, geometry, projected = null) {
   return Boolean(
     point &&
       geometry &&
-      contains(point, geometry.table, 8) &&
+      (projected == null ? contains(point, geometry.table, 8) : projected === true) &&
       Array.isArray(geometry.excluded) &&
       !geometry.excluded.some((r) => contains(point, r)),
   );

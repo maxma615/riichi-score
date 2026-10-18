@@ -278,3 +278,36 @@ test("旋转、滚动和后台清除移动牌和桌面提示；旧预览结果�
     assert.equal(sent.length, 0);
   }
 });
+
+test("真实三维落点优先于矩形回退，保留手牌与控件排除区域", async () => {
+  const geometry = { table, excluded: [blocked] };
+  assert.equal(dropOnTable({ x: 200, y: 180 }, geometry, false), false);
+  assert.equal(dropOnTable({ x: 200, y: 180 }, geometry, null), true);
+  assert.equal(dropOnTable({ x: 260, y: 220 }, geometry, true), false);
+  assert.equal(dropOnTable({ x: 200, y: 180 }, geometry, true), true);
+  // The camera's projected surface owns the boundary, including points outside
+  // the old flat-table inset. Native controls are always excluded separately.
+  assert.equal(dropOnTable({ x: 15, y: 180 }, geometry, true), true);
+  for (const [projected, expected] of [[false, 0], [true, 1], [null, 1]]) {
+    const { p, sent } = page();
+    p.table3d = { dropOnTable: () => projected };
+    start(p);
+    await end(p);
+    assert.equal(sent.length, expected);
+  }
+});
+
+test("原生三维桌面提示仅在命中改变时绘制，取消拖牌立即清除", async () => {
+  const { p } = page(), highlights = [];
+  p.table3d = { dropOnTable: () => true, setDropTarget: value => highlights.push(value) };
+  start(p);
+  p.touchMove({ touches: [event(200, 180)] });
+  await Promise.resolve();
+  p.touchMove({ touches: [event(205, 180)] });
+  assert.deepEqual(highlights, [true]);
+  p.touchMove({ touches: [event(260, 220)] });
+  assert.deepEqual(highlights, [true, false]);
+  p.touchMove({ touches: [event(200, 180)] });
+  p.touchCancel();
+  assert.deepEqual(highlights, [true, false, true, false]);
+});

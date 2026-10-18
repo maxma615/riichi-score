@@ -455,3 +455,45 @@ test("旁观座位的鸣牌路径跟随各家的桌边方向，沿用公开牌�
   assert.equal(h.host.data.seats.find(s=>s.seat===1).edge,'left');
   h.flights.cancel();assert.equal(h.timers.size,0);assert.equal(h.host.data.motionTarget,'');
 });
+
+test("真实三维飞牌读取投影终点并隐藏实际牌体，取消后恢复", () => {
+  const f = scenario("nuki", false), before = f.view(), h = harness(before);
+  const projected = { left: 401, top: 101, width: 31, height: 28, angle: 34 };
+  const hidden = [];
+  h.host.table3d = {
+    rectForNode: () => projected,
+    opponentRect: () => null,
+    hideTarget: (id) => hidden.push(id),
+  };
+  const choice = before.game.choices.find(c => c.type === "nuki");
+  const after = f.choose({ id: choice.id, decisionId: before.game.decisionId });
+  const plan = h.flights.prepare(before, after, true);
+  h.render(after, plan);
+  assert.equal(h.queued.length, 0, "projected destination needs no flat proxy query");
+  assert.equal(hidden.at(-1), plan.target);
+  const sourceCenter = plan.from.left + plan.from.width / 2;
+  assert.equal(h.steps.at(-1).translate[0], projected.left + projected.width / 2 - sourceCenter);
+  assert.equal(h.steps.at(-1).angle, projected.angle);
+  h.flights.cancel();
+  assert.equal(hidden.at(-1), null);
+  assert.equal(h.host.data.flight, null);
+  assert.equal(h.timers.size, 0);
+});
+
+test("三维公开牌河与对手手牌投影作为飞行动画的真实来源", () => {
+  const f = scenario("pon", false), before = f.view(), h = harness(before);
+  const projectedRiver = { left: 501, top: 201, width: 21, height: 30, angle: -20 };
+  const projectedOpponent = { left: 601, top: 101, width: 18, height: 26 };
+  h.host.table3d = {
+    rectForNode: () => projectedRiver,
+    opponentRect: () => projectedOpponent,
+    hideTarget() {},
+  };
+  h.capture();
+  assert.ok(Object.values(h.flights.sources.opponents).every(r => r === projectedOpponent));
+  const choice = before.game.choices.find(c => c.type === "pon");
+  const after = f.choose({ id: choice.id, decisionId: before.game.decisionId });
+  const plan = h.flights.prepare(before, after, true);
+  assert.deepEqual(plan.from, projectedRiver);
+  assert.equal(plan.fromAngle, projectedRiver.angle);
+});

@@ -22,7 +22,8 @@
     "test:mini:layout": "node tests/online-mini-layout-browser.mjs",
     "sync:mini:audio": "node scripts/sync-mini-audio.mjs",
     "test:online:depth": "node tests/online-table-depth-browser.mjs",
-    "test:online:webgl": "node tests/online-webgl-browser.mjs"
+    "test:online:webgl": "node tests/online-webgl-browser.mjs",
+    "test:mini:webgl": "node tests/online-native-webgl-browser.mjs"
   },
   "dependencies": {
     "@kobalab/majiang-core": "1.4.1",
@@ -33,6 +34,7 @@
     "socket.io": "4.8.4",
     "socket.io-client": "4.8.4",
     "three": "0.186.1",
+    "threejs-miniprogram": "0.0.8",
     "zod": "4.6.5"
   },
   "devDependencies": {

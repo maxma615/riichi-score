@@ -124,7 +124,7 @@ test("声明与和牌标题使用本地书法PNG，透明边缘与字体来源�
       return sum + (f.isDirectory() ? size(child) : statSync(child).size);
     }, 0);
   assert.ok(
-    size(root) < 1.5 * 1024 * 1024,
-    "Own 1.5MiB native source/asset budget",
+    size(root) < 1.85 * 1024 * 1024,
+    "Own 1.85MiB native source/asset budget including scoped WebGL runtime",
   );
 });

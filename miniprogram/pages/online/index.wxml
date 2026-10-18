@@ -86,8 +86,10 @@
       ><button open-type="share">邀请朋友</button></view
     >
     <block wx:if="{{game}}">
-      <view class="table {{dropTarget?'is-drop-target':''}}">
-        <view class="table-center drag-exclusion"
+      <view class="table {{dropTarget?'is-drop-target':''}} {{table3dReady?'is-webgl':''}}">
+        <canvas id="table-webgl" canvas-id="table-webgl" type="2d" hidden="{{(settlement && settlement.visible) || game.ranking}}" class="{{table3dBitmap?'table-webgl-buffer':'table-webgl'}}" disable-scroll="{{true}}" />
+        <image wx:if="{{table3dBitmap && table3dFrame}}" class="table-webgl" src="{{table3dFrame}}" mode="scaleToFill" />
+        <view class="table-center drag-exclusion" style="{{table3dReady?table3dCenterStyle:''}}"
           ><view class="round">{{round}}</view
           ><view class="remaining">余 {{game.remainingTiles}}</view
           ><view>本场 {{game.honba}} · 供托 {{game.riichiSticks}}</view></view
@@ -113,7 +115,7 @@
           <view class="seat-rack seat-rack-{{player.edge}} meld-count-{{player.melds.length}}">
           <view
             wx:if="{{!player.self}}"
-            class="drag-exclusion opponent opponent-{{player.edge}}"
+            class="{{table3dReady?'':'drag-exclusion'}} opponent opponent-{{player.edge}}"
             ><view wx:if="{{settlement.tableReveals[player.seat]}}" class="revealed-rack {{settlement.tableReveals[player.seat].animate?'is-turning':''}}">
               <view wx:for="{{settlement.tableReveals[player.seat].hand}}" wx:key="index" class="revealed-tile"><image src="{{item.src}}" /></view>
             </view><view wx:else class="backs"
@@ -122,7 +124,7 @@
                 wx:key="*this"
                 class="back {{item>=player.visibleCount?'deal-pending':openingHolding?'dealt':''}}" /></view
           ></view>
-          <view class="drag-exclusion exposed exposed-{{player.edge}} meld-count-{{player.melds.length}} {{player.hasKan?'has-kan':''}}">
+          <view class="{{table3dReady?'':'drag-exclusion'}} exposed exposed-{{player.edge}} meld-count-{{player.melds.length}} {{player.hasKan?'has-kan':''}}">
             <view class="melds"
               ><view
                 wx:for="{{player.melds}}"
