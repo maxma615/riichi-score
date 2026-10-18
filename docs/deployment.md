@@ -1,6 +1,14 @@
 # 独立日麻记分：上海 ECS 部署
 
-## 当前域名与微信环境（2026-10-18）
+## 2026-10-18 立直自动操作与牌桌结算前端更新
+
+网页前端源`c3a2183`已上线，`current`指向`/srv/riichi-score/releases/c3a2183`。本轮没有服务端规则或数据库改动：复用运行中的`07a07be`后端，仅替换构建出的`public/online/client.js`与`client.css`，没有重启容器，未结束现有联机牌桌。运行容器ID和启动时间、所有有归容器ID、0.25CPU／256MiB均与更新前一致，没有复制资料卷或生成真实资料备份。
+
+同时以原运行镜像为基底生成持久化前端补丁镜像`yougui-riichi-score:c3a2183`并标记latest，镜像标识为`sha256:cf5aeb2d89fe4cc662ae76a2fd570a2f70eccf22055a635e66cbb922b46ace4d`，以后Compose重建会保留本次前端。现有运行容器仍报告旧镜像ID，实际静态资源已替换；不可据此宣称服务端已重建。后续完整升级仍使用正常Dockerfile和独立数据卷。
+
+公网前端JS SHA-256为`d017c26d534a630a8db652d5dfb6a1a2f97659fe48174efbc59ad63788f3da32`，CSS为`78a796ae6d8b24b552fdcfe245cbd465ebb83b43650b4be13dc7b0cce863b379`，与本地及容器文件一致。牌桌入口、健康接口及有归域名均返回200。305项逻辑、204组原生布局、18组特殊动作、12组牌体／坐标流程通过；实际微信preview编译969,789字节，小程序新版未发布，仍等备案与真机验收。
+
+## 当前域名与微信环境（2026-10-18；前端更新前记录）
 
 当前入口为 **https://yougui.online/riichi/**，健康接口 `https://yougui.online/riichi/api/health` 返回 200，不跳转至 IP。原 IP 入口 308 跳转到该域名；下文 IP 入口及空微信环境为历史发布记录。
 
@@ -12,7 +20,7 @@
 
 手机入口：**https://8.133.186.15/riichi/**。原情侣空间和联机麻将保持各自入口；不需要情侣空间账号。网页二维码是浏览器入桌链接，不是微信小程序码。
 
-当前网页运行源为 `07a07be`，运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/07a07be`。后续小程序／测试／文档提交不改变网页运行版本。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`。
+本轮前端更新前的网页运行源为 `07a07be`，运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/07a07be`。后续小程序／测试／文档提交不改变网页运行版本。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`。
 
 ## 进程与资料
 
