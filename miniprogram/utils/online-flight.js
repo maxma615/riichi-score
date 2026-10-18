@@ -334,31 +334,23 @@ class NativeFlights {
               .scale(1, 1)
               .rotate(path.fromAngle)
               .step({ duration: 0 });
+            a.translate(path.dx, path.dy)
+              .scale(path.sx, path.sy)
+              .rotate(path.toAngle)
+              .step({ duration: FLIGHT_MS });
             const flight = {
               id: plan.id,
               src: tile(plan.face).src,
               style: path.style,
             };
-            this.host.table3d?.hideTarget(plan.target);
+            // One native bridge transaction contains both animation steps.
+            // Keep the destination mesh until the flying overlay is on screen.
             this.host.setData(
-              {
-                flight,
-                flightAnimation: a.export(),
-                motionTarget: plan.target,
-              },
+              { flight, flightAnimation: a.export(), motionTarget: plan.target },
               () => {
                 if (!this.current(plan)) return;
-                try {
-                  a.translate(path.dx, path.dy)
-                    .scale(path.sx, path.sy)
-                    .rotate(path.toAngle)
-                    .step({ duration: FLIGHT_MS });
-                  this.host.setData({ flightAnimation: a.export() }, () =>
-                    this.schedule(plan),
-                  );
-                } catch (_) {
-                  this.cancel();
-                }
+                this.host.table3d?.hideTarget(plan.target);
+                this.schedule(plan);
               },
             );
           }

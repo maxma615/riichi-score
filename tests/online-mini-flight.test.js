@@ -497,3 +497,18 @@ test("三维公开牌河与对手手牌投影作为飞行动画的真实来源",
   assert.deepEqual(plan.from, projectedRiver);
   assert.equal(plan.fromAngle, projectedRiver.angle);
 });
+
+test('飞牌两步动画一次过桥，延迟界面回调期间取消不会隐藏新牌局实体',()=>{
+ const f=scenario('nuki',false),before=f.view(),h=harness(before),hidden=[],callbacks=[],updates=[];
+ h.host.table3d={rectForNode:()=>target,hideTarget:id=>hidden.push(id)};
+ const c=before.game.choices.find(c=>c.type==='nuki'),after=f.choose({id:c.id,decisionId:before.game.decisionId});
+ const plan=h.flights.prepare(before,after,true);hidden.length=0;
+ Object.assign(h.host.data,snapshot({room:after}));
+ h.host.setData=(v,done)=>{Object.assign(h.host.data,v);updates.push(v);if(done)callbacks.push(done);};
+ h.flights.start(plan);
+ assert.equal(updates.length,1);
+ assert.deepEqual(updates[0].flightAnimation.actions.map(x=>x.duration),[0,FLIGHT_MS]);
+ assert.deepEqual(hidden,[],'mesh remains until overlay acknowledgement');
+ h.flights.cancel();callbacks.shift()();
+ assert.deepEqual(hidden,[null]);assert.equal(h.timers.size,0);assert.equal(h.host.data.flight,null);
+});

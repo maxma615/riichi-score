@@ -1,5 +1,5 @@
 import { createScopedThreejs } from "./vendor/native-three.cjs";
-import { table3dLayout, TILE, TABLE } from "./table3d-layout";
+import { table3dLayout, TABLE } from "./table3d-layout";
 import rounded from "./native-tile-geometry.json";
 
 export function pointInPolygon(p, polygon) {
@@ -124,9 +124,28 @@ export class NativeScene {
     this.renderer.gammaFactor = 2.2;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
+    // Geometry and the key light are static between table changes. Outline,
+    // face-texture and presentation updates must not redraw the depth map.
+    this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.shadowMap.needsUpdate = true;
     this.materials = new Map();
     this.textures = [];
     this.batches = [];
+    this.batchByMaterial = new Map();
+    this.records = new Map();
+    this.projectionCache = new Map();
+    this.metrics = {
+      geometryAllocations: 0,
+      allocatedBytes: 0,
+      pieceTransforms: 0,
+      batchUpdates: 0,
+      projectionBuilds: 0,
+      visibilityUpdates: 0,
+      shadowUpdates: 0,
+      buildMs: 0,
+      presentMs: 0,
+      presentations: 0,
+    };
     this.owned = [];
     this.pieces = [];
     this.projected = [];
@@ -238,6 +257,7 @@ export class NativeScene {
     this.restore = () => {
       if (this.disposed) return;
       this.failed = false;
+      this.renderer.shadowMap.needsUpdate = true;
       this.requestRender();
     };
     canvas.addEventListener?.("webglcontextlost", this.loss);
@@ -247,14 +267,21 @@ export class NativeScene {
   geometry(source) {
     const T = this.THREE,
       g = new T.BufferGeometry();
+    this.metrics.geometryAllocations++;
     for (const key of ["position", "normal", "uv"])
       g.addAttribute(
         key,
         new T.BufferAttribute(
-          new Float32Array(source[key]),
+          source[key] instanceof Float32Array
+            ? source[key]
+            : new Float32Array(source[key]),
           key === "uv" ? 2 : 3,
         ),
       );
+    this.metrics.allocatedBytes += Object.values(g.attributes).reduce(
+      (sum, a) => sum + a.array.byteLength,
+      0,
+    );
     return g;
   }
   box(w, h, d, x, y, z, material) {
@@ -295,77 +322,211 @@ export class NativeScene {
     image.src = "/assets/tiles/" + file(key) + ".png";
     return material;
   }
-  setPieces(pieces) {
-    const key = JSON.stringify(pieces);
-    if (this.key === key) return false;
-    this.key = key;
-    this.pieces = pieces;
-    this.rebuild();
-    return true;
+  batch(material, source) {
+    let batch = this.batchByMaterial.get(material);
+    if (batch) return batch;
+    const mesh = new this.THREE.Mesh(new this.THREE.BufferGeometry(), material);
+    mesh.castShadow = material === this.ivory || material === this.back;
+    mesh.receiveShadow = true;
+    // The camera already frames the whole table; a stale bounding sphere after
+    // incremental writes must never cull newly appended or moved pieces.
+    mesh.frustumCulled = false;
+    batch = { mesh, source, slots: [], capacity: 0 };
+    this.batchByMaterial.set(material, batch);
+    this.batches.push(mesh);
+    this.scene.add(mesh);
+    return batch;
   }
-  rebuild() {
-    const T = this.THREE;
-    for (const m of this.batches) {
-      this.scene.remove(m);
-      m.geometry.dispose();
+  growBatch(batch) {
+    const capacity = Math.max(8, batch.capacity * 2),
+      attrs = {};
+    for (const key of ["position", "normal", "uv"]) {
+      attrs[key] = new Float32Array(batch.source[key].length * capacity);
+      if (batch.capacity)
+        attrs[key].set(batch.mesh.geometry.attributes[key].array);
     }
-    this.batches = [];
-    const groups = new Map(),
-      add = (source, matrix, material) => {
-        let a = groups.get(material);
-        if (!a) {
-          a = { position: [], normal: [], uv: [] };
-          groups.set(material, a);
-        }
-        const nm = new T.Matrix3().getNormalMatrix(matrix),
-          v = new T.Vector3();
-        for (let i = 0; i < source.position.length; i += 3) {
-          v.fromArray(source.position, i).applyMatrix4(matrix);
-          a.position.push(v.x, v.y, v.z);
-          v.fromArray(source.normal, i).applyMatrix3(nm).normalize();
-          a.normal.push(v.x, v.y, v.z);
-        }
-        a.uv.push(...source.uv);
-      };
-    for (const p of this.pieces) {
-      if (this.hidden && this.hidden === p.nodeId) continue;
-      const q = new T.Quaternion().setFromEuler(new T.Euler(...p.rotation)),
-        matrix = new T.Matrix4().compose(
-          new T.Vector3(...p.position),
-          q,
-          new T.Vector3(1, 1, 1),
-        );
-      add(rounded.body, matrix, this.ivory);
-      add(rounded.back, matrix, this.back);
-      if (p.value) add(rounded.face, matrix, this.face(p.value));
+    const geometry = this.geometry(attrs);
+    for (const attribute of Object.values(geometry.attributes))
+      attribute.setDynamic(true);
+    batch.mesh.geometry.dispose();
+    batch.mesh.geometry = geometry;
+    batch.capacity = capacity;
+  }
+  dirtySlot(batch, slot) {
+    for (const key of ["position", "normal", "uv"]) {
+      const a = batch.mesh.geometry.attributes[key],
+        size = batch.source[key].length;
+      const start = slot * size,
+        end = start + size,
+        range = a.updateRange;
+      if (range.count < 0) {
+        range.offset = start;
+        range.count = size;
+      } else {
+        const last = Math.max(range.offset + range.count, end);
+        range.offset = Math.min(range.offset, start);
+        range.count = last - range.offset;
+      }
+      a.needsUpdate = true;
     }
-    for (const [material, attrs] of groups) {
-      const mesh = new T.Mesh(this.geometry(attrs), material);
-      mesh.castShadow = material === this.ivory || material === this.back;
-      mesh.receiveShadow = true;
-      this.scene.add(mesh);
-      this.batches.push(mesh);
+    this.metrics.batchUpdates++;
+  }
+  swapSlots(batch, a, b) {
+    if (a === b) return;
+    for (const key of ["position", "normal", "uv"]) {
+      const array = batch.mesh.geometry.attributes[key].array,
+        size = batch.source[key].length;
+      // Swaps are only needed for one removed/hidden tile, without allocating
+      // or retransforming the rest of the merged geometry.
+      for (let i = 0; i < size; i++) {
+        const x = a * size + i,
+          y = b * size + i,
+          value = array[x];
+        array[x] = array[y];
+        array[y] = value;
+      }
+    }
+    const entry = batch.slots[a];
+    batch.slots[a] = batch.slots[b];
+    batch.slots[b] = entry;
+    batch.slots[a].slot = a;
+    batch.slots[b].slot = b;
+    this.dirtySlot(batch, a);
+    this.dirtySlot(batch, b);
+  }
+  removeEntry(entry) {
+    const batch = entry.batch;
+    this.swapSlots(batch, entry.slot, batch.slots.length - 1);
+    batch.slots.pop();
+    batch.mesh.geometry.setDrawRange(
+      0,
+      (batch.slots.length * batch.source.position.length) / 3,
+    );
+  }
+  writeEntry(entry, matrix, normalMatrix) {
+    const batch = entry.batch,
+      source = batch.source,
+      slot = entry.slot;
+    const attrs = batch.mesh.geometry.attributes,
+      v = new this.THREE.Vector3();
+    for (let i = 0; i < source.position.length; i += 3) {
+      v.fromArray(source.position, i).applyMatrix4(matrix);
+      const offset = slot * source.position.length + i;
+      attrs.position.array[offset] = v.x;
+      attrs.position.array[offset + 1] = v.y;
+      attrs.position.array[offset + 2] = v.z;
+      v.fromArray(source.normal, i).applyMatrix3(normalMatrix).normalize();
+      const normalOffset = slot * source.normal.length + i;
+      attrs.normal.array[normalOffset] = v.x;
+      attrs.normal.array[normalOffset + 1] = v.y;
+      attrs.normal.array[normalOffset + 2] = v.z;
+    }
+    attrs.uv.array.set(source.uv, slot * source.uv.length);
+    this.dirtySlot(batch, slot);
+  }
+  setPieces(pieces) {
+    const start = Date.now(),
+      T = this.THREE,
+      remaining = new Set(this.records.keys());
+    let changed = false,
+      geometryChanged = false;
+    for (const p of pieces) {
+      remaining.delete(p.id);
+      // Only geometry-affecting values control vertex work. Node/seat metadata
+      // can change without rebuilding or uploading the physical table.
+      const shape = [p.value || "", ...p.position, ...p.rotation].join(",");
+      const projection = [shape, p.kind, p.faceDown, p.nodeId, p.seat].join(
+        "|",
+      );
+      let record = this.records.get(p.id);
+      if (record?.shape === shape) {
+        if (record.projection !== projection) changed = true;
+        record.piece = p;
+        record.projection = projection;
+        continue;
+      }
+      changed = geometryChanged = true;
+      if (record) for (const entry of record.entries) this.removeEntry(entry);
+      record = { piece: p, shape, projection, entries: [] };
+      this.records.set(p.id, record);
+      const matrix = new T.Matrix4().compose(
+        new T.Vector3(...p.position),
+        new T.Quaternion().setFromEuler(new T.Euler(...p.rotation)),
+        new T.Vector3(1, 1, 1),
+      );
+      const normalMatrix = new T.Matrix3().getNormalMatrix(matrix);
+      const parts = [
+        [this.ivory, rounded.body],
+        [this.back, rounded.back],
+      ];
+      if (p.value) parts.push([this.face(p.value), rounded.face]);
+      for (const [material, source] of parts) {
+        const batch = this.batch(material, source);
+        if (batch.slots.length === batch.capacity) this.growBatch(batch);
+        const entry = { batch, slot: batch.slots.length, id: p.id };
+        batch.slots.push(entry);
+        record.entries.push(entry);
+        this.writeEntry(entry, matrix, normalMatrix);
+      }
+      this.metrics.pieceTransforms++;
+    }
+    for (const id of remaining) {
+      for (const entry of this.records.get(id).entries) this.removeEntry(entry);
+      this.records.delete(id);
+      this.projectionCache.delete(id);
+      changed = geometryChanged = true;
+    }
+    this.pieces = pieces;
+    if (!changed) return false;
+    if (geometryChanged || this.hidden) {
+      this.applyVisibility();
+      this.renderer.shadowMap.needsUpdate = true;
     }
     this.projected = this.projections();
+    this.metrics.buildMs += Date.now() - start;
     this.requestRender();
+    return true;
+  }
+  applyVisibility() {
+    for (const batch of this.batchByMaterial.values()) {
+      const hidden = this.hidden
+        ? batch.slots.findIndex(
+            (e) => this.records.get(e.id)?.piece.nodeId === this.hidden,
+          )
+        : -1;
+      const count = batch.slots.length;
+      if (hidden >= 0) this.swapSlots(batch, hidden, count - 1);
+      batch.mesh.geometry.setDrawRange(
+        0,
+        ((count - (hidden >= 0 ? 1 : 0)) * batch.source.position.length) / 3,
+      );
+    }
   }
   hideTarget(nodeId) {
-    if (this.hidden === nodeId) return;
-    this.hidden = nodeId;
-    this.rebuild();
+    const id = nodeId || null;
+    if ((this.hidden || null) === id) return;
+    this.hidden = id;
+    this.applyVisibility();
+    this.metrics.visibilityUpdates++;
+    this.renderer.shadowMap.needsUpdate = true;
+    this.requestRender();
   }
   resize(width, height, dpr = 1) {
     if (!(width > 0 && height > 0)) return;
     const T = this.THREE,
       q = nativeQuality(width, height, dpr);
-    const same =
-      this.width === width && this.height === height && this.dpr === q.dpr;
+    const dimensionsChanged = this.width !== width || this.height !== height;
+    const same = !dimensionsChanged && this.dpr === q.dpr;
     if (same) return;
     this.width = width;
     this.height = height;
     this.dpr = q.dpr;
     this.renderer.setPixelRatio(q.dpr);
     this.renderer.setSize(width, height, false);
+    if (!dimensionsChanged) {
+      this.requestRender();
+      return;
+    }
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     const direction = new T.Vector3(0, 0.68, 0.734).normalize();
@@ -390,6 +551,8 @@ export class NativeScene {
         break;
       distance *= 1.055;
     }
+    this.projectionCache.clear();
+    this.felt = null;
     this.projected = this.projections();
     this.requestRender();
   }
@@ -403,6 +566,13 @@ export class NativeScene {
   projections() {
     const T = this.THREE;
     return this.pieces.map((piece) => {
+      const signature = this.records.get(piece.id)?.projection;
+      const cached = this.projectionCache.get(piece.id);
+      if (cached && cached.signature === signature) {
+        cached.value.piece = piece;
+        return cached.value;
+      }
+      this.metrics.projectionBuilds++;
       const matrix = new T.Matrix4().compose(
         new T.Vector3(...piece.position),
         new T.Quaternion().setFromEuler(new T.Euler(...piece.rotation)),
@@ -429,7 +599,7 @@ export class NativeScene {
           ),
         ),
       );
-      return {
+      const value = {
         piece,
         points,
         hull,
@@ -444,15 +614,20 @@ export class NativeScene {
             180) /
           Math.PI,
       };
+      this.projectionCache.set(piece.id, { signature, value });
+      return value;
     });
   }
   feltPolygon() {
-    return [
-      [-17, 0, -13],
-      [17, 0, -13],
-      [17, 0, 13],
-      [-17, 0, 13],
-    ].map((p) => this.project(p));
+    return (
+      this.felt ||
+      (this.felt = [
+        [-17, 0, -13],
+        [17, 0, -13],
+        [17, 0, 13],
+        [-17, 0, 13],
+      ].map((p) => this.project(p)))
+    );
   }
   setDropTarget(value) {
     if (this.outline.visible === !!value) return;
@@ -461,6 +636,10 @@ export class NativeScene {
   }
   renderNow() {
     if (this.disposed || !this.active || this.failed) return false;
+    if (this.canRender && !this.canRender()) {
+      this.suspend();
+      return false;
+    }
     if (this.renderer.getContext().isContextLost()) {
       this.loss();
       return false;
@@ -474,6 +653,7 @@ export class NativeScene {
         return false;
       }
       const start = Date.now();
+      if (this.renderer.shadowMap.needsUpdate) this.metrics.shadowUpdates++;
       this.renderer.render(this.scene, this.camera);
       if (this.renderer.getContext().isContextLost()) {
         this.loss();
@@ -482,11 +662,14 @@ export class NativeScene {
       this.dirty = false;
       this.frames++;
       this.stats = {
+        ...this.metrics,
         frames: this.frames,
         drawCalls: this.renderer.info.render.calls,
         triangles: this.renderer.info.render.triangles,
         drawMs: Date.now() - start,
         dpr: this.dpr,
+        effectiveDpr: this.dpr,
+        qualityReason: this.qualityReason || null,
         width: this.canvas.width,
         height: this.canvas.height,
       };
@@ -535,6 +718,9 @@ export class NativeScene {
     this.renderer.forceContextLoss();
     this.pieces = [];
     this.projected = [];
+    this.records.clear();
+    this.projectionCache.clear();
+    this.batchByMaterial.clear();
   }
 }
 
@@ -542,12 +728,59 @@ export class NativeTable3D {
   constructor(host, api) {
     this.host = host;
     this.api = api;
-    this.bitmap = api.getDeviceInfo?.().platform === "devtools";
+    this.platform = api.getDeviceInfo?.().platform;
+    this.bitmap = this.platform === "devtools";
     if (this.bitmap) host.setData({ table3dBitmap: true });
     this.serial = 0;
     this.rect = null;
     this.scene = null;
     this.dead = false;
+    this.metrics = {
+      syncs: 0,
+      selectorQueries: 0,
+      layoutBuilds: 0,
+      presentationSamples: 0,
+      effectiveDpr: null,
+      qualityReason: null,
+    };
+  }
+  requestedDpr() {
+    return Math.min(
+      this.api.getWindowInfo?.().pixelRatio || 1,
+      this.maxDpr || Infinity,
+    );
+  }
+  presented(presentMs) {
+    const scene = this.scene;
+    this.metrics.presentationSamples++;
+    this.metrics.effectiveDpr = scene?.dpr ?? null;
+    if (
+      this.platform !== "android" ||
+      this.maxDpr ||
+      !scene ||
+      scene.dpr <= 1 ||
+      this.metrics.presentationSamples <= 2
+    )
+      return;
+    this.slowCopies = presentMs > 8 ? (this.slowCopies || 0) + 1 : 0;
+    if (this.slowCopies < 3) return;
+    // Retain full geometry and the CSS camera. Reduce only framebuffer pixels
+    // after repeated measured copy cost, once per controller lifetime.
+    this.maxDpr = 1;
+    this.metrics.qualityReason = scene.qualityReason =
+      "slow-android-canvas-copy";
+    scene.resize(scene.width, scene.height, 1);
+    this.metrics.effectiveDpr = scene.dpr;
+    if (scene.stats)
+      Object.assign(scene.stats, {
+        effectiveDpr: scene.dpr,
+        qualityReason: scene.qualityReason,
+      });
+  }
+  covered() {
+    return !!(
+      this.host.data.settlement?.visible || this.host.data.game?.ranking
+    );
   }
   ready(value) {
     if (this.host.data.table3dReady !== value)
@@ -556,8 +789,11 @@ export class NativeTable3D {
   async sync() {
     const h = this.host,
       room = h.data.room;
-    if (this.dead || !h.active || !room?.game) {
-      this.suspend();
+    this.metrics.syncs++;
+    if (this.dead || !h.active || !room?.game || this.covered()) {
+      // Keep the mounted 3D view while the result panel covers it. Switching
+      // readiness off would reveal the old flat measurement proxies behind it.
+      this.suspend(!this.dead && h.active && !!room?.game && this.covered());
       if (!room?.game) {
         this.scene?.dispose();
         this.scene = null;
@@ -568,14 +804,12 @@ export class NativeTable3D {
     const serial = ++this.serial;
     try {
       return await new Promise((resolve) => {
-        const q = this.api.createSelectorQuery().in(h);
-        q.select("#table-webgl").fields({ node: true, size: true });
-        q.select(".table").boundingClientRect();
-        q.exec((results) => {
+        const apply = (results) => {
           if (
             this.dead ||
             serial !== this.serial ||
             !h.active ||
+            this.covered() ||
             h.data.room !== room
           ) {
             resolve(false);
@@ -595,6 +829,7 @@ export class NativeTable3D {
               this.scene?.dispose();
               this.scene = null;
               this.canvas = null;
+              this.layoutRoom = null;
               // WebGL native layers can cover WXML controls. Draw real depth-buffered
               // geometry offscreen, then one GPU canvas blit into same-layer Canvas2D.
               const glCanvas = this.api.createOffscreenCanvas({
@@ -606,7 +841,7 @@ export class NativeTable3D {
                 glCanvas,
                 rect.width,
                 rect.height,
-                this.api.getWindowInfo?.().pixelRatio || 1,
+                this.requestedDpr(),
                 () => {
                   this.rect = null;
                   this.ready(false);
@@ -617,9 +852,11 @@ export class NativeTable3D {
                 scene.dispose();
                 throw Error("Canvas2D unavailable");
               }
+              scene.canRender = () => h.active && !this.dead && !this.covered();
               scene.onRendered = () => {
                 if (
                   !h.active ||
+                  this.covered() ||
                   this.dead ||
                   this.scene !== scene ||
                   !this.rect ||
@@ -636,11 +873,20 @@ export class NativeTable3D {
                   const frame = glCanvas.toDataURL("image/png");
                   h.setData({ table3dFrame: frame, table3dReady: true });
                 } else {
-                  context.clearRect(0, 0, node.width, node.height);
+                  // The WebGL canvas has an opaque background and covers the
+                  // entire destination; clearing it first doubles Canvas2D work.
                   context.drawImage(glCanvas, 0, 0, node.width, node.height);
                   this.ready(true);
                 }
-                scene.stats.presentMs = Date.now() - presentStart;
+                const presentMs = Date.now() - presentStart;
+                scene.metrics.presentMs += presentMs;
+                scene.metrics.presentations++;
+                Object.assign(scene.stats, {
+                  presentMs,
+                  totalPresentMs: scene.metrics.presentMs,
+                  presentations: scene.metrics.presentations,
+                });
+                this.presented(presentMs);
               };
               this.canvas = node;
               this.scene = scene;
@@ -648,11 +894,8 @@ export class NativeTable3D {
             const scene = this.scene;
             this.rect = rect;
             scene.resume();
-            scene.resize(
-              rect.width,
-              rect.height,
-              this.api.getWindowInfo?.().pixelRatio || 1,
-            );
+            scene.resize(rect.width, rect.height, this.requestedDpr());
+            this.metrics.effectiveDpr = scene.dpr;
             const reveals =
               room.game.settlement?.drawInfo?.revealedHands?.filter(
                 (p) => h.data.settlement?.tableReveals?.[p.seat],
@@ -660,17 +903,29 @@ export class NativeTable3D {
             const age = h.openingRun
               ? Math.max(h.openingRun.age, Date.now() - h.openingRun.time)
               : null;
-            const pieces = table3dLayout(room, room.mySeat, {
-              openingAge: age,
-              revealedHands: reveals,
-            });
-            for (const p of pieces) {
-              p.nodeId = nativePieceNode(p);
-              if (p.kind === "meld") {
-                p.nodeId = this.meldNode(p);
-              }
+            const revealKey = reveals
+              .map((p) => p.seat + ":" + p.hand)
+              .join("|");
+            if (
+              this.layoutRoom !== room ||
+              this.layoutAge !== age ||
+              this.layoutReveals !== revealKey ||
+              this.layoutSeats !== h.data.seats
+            ) {
+              const pieces = table3dLayout(room, room.mySeat, {
+                openingAge: age,
+                revealedHands: reveals,
+              });
+              for (const p of pieces)
+                p.nodeId =
+                  p.kind === "meld" ? this.meldNode(p) : nativePieceNode(p);
+              scene.setPieces(pieces);
+              this.layoutRoom = room;
+              this.layoutAge = age;
+              this.layoutReveals = revealKey;
+              this.layoutSeats = h.data.seats;
+              this.metrics.layoutBuilds++;
             }
-            scene.setPieces(pieces);
             scene.setDropTarget(h.data.dropTarget);
             const corners = [
                 [-2.5, 0.37, -2.45],
@@ -692,7 +947,16 @@ export class NativeTable3D {
             this.ready(false);
             resolve(false);
           }
-        });
+        };
+        if (this.canvas && this.scene && this.rect) {
+          apply([{ node: this.canvas }, this.rect]);
+        } else {
+          const q = this.api.createSelectorQuery().in(h);
+          q.select("#table-webgl").fields({ node: true, size: true });
+          q.select(".table").boundingClientRect();
+          this.metrics.selectorQueries++;
+          q.exec(apply);
+        }
       });
     } catch (e) {
       this.error = String(e?.message || e);
@@ -716,11 +980,11 @@ export class NativeTable3D {
     this.rect = null;
     return this.sync();
   }
-  suspend() {
+  suspend(keepReady = false) {
     ++this.serial;
     this.rect = null;
     this.scene?.suspend();
-    this.ready(false);
+    if (!keepReady) this.ready(false);
   }
   dispose() {
     if (this.dead) return;

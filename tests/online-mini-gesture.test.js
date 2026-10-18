@@ -9,7 +9,7 @@ const require = createRequire(
 const { dropOnTable, touchPoint } = require("../../utils/online-gesture");
 const table = { left: 10, top: 20, right: 610, bottom: 420 };
 const blocked = { left: 240, top: 200, right: 300, bottom: 245 };
-function page({ delayed = false, missing = false, throws = false } = {}) {
+function page({ delayed = false, missing = false, throws = false, flushFrames = true, windowInfo = null } = {}) {
   let p;
   const replies = [];
   const calls = [],
@@ -43,6 +43,7 @@ function page({ delayed = false, missing = false, throws = false } = {}) {
       },
       require: (s) => (s === "../../utils/api" ? {} : require(s)),
       wx: {
+        getWindowInfo: () => windowInfo,
         createSelectorQuery() {
           if (throws) throw Error("measurement unavailable");
           return query;
@@ -61,7 +62,12 @@ function page({ delayed = false, missing = false, throws = false } = {}) {
     ],
   };
   p.active = true;
-  p.setData = (v) => Object.assign(p.data, v);
+  p.setData = (v, done) => { Object.assign(p.data, v); done?.(); };
+  // Geometry invariants inspect a completed visual frame; batching is tested separately.
+  if (flushFrames) {
+    const touchMove = p.touchMove;
+    p.touchMove = event => { touchMove.call(p, event); p.dragFrames?.flush(); };
+  }
   p.send = async (v) => {
     sent.push(v);
   };
@@ -207,6 +213,7 @@ test("拖动预览跟随手指且只测量一次提示几何，选中牌的抬�
   assert.equal(p.data.dropTarget, false);
   measureAt(0);
   await Promise.resolve();
+  p.dragFrames?.flush();
   assert.equal(p.data.dropTarget, true);
   move(260, 220);
   assert.equal(p.data.dropTarget, false);
@@ -217,9 +224,9 @@ test("拖动预览跟随手指且只测量一次提示几何，选中牌的抬�
   assert.deepEqual(calls, [".table", ".drag-exclusion"]);
   let updates = 0;
   const setData = p.setData;
-  p.setData = (v) => {
+  p.setData = (v, done) => {
     updates++;
-    setData(v);
+    setData(v, done);
   };
   move(200, 180);
   assert.equal(updates, 0);
@@ -237,6 +244,7 @@ test("桌面提示是预览，松手重新测量；旧预览回调不让取消�
   p.touchMove({ touches: [event(200, 180)] });
   measureAt(0);
   await Promise.resolve();
+  p.dragFrames?.flush();
   assert.equal(p.data.dropTarget, true);
   const pending = end(p);
   assert.equal(p.data.draggingId, -1);
@@ -251,6 +259,7 @@ test("桌面提示是预览，松手重新测量；旧预览回调不让取消�
   const released = end(next.p);
   next.measureAt(0);
   await Promise.resolve();
+  p.dragFrames?.flush();
   assert.equal(next.p.data.draggingId, -1);
   assert.equal(next.p.data.dropTarget, false);
   next.measureAt(1);
@@ -271,6 +280,7 @@ test("旋转、滚动和后台清除移动牌和桌面提示；旧预览结果�
     cancel(p);
     measureAt(0);
     await Promise.resolve();
+  p.dragFrames?.flush();
     assert.equal(p.data.draggingId, -1);
     assert.equal(p.data.dragStyle, "");
     assert.equal(p.data.dropTarget, false);
@@ -303,6 +313,7 @@ test("原生三维桌面提示仅在命中改变时绘制，取消拖牌立即�
   start(p);
   p.touchMove({ touches: [event(200, 180)] });
   await Promise.resolve();
+  p.dragFrames?.flush();
   p.touchMove({ touches: [event(205, 180)] });
   assert.deepEqual(highlights, [true]);
   p.touchMove({ touches: [event(260, 220)] });
@@ -310,4 +321,36 @@ test("原生三维桌面提示仅在命中改变时绘制，取消拖牌立即�
   p.touchMove({ touches: [event(200, 180)] });
   p.touchCancel();
   assert.deepEqual(highlights, [true, false, true, false]);
+});
+
+
+test("实际Page拖动突发只更新活动实体牌，并等待原生帧回调", async () => {
+ const {p}=page({flushFrames:false});
+ const updates=[];p.setData=(v,done)=>{updates.push(v);Object.assign(p.data,v);done?.();};
+ start(p);
+ for(let i=0;i<120;i++)p.touchMove({touches:[event(200+i,180)]});
+ assert.equal(updates.length,0);
+ p.dragFrames.flush();
+ assert.equal(updates.length,1);
+ assert.equal(p.data.hand[0].dragStyle,'transform:translate(119px,-200px);');
+ assert.ok(Object.keys(updates[0]).some(key=>key==='hand[0]'));
+ assert.ok(!Object.hasOwn(updates[0],'hand'));
+ p.touchCancel();
+ assert.equal(p.data.hand[0].dragging,false);
+});
+
+test("滚动与安全区改变重新测量三维视口，不沿用旧拖牌投影", () => {
+  const { p } = page({ windowInfo: { screenWidth: 844, screenHeight: 390,
+    safeArea: { left: 47, right: 797, top: 0, bottom: 390 } } });
+  let invalidated = 0, synced = 0;
+  p.table3d = { resize: () => invalidated++ };
+  p.syncTable3D = () => synced++;
+  p.onPageScroll();
+  assert.equal(invalidated, 1);
+  p.updateSafeArea({ windowWidth: 844 });
+  assert.equal(invalidated, 2);
+  assert.equal(p.data.safeInsets.left, 47);
+  p.updateSafeArea({ windowWidth: 844 });
+  assert.equal(invalidated, 2, '相同安全区不重复测量');
+  assert.equal(synced, 1);
 });

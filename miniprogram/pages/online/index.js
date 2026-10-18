@@ -1,3 +1,5 @@
+const { patchView } = require('../../utils/online-view-patch');
+const { DragFrames } = require('../../utils/online-drag-frame');
 const { automaticChoice, automaticOff, automaticChoiceDelay } = require('../../utils/online-automatic');
 const { NativeSettlementAudio } = require('../../utils/online-settlement-audio');
 const { NativeFlights } = require("../../utils/online-flight");
@@ -52,7 +54,7 @@ Page({
     this.active = true;
     this.tableActivity = (this.tableActivity || 0) + 1;
     this.liveReady = false;
-    this.setData({ busy: false }, () => this.syncTable3D());
+    patchView(this,{ busy: false }, () => this.syncTable3D());
     this.tickRanking();
     this.updateSafeArea();
     this.refresh();
@@ -70,7 +72,7 @@ Page({
     this.clearAutomaticRetry();
     this.resultAudio?.invalidate();
     if (this.resultAnchor) this.resultAnchor.baselineAge = Infinity;
-    this.setData({ riichiMode: false });
+    patchView(this,{ riichiMode: false });
     this.revision = (this.revision || 0) + 1;
     clearInterval(this.timer);
     clearTimeout(this.feedbackTimer);
@@ -79,7 +81,7 @@ Page({
     this.cancelOpening();
     this.openingIntent = null;
     this.drag = null;
-    this.setData({ announcement: null, selected: -1, riichiMode: false });
+    patchView(this,{ announcement: null, selected: -1, riichiMode: false });
   },
   onResize(event) {
     this.resultAudio?.invalidate();
@@ -97,8 +99,14 @@ Page({
     if (!info) return;
     const revision = this.safeRevision = (this.safeRevision || 0) + 1;
     const apply = (width) => {
-      if (this.active && revision === this.safeRevision)
-        this.setData({ safeInsets: horizontalInsets(info, width) }, () => this.syncTable3D());
+      if (this.active && revision === this.safeRevision) {
+        const safeInsets = horizontalInsets(info, width);
+        const changed = safeInsets.left !== this.data.safeInsets?.left || safeInsets.right !== this.data.safeInsets?.right;
+        patchView(this,{ safeInsets }, () => {
+          if (changed && this.table3d) this.table3d.resize();
+          else this.syncTable3D();
+        });
+      }
     };
     if (Number.isFinite(size?.windowWidth)) apply(size.windowWidth);
     else if (typeof wx.createSelectorQuery === "function")
@@ -108,7 +116,8 @@ Page({
   onPageScroll() {
     this.flights?.cancel();
     this.touchCancel();
-    this.syncTable3D();
+    if (this.table3d) this.table3d.resize();
+    else this.syncTable3D();
   },
   onUnload() {
     this.onHide();
@@ -149,7 +158,7 @@ Page({
       await this.nativeTable3D()?.sync();
     } catch (_) {
       if (this.active && this.data.room === room && activity === this.tableActivity)
-        this.setData({ table3dReady: false });
+        patchView(this,{ table3dReady: false });
     }
     return this.active && this.data.room === room && activity === this.tableActivity;
   },
@@ -205,6 +214,11 @@ Page({
       openingAge,
       this.openingIntent === (r.room && openingKey(r.room)),
     );
+    if (sameDecision && this.drag) {
+      const active = this.data.hand.find(t => t.physicalKey === this.drag.tile.physicalKey);
+      if (active?.dragging) next.hand = next.hand.map(t => t.physicalKey === active.physicalKey
+        ? { ...t, dragging: true, dragStyle: active.dragStyle } : t);
+    }
     const flow = next.game?.settlementFlow;
     const key =
       next.game && flow && !next.game.ranking
@@ -227,7 +241,7 @@ Page({
     this.resultAnchor = key ? { key, time, age, baselineAge } : null;
     if (previousAnchor?.key !== key) this.autoPhase = "";
     const result = presentation(next.game, next.seats, age, baselineAge);
-    this.setData(
+    patchView(this,
       {
         ...next,
         settlement: result,
@@ -252,10 +266,10 @@ Page({
       (r.room.game.settlementFlow && r.room.game.settlement)
     ) {
       clearTimeout(this.feedbackTimer);
-      this.setData({ announcement: null });
+      patchView(this,{ announcement: null });
     } else if (announcement) {
       clearTimeout(this.feedbackTimer);
-      this.setData({
+      patchView(this,{
         announcement: {
           ...announcement,
           art: callArt(announcement.text),
@@ -265,13 +279,13 @@ Page({
         },
       });
       this.feedbackTimer = setTimeout(() => {
-        if (this.active) this.setData({ announcement: null });
+        if (this.active) patchView(this,{ announcement: null });
       }, 1500);
     }
     this.scheduleAutomatic();
     if (!sameDecision) {
       this.touchCancel();
-      this.setData({ selected: -1 });
+      patchView(this,{ selected: -1 });
     }
   },
   nativeAudio() {
@@ -285,7 +299,7 @@ Page({
   activateSound() { this.nativeAudio()?.activateFromGesture(); },
   toggleSound() {
     const enabled = !this.data.soundEnabled;
-    this.setData({ soundEnabled: enabled });
+    patchView(this,{ soundEnabled: enabled });
     this.nativeAudio()?.setEnabled(enabled);
     this.activateSound();
   },
@@ -347,7 +361,7 @@ Page({
         null,
         this.openingIntent === openingKey(this.data.room),
       );
-      this.setData({
+      patchView(this,{
         hand: next.hand,
         seats: next.seats,
         openingHolding: false,
@@ -368,7 +382,7 @@ Page({
       done ? null : age,
       true,
     );
-    this.setData(
+    patchView(this,
       {
         hand: next.hand,
         seats: next.seats,
@@ -412,7 +426,10 @@ Page({
       age,
       anchor.baselineAge ?? anchor.age,
     );
-    this.setData({ settlement: result }, () => this.syncTable3D());
+    const oldResult = this.data.settlement;
+    const tableChanged = Boolean(oldResult?.visible) !== Boolean(result?.visible) ||
+      JSON.stringify(oldResult?.tableReveals || {}) !== JSON.stringify(result?.tableReveals || {});
+    patchView(this,{ settlement: result }, tableChanged ? () => this.syncTable3D() : undefined);
     const key = anchor.key;
     const due =
       age >= result.autoAt && this.data.settlementAck && this.autoPhase !== key;
@@ -441,7 +458,7 @@ Page({
     if (!game?.ranking) {
       clearTimeout(this.rankingTimer);
       this.rankingAnchor = null;
-      this.setData({ ranking: null });
+      patchView(this,{ ranking: null });
       return;
     }
     const key = `${this.data.room.id}:${game.rankingFlow?.id || game.gameInstanceId || "legacy"}`;
@@ -459,7 +476,7 @@ Page({
     if (!this.active || !anchor || !game?.ranking) return;
     const age = Math.max(anchor.lastAge || 0, anchor.age + Math.max(0, Date.now() - anchor.time));
     anchor.lastAge = age;
-    this.setData({ ranking: rankingPresentation(game, this.data.seats, this.data.room.mySeat, age) });
+    patchView(this,{ ranking: rankingPresentation(game, this.data.seats, this.data.room.mySeat, age) });
     const next = rankingBoundaries(game.ranking.length).find((boundary) => boundary > age);
     if (next !== undefined)
       this.rankingTimer = setTimeout(() => {
@@ -468,12 +485,12 @@ Page({
   },
   choose(e) {
     if (!this.data.busy)
-      this.setData({
+      patchView(this,{
         [e.currentTarget.dataset.key]: e.currentTarget.dataset.value,
       });
   },
   code(e) {
-    this.setData({ code: e.detail.value.trim().toUpperCase() });
+    patchView(this,{ code: e.detail.value.trim().toUpperCase() });
   },
   async send(command, automatic = null) {
     this.cancelAutomatic();
@@ -501,7 +518,7 @@ Page({
         : null;
     this.chosenMotion = null;
     this.touchCancel();
-    this.setData({ busy: true });
+    patchView(this,{ busy: true });
     try {
       const r = await api("/api/online", "POST", request.body);
       if (this.pending === request) this.pending = null;
@@ -515,7 +532,7 @@ Page({
       if (this.active) error(e);
     } finally {
       if (this.active && revision === this.revision)
-        { this.setData({ busy: false }); this.scheduleAutomatic(); }
+        { patchView(this,{ busy: false }); this.scheduleAutomatic(); }
     }
   },
   create() {
@@ -592,7 +609,7 @@ Page({
       { room: this.data.room, serviceRunning: this.data.serviceRunning },
       !this.data.riichiMode,
     );
-    this.setData(
+    patchView(this,
       {
         hand: next.hand,
         riichiMode: next.riichiMode,
@@ -615,7 +632,7 @@ Page({
         choiceId: t.choiceId,
       });
     }
-    this.setData({ selected: t.id }, () => this.flights?.capture());
+    patchView(this,{ selected: t.id }, () => this.flights?.capture());
   },
   touchStart(e) {
     if (e?.type) this.activateSound();
@@ -659,17 +676,21 @@ Page({
     }
     d.point = point;
     if (!d.moved) return;
-    this.renderDrag(d);
+    this.queueDrag(d);
     if (!d.geometryRequested) {
       d.geometryRequested = true;
       this.dropGeometry().then((geometry) => {
         if (this.drag !== d || !this.currentDrag(d)) return;
         d.geometry = geometry;
-        this.renderDrag(d);
+        this.queueDrag(d);
       });
     }
   },
-  renderDrag(d) {
+  queueDrag(d) {
+    if (!this.dragFrames) this.dragFrames = new DragFrames(this);
+    this.dragFrames.request(d);
+  },
+  renderDrag(d, done) {
     const dx = Math.round(d.point.x - d.start.x);
     const dy = Math.round(d.point.y - d.start.y) - (d.raised ? 12 : 0);
     const dragStyle = `transform:translate(${dx}px,${dy}px);`;
@@ -678,21 +699,20 @@ Page({
       dropOnTable(d.point, d.geometry, this.table3d?.dropOnTable(d.point));
     if (this.data.dropTarget !== dropTarget)
       this.table3d?.setDropTarget?.(dropTarget);
-    if (
-      this.data.dragStyle !== dragStyle ||
-      this.data.dropTarget !== dropTarget ||
-      this.data.draggingId !== d.tile.id
-    )
-      this.setData({ draggingId: d.tile.id, dragStyle, dropTarget });
+    const index = this.data.hand.findIndex(t => t.physicalKey === d.tile.physicalKey);
+    if (index < 0) { done?.(); return; }
+    const hand = this.data.hand.slice();
+    hand[index] = { ...hand[index], dragStyle, dragging: true };
+    // Kept for gesture logic only; WXML styles now bind to this one physical tile.
+    this.data.dragStyle = dragStyle;
+    patchView(this, { draggingId: d.tile.id, hand, dropTarget }, done);
   },
   clearDragPreview() {
+    this.dragFrames?.cancel();
     if (this.data.dropTarget) this.table3d?.setDropTarget?.(false);
-    if (
-      this.data.draggingId !== -1 ||
-      this.data.dragStyle ||
-      this.data.dropTarget
-    )
-      this.setData({ draggingId: -1, dragStyle: "", dropTarget: false });
+    const hand = this.data.hand.map(t => t.dragging || t.dragStyle
+      ? { ...t, dragging: false, dragStyle: '' } : t);
+    patchView(this, { draggingId: -1, dragStyle: '', dropTarget: false, hand });
   },
   async touchEnd(e) {
     const d = this.drag;
@@ -723,7 +743,7 @@ Page({
       key: d.tile.physicalKey,
       shift: { x: point.x - d.start.x, y: point.y - d.start.y },
     };
-    this.setData({ selected: -1 });
+    patchView(this,{ selected: -1 });
     return this.send({
       action: "respond",
       decisionId: d.tile.decisionId,
@@ -773,6 +793,6 @@ Page({
     };
   },
   onLoad(o) {
-    if (o.code) this.setData({ code: o.code });
+    if (o.code) patchView(this,{ code: o.code });
   },
 });

@@ -168,8 +168,8 @@
             catchtouchmove="touchMove"
             catchtouchend="touchEnd"
             bindtouchcancel="touchCancel"
-            style="{{draggingId===item.id?dragStyle:''}}"
-            class="tile {{draggingId===item.id?'is-dragging':''}} {{!item.dealVisible?'deal-pending':openingHolding?'dealt':''}} {{riichiMode && !item.choiceId?'locked':''}} {{selected===item.id?'raised':''}} {{item.choiceId?'playable':''}} {{item.drawn?'drawn':''}}"
+            style="{{item.dragStyle || ''}}"
+            class="tile {{item.dragging?'is-dragging':''}} {{!item.dealVisible?'deal-pending':openingHolding?'dealt':''}} {{riichiMode && !item.choiceId?'locked':''}} {{selected===item.id?'raised':''}} {{item.choiceId?'playable':''}} {{item.drawn?'drawn':''}}"
             ><image src="{{item.src}}" /></view
         ></view>
         <view class="actions"
