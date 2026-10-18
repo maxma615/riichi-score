@@ -95,7 +95,7 @@ npm run test:mini:layout # 实际WXML与样式的浏览器布局适配检查；�
 
 ## 小程序开发与验证
 
-原生项目在`miniprogram/`，正式AppID为`wx96a4805151b838f6`，API前缀为`https://yougui.online/riichi`。本轮已通过当前微信开发者工具的preview编译（969,789字节）；尚未提交新版审核或正式发布。备案审核期间保持网页入口可用。编译、浏览器适配和合成身份检查不能替代真实微信登录／扫码、安卓拖牌、音效与滚动验收。
+原生项目在`miniprogram/`，公开配置使用游客占位值，正式 AppID 仅保存在被 Git 忽略的 `miniprogram/project.private.config.json` 中，API前缀为`https://yougui.online/riichi`。本轮已通过当前微信开发者工具的preview编译（969,789字节）；尚未提交新版审核或正式发布。备案审核期间保持网页入口可用。编译、浏览器适配和合成身份检查不能替代真实微信登录／扫码、安卓拖牌、音效与滚动验收。
 
 `npm run sync:mini`同步计分、番种、联机自动操作及结算时刻。`npm run sync:mini:assets`导出原有授权牌面和书法PNG；`npm run sync:mini:audio`导出原创合成结算音效。来源和重建说明见[miniprogram/assets/README.md](miniprogram/assets/README.md)。
 

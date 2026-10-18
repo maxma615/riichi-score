@@ -2,7 +2,7 @@
 
 ## 当前配置（2026-10-18）
 
-用户已提供正式 AppID `wx96a4805151b838f6`，已写入 `miniprogram/project.config.json`，项目名及默认导航标题为「雀叙牌谱」。下文游客模式及缺少 AppID 的描述保留为历史验证记录。
+正式 AppID 仅写入本机被 Git 忽略的 `miniprogram/project.private.config.json`；公开的 `miniprogram/project.config.json` 使用 `touristappid` 占位，项目名及默认导航标题为「雀叙牌谱」。下文游客模式及缺少 AppID 的描述保留为历史验证记录。 新设备可复制 `miniprogram/project.private.config.json.example` 为 `project.private.config.json`，再仅在本机填写真实 AppID。AppSecret 始终仅配置在服务端环境文件。
 
 AppSecret 从用户本地 `env.md` 读取，配置于受 Git 忽略的本地服务端 `.env` 及 ECS 独立麻将服务的 `.env`，环境版本为 `trial`；环境文件权限为 0600，`env.md` 已加入忽略规则。密钥未写入小程序、文档或 Git。服务器成功调用微信 access_token 接口，但这不等于真实用户 `wx.login` 或扫码已通过。
 
