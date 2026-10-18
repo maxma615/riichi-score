@@ -2,9 +2,10 @@
 import {useLayoutEffect,type RefObject} from 'react';
 import {tableSpace,tableRect} from './table-space';
 import {placeMahjongActions,type PlacementRect} from './action-placement';
+import {projectedRect} from './table3d-projection';
 export const actionPlacementProtectedSelector='.mahjong-notice,.mahjong-reconnect,.mahjong-screen-hint,.mahjong-game__topline,.mahjong-table__dora,.mahjong-table__center,.mahjong-player__head,.mahjong-river__tile,.mahjong-opponent-rack .mahjong-standing-tile,.mahjong-table__surface [data-meld-volume],.mahjong-table__surface [data-meld-surface="cap"],[data-nuki-index] .mahjong-discard-flight__face-up-cap,.mahjong-nuki-tray > small,.mahjong-hand [data-tile-face]';
 const properties=['position','left','right','top','bottom','width','height','transform','transition-property','pointer-events'];
-const rect=(el:Element):PlacementRect=>{const r=el.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height};};
+const rect=(el:Element):PlacementRect=>{const r=projectedRect(el)??el.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height};};
 /** Layout runs on local UI changes, resize and font arrival, never a timer loop. */
 export function useMahjongActionPlacement(root:RefObject<HTMLElement|null>,enabled:boolean,generation:string){
  useLayoutEffect(()=>{
@@ -18,7 +19,7 @@ export function useMahjongActionPlacement(root:RefObject<HTMLElement|null>,enabl
    const buttons=[...dock.querySelectorAll<HTMLElement>(':scope > button')];if(!buttons.length)return;
    restore();
    const space=tableSpace(game);
-   const localRect=(el:Element)=>(space.rotated||game.dataset.tableFitted==='true')?tableRect(space,el.getBoundingClientRect()):rect(el);
+   const localRect=(el:Element)=>(space.rotated||game.dataset.tableFitted==='true')?tableRect(space,projectedRect(el)??el.getBoundingClientRect()):rect(el);
    const actions=buttons.map((button,i)=>({id:String(i),...localRect(button)})).filter(a=>a.w>0&&a.h>0);
    const obstacles=[...shell.querySelectorAll(actionPlacementProtectedSelector)].filter(el=>!el.closest('.mahjong-action-dock')).map(localRect).filter(r=>r.w>0&&r.h>0);
    const style=getComputedStyle(game),inset=(name:string)=>Math.max(8,parseFloat(style.getPropertyValue(name))||0);

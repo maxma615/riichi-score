@@ -77,3 +77,5 @@ function Harness() {
   );
 }
 createRoot(document.getElementById("online-root")!).render(<Harness />);
+
+import "../src/online/client/mahjong-table-webgl.css";

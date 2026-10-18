@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import type { RoomView } from "../domain/types";
 import { MahjongFaceUpFlightTile, MahjongSolidFlightTile } from "./mahjong-solid-flight-tile";
 import { quadToMatrix3d } from "./projected-geometry";
+import { projectedRect, readProjectedTile } from "./table3d-projection";
 import {
   DiscardMotionTracker,
   type DiscardMotionEvent,
@@ -75,7 +76,7 @@ export function useDiscardMotion({
       // An upright tile's visible back occupies a different plane from its
       // layout wrapper. Cache that surface before the accepted discard arrives.
       const surface = element.querySelector<HTMLElement>("[data-motion-surface]") ?? element;
-      const rect = surface.getBoundingClientRect();
+      const rect = projectedRect(surface) ?? surface.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         const rack = next.get(seat) ?? {};
         rack[element.dataset.motionDrawn === "true" ? "drawn" : "closed"] = elementToFlight(surface, rect);
@@ -131,7 +132,7 @@ export function useDiscardMotion({
       const target = [...table.querySelectorAll<HTMLElement>("[data-discard-event-id]")]
         .find((element) => element.dataset.discardEventId === eventId);
       const face = target?.querySelector<HTMLElement>(".mahjong-tile");
-      const targetRect = face?.getBoundingClientRect();
+      const targetRect = face && (projectedRect(face) ?? face.getBoundingClientRect());
       const cachedRack = result.flight.source === "opponent"
         ? previousRackRects.current.get(result.flight.event.seat)
         : undefined;
@@ -214,7 +215,7 @@ export function rectToFlight(rect: PointRect, geometry: MotionSourceGeometry): F
 }
 
 export function measureDiscardElement(element: HTMLElement) {
-  const rect = element.getBoundingClientRect();
+  const rect = projectedRect(element) ?? element.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return null;
   const geometry = elementToFlight(element, rect);
   return {
@@ -250,11 +251,13 @@ function readTilePaint(element: HTMLElement, wrapper?: HTMLElement): MotionTileP
   };
 }
 
-function targetToFlight(face: HTMLElement, rect: DOMRect): FlightGeometry {
+function targetToFlight(face: HTMLElement, rect: MotionRect): FlightGeometry {
   return elementToFlight(face, rect);
 }
 
-function elementToFlight(element: HTMLElement, rect: DOMRect): FlightGeometry {
+function elementToFlight(element: HTMLElement, rect: MotionRect): FlightGeometry {
+  const projected = readProjectedTile(element);
+  if (projected) return rectToFlight(projected.rect, projected.geometry);
   const style = getComputedStyle(element);
   const width = borderBoxSize(element, style, "width") || element.offsetWidth || rect.width;
   const height = borderBoxSize(element, style, "height") || element.offsetHeight || rect.height;

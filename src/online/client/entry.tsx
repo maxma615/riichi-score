@@ -23,3 +23,5 @@ import './theme.css';
 import './mahjong-table-legibility.css';
 import './mahjong-yaku-reveal.css';
 createRoot(document.getElementById('online-root')!).render(<MahjongClient/>);
+
+import "./mahjong-table-webgl.css";

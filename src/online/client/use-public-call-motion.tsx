@@ -3,6 +3,7 @@ import {useCallback,useEffect,useLayoutEffect,useRef,useState,type RefObject} fr
 import type {RoomView} from '../domain/types';
 import {acceptedPublicCallEvent} from './public-call-motion';
 import {measureDiscardElement,rectToFlight,type FlightView} from './use-discard-motion';
+import {readProjectedTile} from './table3d-projection';
 type Measurement = NonNullable<ReturnType<typeof measureDiscardElement>>;
 type Baseline = {room:RoomView;connected:boolean;environmentEpoch:number;sources:Map<string,Measurement>};
 type Active = {id:string;decision:string;group:HTMLElement;emphasis:Animation|null;target?:HTMLElement;visibility:string;priority:string;volume?:HTMLElement;volumeVisibility:string;volumePriority:string};
@@ -17,8 +18,8 @@ function readRivers(table:HTMLElement|null, retained:ReadonlyMap<string,Measurem
     }
     const face = wrapper.querySelector<HTMLElement>('.mahjong-tile');
     if (!id || !face || !face.isConnected || getComputedStyle(face).visibility !== 'visible'
-      || getComputedStyle(wrapper).visibility !== 'visible' || Number(getComputedStyle(face).opacity) === 0
-      || Number(getComputedStyle(wrapper).opacity) === 0) return;
+      || getComputedStyle(wrapper).visibility !== 'visible' || (!readProjectedTile(face) && (Number(getComputedStyle(face).opacity) === 0
+      || Number(getComputedStyle(wrapper).opacity) === 0))) return;
     const measurement = measureDiscardElement(face);
     if (measurement) {
       const filter = getComputedStyle(wrapper).filter;

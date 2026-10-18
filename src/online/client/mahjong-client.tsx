@@ -1,4 +1,5 @@
 "use client";
+import {MahjongTableWebGL} from "./mahjong-table-webgl";
 import { mahjongTerm } from "../../yaku.js";
 import {acceptedRoundOpening,openingTileCount,openingKey,isOpeningGame} from "../domain/round-opening";
 import {handRack,validOpeningDeal} from "./hand-rack";
@@ -12,6 +13,7 @@ import {useDoraSheenClock} from "./use-dora-sheen-clock";
 import {useBlankTableDoubleTap} from "./use-blank-table-double-tap";
 import {useAutomaticPlay} from "./use-automatic-play";
 import {tableSpace, tablePoint, tableDelta, tableRect, type TableSpace} from "./table-space";
+import {projectedDiscardTarget} from "./table3d-projection";
 import {useMahjongActionPlacement} from "./use-action-placement";
 import {WaitPeekButton} from "./wait-peek-button";
 import {currentWaits,discardWaits,singleDiscardWaits} from "./discard-waits";
@@ -705,8 +707,12 @@ export function GameRoom({ tableAudio, room, busy, host, ownSeat, connected, mot
   const isPlayableDiscardRelease = (active: NonNullable<typeof activeTilePointerRef.current>, clientX: number, clientY: number) => {
     const localY = active.space ? tablePoint(active.space, clientX, clientY).y : clientY;
     if (![active.rackTop, clientX, clientY, localY].every(Number.isFinite) || localY >= active.rackTop) return false;
-    const surface = tableRef.current?.querySelector(".mahjong-table__surface");
     const target = document.elementFromPoint?.(clientX, clientY);
+    if (target?.closest("button, a, input, select, textarea, [role='button']")) return false;
+    const table = tableRef.current;
+    const projected = table ? projectedDiscardTarget(table, clientX, clientY) : null;
+    if (projected !== null) return projected;
+    const surface = table?.querySelector(".mahjong-table__surface");
     return Boolean(surface && target && surface.contains(target)
       && !target.closest("button, a, input, select, textarea, [role='button'], .mahjong-opponent-rack, .mahjong-player__melds, .mahjong-hand-public-melds, .mahjong-nuki-tray"));
   };
@@ -813,6 +819,7 @@ export function GameRoom({ tableAudio, room, busy, host, ownSeat, connected, mot
       <MahjongDeclarations room={room} connected={connected} canAnimate={motionCanAnimate} ownSeat={ownSeat}/>
       <MahjongYakumanOpportunity room={room} waits={currentHandWaits} connected={connected} canAnimate={motionCanAnimate}/>
       {game.settlement?.drawInfo?.kind === "abort" ? <MahjongAbortAnnouncements settlement={game.settlement} flow={game.settlementFlow} elapsed={drawPresentation.elapsed} members={room.members} ownSeat={ownSeat} capacity={capacity} reducedMotion={drawPresentation.reducedMotion}/> : null}
+      <MahjongTableWebGL room={room} ownSeat={ownSeat} tableRef={tableRef} cloth={tablecloth.cloth} openingAge={opening.age} revealedHands={revealedHands} hiddenEventIds={discardMotion.hiddenEventIds} discardTarget={overDiscardTarget}/>
       <div className="mahjong-table__surface" data-testid="mahjong-table-surface">
         <div className="mahjong-table__grain" aria-hidden="true"/>
         <div className="mahjong-table__seams mahjong-table__lane" aria-hidden="true"/>

@@ -2614,7 +2614,116 @@ __export(native_motion_exports, {
   parseMeld: () => parseMeld
 });
 module.exports = __toCommonJS(native_motion_exports);
-var import_majiang_core2 = __toESM(require_lib());
+
+// src/online/client/mahjong-meld-model.ts
+var import_majiang_core = __toESM(require_lib(), 1);
+function normalizedRank(rank) {
+  return rank === "0" ? "5" : rank;
+}
+function hasOneSuitRank(digits) {
+  return digits.length > 0 && digits.every((rank) => normalizedRank(rank) === normalizedRank(digits[0]));
+}
+function calledSlot(source, size) {
+  if (source === "-") return 0;
+  if (source === "=") return 1;
+  return size - 1;
+}
+function reorderWithCalled(tiles, source) {
+  const called = tiles[tiles.length - 1];
+  const others = tiles.slice(0, -1);
+  if (source === "-") return [called, ...others];
+  if (source === "=") return [others[0], called, ...others.slice(1)];
+  return [...others, called];
+}
+function parseMeld(meld) {
+  var _a, _b, _c;
+  const canonical = import_majiang_core.default.Shoupai.valid_mianzi(meld);
+  if (canonical !== meld) return null;
+  const suit = meld[0];
+  const digits = (_a = meld.match(/\d/g)) != null ? _a : [];
+  if (digits.filter((rank) => rank === "0").length > 1) return null;
+  const markerMatches = [...meld.matchAll(/[+\-=]/g)];
+  if (markerMatches.length === 0) {
+    if (digits.length !== 4 || !hasOneSuitRank(digits)) return null;
+    const normal = `${suit}${digits.find((rank) => rank !== "0")}`;
+    const firstFace = digits.includes("0") ? `${suit}0` : normal;
+    return {
+      kind: "ankan",
+      suit,
+      slots: [
+        { type: "back", value: normal },
+        { type: "tile", value: firstFace, sideways: false },
+        { type: "tile", value: normal, sideways: false },
+        { type: "back", value: normal }
+      ]
+    };
+  }
+  if (markerMatches.length !== 1) return null;
+  const source = markerMatches[0][0];
+  const markerIndex = markerMatches[0].index;
+  if (markerIndex === void 0) return null;
+  const before = (_b = meld.slice(1, markerIndex).match(/\d/g)) != null ? _b : [];
+  const after = (_c = meld.slice(markerIndex + 1).match(/\d/g)) != null ? _c : [];
+  if (before.length === 3 && after.length === 1 && hasOneSuitRank([...before, ...after])) {
+    const called = `${suit}${before[2]}`;
+    const added = `${suit}${after[0]}`;
+    const sourceIndex = calledSlot(source, 3);
+    const slots = [
+      { type: "tile", value: `${suit}${before[0]}`, sideways: false },
+      { type: "tile", value: `${suit}${before[1]}`, sideways: false }
+    ];
+    slots.splice(sourceIndex, 0, { type: "stack", called, added });
+    return { kind: "kakan", suit, source, slots };
+  }
+  if (after.length === 0 && before.length === 3 && hasOneSuitRank(before)) {
+    const ordered = reorderWithCalled(before.map((rank) => `${suit}${rank}`), source);
+    return {
+      kind: "pon",
+      suit,
+      source,
+      slots: ordered.map((value, index) => ({
+        type: "tile",
+        value,
+        sideways: index === calledSlot(source, 3),
+        called: index === calledSlot(source, 3)
+      }))
+    };
+  }
+  if (after.length === 0 && before.length === 4 && hasOneSuitRank(before)) {
+    const ordered = reorderWithCalled(before.map((rank) => `${suit}${rank}`), source);
+    return {
+      kind: "daiminkan",
+      suit,
+      source,
+      slots: ordered.map((value, index) => ({
+        type: "tile",
+        value,
+        sideways: index === calledSlot(source, 4),
+        called: index === calledSlot(source, 4)
+      }))
+    };
+  }
+  if (source === "-" && suit !== "z" && before.length + after.length === 3) {
+    const chiDigits = [...before, ...after];
+    const sorted = chiDigits.map(normalizedRank).sort();
+    if (+sorted[0] + 1 !== +sorted[1] || +sorted[1] + 1 !== +sorted[2]) return null;
+    const calledRank = before[before.length - 1];
+    const remaining = [...before.slice(0, -1), ...after];
+    const ordered = [calledRank, ...remaining];
+    return {
+      kind: "chi",
+      suit,
+      source,
+      slots: ordered.map((rank, index) => ({
+        type: "tile",
+        value: `${suit}${rank}`,
+        sideways: index === 0,
+        called: index === 0
+      }))
+    };
+  }
+  return null;
+}
 
 // src/online/client/discard-motion.ts
 function validQuad(quad) {
@@ -2792,9 +2901,9 @@ function acceptedNukiEvent(before, after) {
 }
 
 // src/online/client/public-call-motion.ts
-var import_majiang_core = __toESM(require_lib(), 1);
+var import_majiang_core2 = __toESM(require_lib(), 1);
 var same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-var valid = (meld) => import_majiang_core.default.Shoupai.valid_mianzi(meld) === meld;
+var valid = (meld) => import_majiang_core2.default.Shoupai.valid_mianzi(meld) === meld;
 function direction(from, to, capacity) {
   const offset = (from - to + capacity) % capacity;
   return offset === 1 ? "+" : capacity === 4 && offset === 2 ? "=" : "-";
@@ -2859,115 +2968,6 @@ function provePublicCall(before, after, pendingKakan) {
     event.source = { ...identity, id: createDiscardEventId(identity), tile };
   }
   return event;
-}
-
-// src/online/client/native-motion.ts
-function normalizedRank(rank) {
-  return rank === "0" ? "5" : rank;
-}
-function hasOneSuitRank(digits) {
-  return digits.length > 0 && digits.every((rank) => normalizedRank(rank) === normalizedRank(digits[0]));
-}
-function calledSlot(source, size) {
-  if (source === "-") return 0;
-  if (source === "=") return 1;
-  return size - 1;
-}
-function reorderWithCalled(tiles, source) {
-  const called = tiles[tiles.length - 1];
-  const others = tiles.slice(0, -1);
-  if (source === "-") return [called, ...others];
-  if (source === "=") return [others[0], called, ...others.slice(1)];
-  return [...others, called];
-}
-function parseMeld(meld) {
-  var _a, _b, _c;
-  const canonical = import_majiang_core2.default.Shoupai.valid_mianzi(meld);
-  if (canonical !== meld) return null;
-  const suit = meld[0];
-  const digits = (_a = meld.match(/\d/g)) != null ? _a : [];
-  if (digits.filter((rank) => rank === "0").length > 1) return null;
-  const markerMatches = [...meld.matchAll(/[+\-=]/g)];
-  if (markerMatches.length === 0) {
-    if (digits.length !== 4 || !hasOneSuitRank(digits)) return null;
-    const normal = `${suit}${digits.find((rank) => rank !== "0")}`;
-    const firstFace = digits.includes("0") ? `${suit}0` : normal;
-    return {
-      kind: "ankan",
-      suit,
-      slots: [
-        { type: "back", value: normal },
-        { type: "tile", value: firstFace, sideways: false },
-        { type: "tile", value: normal, sideways: false },
-        { type: "back", value: normal }
-      ]
-    };
-  }
-  if (markerMatches.length !== 1) return null;
-  const source = markerMatches[0][0];
-  const markerIndex = markerMatches[0].index;
-  if (markerIndex === void 0) return null;
-  const before = (_b = meld.slice(1, markerIndex).match(/\d/g)) != null ? _b : [];
-  const after = (_c = meld.slice(markerIndex + 1).match(/\d/g)) != null ? _c : [];
-  if (before.length === 3 && after.length === 1 && hasOneSuitRank([...before, ...after])) {
-    const called = `${suit}${before[2]}`;
-    const added = `${suit}${after[0]}`;
-    const sourceIndex = calledSlot(source, 3);
-    const slots = [
-      { type: "tile", value: `${suit}${before[0]}`, sideways: false },
-      { type: "tile", value: `${suit}${before[1]}`, sideways: false }
-    ];
-    slots.splice(sourceIndex, 0, { type: "stack", called, added });
-    return { kind: "kakan", suit, source, slots };
-  }
-  if (after.length === 0 && before.length === 3 && hasOneSuitRank(before)) {
-    const ordered = reorderWithCalled(before.map((rank) => `${suit}${rank}`), source);
-    return {
-      kind: "pon",
-      suit,
-      source,
-      slots: ordered.map((value, index) => ({
-        type: "tile",
-        value,
-        sideways: index === calledSlot(source, 3),
-        called: index === calledSlot(source, 3)
-      }))
-    };
-  }
-  if (after.length === 0 && before.length === 4 && hasOneSuitRank(before)) {
-    const ordered = reorderWithCalled(before.map((rank) => `${suit}${rank}`), source);
-    return {
-      kind: "daiminkan",
-      suit,
-      source,
-      slots: ordered.map((value, index) => ({
-        type: "tile",
-        value,
-        sideways: index === calledSlot(source, 4),
-        called: index === calledSlot(source, 4)
-      }))
-    };
-  }
-  if (source === "-" && suit !== "z" && before.length + after.length === 3) {
-    const chiDigits = [...before, ...after];
-    const sorted = chiDigits.map(normalizedRank).sort();
-    if (+sorted[0] + 1 !== +sorted[1] || +sorted[1] + 1 !== +sorted[2]) return null;
-    const calledRank = before[before.length - 1];
-    const remaining = [...before.slice(0, -1), ...after];
-    const ordered = [calledRank, ...remaining];
-    return {
-      kind: "chi",
-      suit,
-      source,
-      slots: ordered.map((rank, index) => ({
-        type: "tile",
-        value: `${suit}${rank}`,
-        sideways: index === 0,
-        called: index === 0
-      }))
-    };
-  }
-  return null;
 }
 /*! Bundled license information:
 

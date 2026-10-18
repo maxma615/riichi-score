@@ -134,12 +134,39 @@ for (const engine of [chromium, webkit])
       const box = await playable.boundingBox();
       const target = await page.evaluate(() => {
         const surface = document.querySelector(".mahjong-table__surface");
+        const table = surface.closest(".mahjong-table");
+        const game = table.closest(".mahjong-game");
+        const webgl = game.dataset.tableRenderer === "webgl";
+        const tableBounds = table.getBoundingClientRect();
+        const felt = webgl
+          ? getComputedStyle(table).getPropertyValue("--table-felt-clip")
+            .trim().replace(/^polygon\(/, "").replace(/\)$/, "")
+            .split(",").map(pair => pair.trim().split(/\s+/).map(parseFloat))
+          : [];
+        const onFelt = (x, y) => {
+          if (!webgl) return true;
+          if (felt.length < 3 || felt.some(p => p.length !== 2 || !p.every(Number.isFinite))) return false;
+          const point = game.dataset.tableRotated === "true"
+            ? [y - tableBounds.top, tableBounds.right - x]
+            : [x - tableBounds.left, y - tableBounds.top];
+          let inside = false;
+          for (let i = 0, j = felt.length - 1; i < felt.length; j = i++) {
+            const a = felt[j], b = felt[i];
+            if ((a[1] > point[1]) !== (b[1] > point[1])
+              && point[0] < (b[0] - a[0]) * (point[1] - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
+          }
+          return inside;
+        };
         const rack = document
           .querySelector(".mahjong-hand")
           .getBoundingClientRect();
         const bounds = surface.getBoundingClientRect();
         for (let y = rack.top - 35; y > bounds.top + 20; y -= 20)
           for (let x = bounds.left + 50; x < bounds.right - 50; x += 30) {
+            // Transparent CSS proxies can hit outside their clip in WebKit.
+            // Keep candidates inside the real felt, including rounding tolerance.
+            if (!onFelt(x - 2, y - 2) || !onFelt(x + 2, y - 2)
+              || !onFelt(x + 2, y + 2) || !onFelt(x - 2, y + 2)) continue;
             const el = document.elementFromPoint(x, y);
             if (
               el &&
