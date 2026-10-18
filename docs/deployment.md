@@ -1,5 +1,15 @@
 # 独立日麻记分：上海 ECS 部署
 
+## 当前域名与微信环境（2026-10-18）
+
+当前入口为 **https://yougui.online/riichi/**，健康接口 `https://yougui.online/riichi/api/health` 返回 200，不跳转至 IP。原 IP 入口 308 跳转到该域名；下文 IP 入口及空微信环境为历史发布记录。
+
+保持运行源 `07a07be` 与既有镜像，仅更新该版本目录下受保护的 `.env`：`APP_ORIGIN=https://yougui.online`、`APP_BASE_PATH=/riichi`、正式 `WECHAT_APP_ID`、AppSecret 及 `WECHAT_ENV_VERSION=trial`。AppSecret 不入库，环境文件为 0600。独立容器重建后健康、镜像与卷保持一致；微信 access_token 接口实测成功。没有重启有归或网关容器，没有创建或下载真实资料备份。
+
+共享网关当前配置 `/srv/yougui/current/deploy/Caddyfile.ip` 已校验并平滑 reload：`yougui.online` 的 `/riichi` 和 `/riichi/*` 反代至 `yougui-riichi-score:3200`，IP 站点相同路径改为跳转域名。**有归下次发布必须保留此配置，不得恢复旧的域名到 IP 跳转。** 此仓库不修改有归本地源码，网关规则需纳入其后续发布核对。
+
+当前小程序客户端已同步域名；真实 wx.login、入桌码扫码及体验版待用户开启微信工具服务端口并配置后台合法域名后完成。获取 access_token 不证明用户登录或扫码成功。
+
 手机入口：**https://8.133.186.15/riichi/**。原情侣空间和联机麻将保持各自入口；不需要情侣空间账号。网页二维码是浏览器入桌链接，不是微信小程序码。
 
 当前网页运行源为 `07a07be`，运行目录 `/srv/riichi-score/current` 指向 `/srv/riichi-score/releases/07a07be`。后续小程序／测试／文档提交不改变网页运行版本。ECS `i-uf6i9ie15g82dprialoy`，`cn-shanghai`。

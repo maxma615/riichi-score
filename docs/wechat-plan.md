@@ -4,9 +4,11 @@
 
 用户已提供正式 AppID `wx96a4805151b838f6`，已写入 `miniprogram/project.config.json`，项目名及默认导航标题为「雀叙牌谱」。下文游客模式及缺少 AppID 的描述保留为历史验证记录。
 
-AppSecret 从用户本地 `env.md` 读取，仅配置于受 Git 忽略的本地服务端 `.env`，环境版本为 `trial`；两个文件权限均为 0600，`env.md` 已加入忽略规则。密钥未写入小程序、文档或 Git。服务器环境尚未配置此密钥，真实登录和扫码未验证。
+AppSecret 从用户本地 `env.md` 读取，配置于受 Git 忽略的本地服务端 `.env` 及 ECS 独立麻将服务的 `.env`，环境版本为 `trial`；环境文件权限为 0600，`env.md` 已加入忽略规则。密钥未写入小程序、文档或 Git。服务器成功调用微信 access_token 接口，但这不等于真实用户 `wx.login` 或扫码已通过。
 
-实测 `https://yougui.online/riichi/` 返回 302，跳转到 IP 地址；当前小程序 `config.js` 保留原调试接口。正式接入前须配置不跳转至 IP 的 HTTPS 域名接口，再同步 `apiBase` 和微信后台合法域名。目前会话没有可用的 ECS 连接工具或已配置的 SSH 目标，未修改远端服务，也未上传或发布小程序。
+已通过既有 Workbench CLI 配置服务器：`https://yougui.online/riichi/` 及 `/riichi/api/health` 直接返回 200，旧 IP 的 `/riichi/` 返回 308 到域名。小程序 `config.js` 已改为 `https://yougui.online/riichi`；微信后台 request、uploadFile、downloadFile 合法域名填写 `https://yougui.online`，不带路径。用户仍需在后台保存合法域名，并开启开发者工具「设置 → 安全设置 → 服务端口」。
+
+本轮只重建独立麻将容器并平滑 reload 网关；麻将镜像与数据卷未换，有归容器 ID、镜像及挂载保持一致。正式用户登录、小程序码、真机扫码、体验版上传和后台设为体验版仍待继续验证，未宣称已上线。
 
 2026-10-11 已实现原生 WXML/WXSS/JavaScript 客户端，源码在 `miniprogram/`，不使用web-view包装。保留符番速查、四/三人桌、多人荣和独立符番、记分、撤回、逐局及每圈收支，新增算符清单、月度统计、同桌净点排名、微信登录与头像昵称填写。
 
