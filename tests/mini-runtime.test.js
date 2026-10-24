@@ -314,3 +314,14 @@ test('小程序座位排序保留版本并重设起庄；立直整块点选',asy
  q.toggleRiichi({currentTarget:{dataset:{seat:1}}});assert.deepEqual(Array.from(q.data.riichi),[1]);assert.equal(q.data.riichiFlags[1],true);
  q.toggleRiichi({currentTarget:{dataset:{seat:1}}});assert.equal(q.data.riichi.length,0);assert.equal(q.data.riichiFlags[1],false);
 });
+
+test('小程序整行拖动实时让位、取消恢复、续桌清除旧二维码',async()=>{
+ let scroll=false;const p=page('room',{}, {createSelectorQuery:()=>({in(){return this},selectAll(){return this},boundingClientRect(cb){cb([0,1,2].map(i=>({top:100+i*80,bottom:170+i*80})));return this},exec(){}}),pageScrollTo:()=>{scroll=true}});
+ p.data.room={version:2,members:[{name:'甲'},{name:'乙'},{name:'丙'}]};p.sortSeats();
+ const start=()=>p.dragStart({currentTarget:{dataset:{index:0}},touches:[{identifier:4,clientY:125}]});
+ const move=()=>p.dragMove({touches:[{identifier:4,clientY:208}]});start();move();
+ assert.equal(p.data.dragging,0);assert.equal(p.data.seatOrder[0].offset,83);assert.equal(p.data.seatOrder[1].offset,-80);
+ p.dragCancel();assert.deepEqual(Array.from(p.data.seatOrder,m=>m.name),['甲','乙','丙']);assert.equal(p.data.seatOrder[0].offset,0);
+ start();move();p.dragEnd();assert.deepEqual(Array.from(p.data.seatOrder,m=>m.name),['乙','甲','丙']);assert.equal(p.data.dragging,-1);
+ let action;p.command=async x=>{action=x};p.data.qr='old';await p.rematch();assert.equal(action,'rematch');assert.equal(p.data.qr,'');assert.equal(scroll,true);
+});

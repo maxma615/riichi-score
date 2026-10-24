@@ -71,7 +71,8 @@ export function settlementView(room, event) {
   const next = {
     honba: settled.next.honba,
     dealerName: rows[settled.next.dealer].name,
-    label: continuing ? `连庄 ${roundStatus(room).repeats + 1} 次` : "换庄",
+    finished: !!settled.next.finished,
+    label: settled.next.finished ? "本场结束" : continuing ? `连庄 ${roundStatus(room).repeats + 1} 次` : "换庄",
     hand: settled.next.hand,
   };
   return {

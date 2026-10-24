@@ -13,6 +13,7 @@ Page({
     loading: false,
     kiriage: false,
     kazoe: true,
+    rounds: 2,
   },
   onLoad(o) {
     const code = parseInvite(o.scene || o.join || "");
@@ -100,6 +101,7 @@ Page({
       room: r,
       status: roundStatus(r),
       members,
+      ranking: [...members].sort((a,b)=>b.score-a.score||a.seat-b.seat),
       history: history.reverse(),
       round:
         (["东", "南", "西", "北"][Math.floor(r.hand / r.rules.players)] ||
@@ -137,6 +139,7 @@ Page({
     api("/api/rooms", "POST", {
       players: e.currentTarget.dataset.players,
       chooseDealer: true,
+      rounds: this.data.rounds,
       kiriage: this.data.kiriage,
       kazoe: this.data.kazoe,
     })
@@ -231,21 +234,34 @@ Page({
   sortSeats() {
     const r=this.data.room;
     this.sortVersion=r.version;
-    this.setData({seatOrder:r.members.map((m,seat)=>({seat,name:m?.name||"空位"})),sorting:true});
+    this.dragIndex=null;this.dragTo=null;
+    this.setData({dragging:-1,seatOrder:r.members.map((m,seat)=>({seat,name:m?.name||"空位",offset:0})),sorting:true});
   },
   noop(){},
   dragStart(e) {
-    this.dragIndex=Number(e.currentTarget.dataset.index);
-    wx.createSelectorQuery().in(this).selectAll(".order-seat").boundingClientRect(rows=>{this.dragRects=rows;}).exec();
+    const touch=e.touches[0];if(!touch||e.touches.length!==1)return;
+    this.dragIndex=Number(e.currentTarget.dataset.index);this.dragTouch=touch.identifier;this.dragY=touch.clientY;
+    this.setData({dragging:this.dragIndex,seatOrder:this.data.seatOrder.map(m=>({...m,offset:0}))});
+    wx.createSelectorQuery().in(this).selectAll(".order-seat").boundingClientRect(rows=>{if(this.dragIndex!==null)this.dragRects=rows;}).exec();
   },
-  dragEnd(e) {
-    const y=e.changedTouches[0]?.clientY;
-    const to=this.dragRects?.findIndex(r=>y>=r.top&&y<=r.bottom);
-    if(Number.isInteger(to)&&to>=0&&Number.isInteger(this.dragIndex)){
-      const order=[...this.data.seatOrder];const [m]=order.splice(this.dragIndex,1);order.splice(to,0,m);this.setData({seatOrder:order});
-    }
-    this.dragIndex=null;this.dragRects=null;
+  dragMove(e) {
+    if(this.dragIndex===null||!this.dragRects)return;
+    if(e.touches.length!==1)return this.dragCancel();
+    const touch=e.touches[0];if(touch.identifier!==this.dragTouch)return this.dragCancel();
+    const rows=this.dragRects,from=this.dragIndex;
+    const dy=Math.max(rows[0].top-rows[from].top,Math.min(touch.clientY-this.dragY,rows[rows.length-1].top-rows[from].top));
+    const center=(rows[from].top+rows[from].bottom)/2+dy;
+    const to=rows.reduce((best,r,i)=>Math.abs((r.top+r.bottom)/2-center)<Math.abs((rows[best].top+rows[best].bottom)/2-center)?i:best,0);
+    this.dragTo=to;
+    this.setData({seatOrder:this.data.seatOrder.map((m,i)=>({...m,offset:i===from?dy:from<to&&i>from&&i<=to?rows[i-1].top-rows[i].top:from>to&&i>=to&&i<from?rows[i+1].top-rows[i].top:0}))});
   },
+  dragEnd() {
+    const from=this.dragIndex,to=this.dragTo,order=[...this.data.seatOrder];
+    if(Number.isInteger(from)&&Number.isInteger(to)&&from!==to){const [m]=order.splice(from,1);order.splice(to,0,m);}
+    this.dragIndex=null;this.dragTo=null;this.dragRects=null;
+    this.setData({dragging:-1,seatOrder:order.map(m=>({...m,offset:0}))});
+  },
+  dragCancel(){this.dragTo=null;this.dragEnd();},
   sortUp(e) {
     const i=Number(e.currentTarget.dataset.index);if(i<1)return;
     const order=[...this.data.seatOrder];[order[i-1],order[i]]=[order[i],order[i-1]];this.setData({seatOrder:order});
@@ -253,7 +269,10 @@ Page({
   saveOrder() {
     this.command("reorder",{order:this.data.seatOrder.map(m=>m.seat),version:this.sortVersion}).then(()=>this.setData({sorting:false}));
   },
-  cancelOrder(){this.setData({sorting:false});},
+  cancelOrder(){this.dragCancel();this.setData({sorting:false});},
+  length(e){const rounds=Number(e.currentTarget.dataset.rounds);if(this.data.room)this.command("set-length",{rounds});else this.setData({rounds});},
+  removePlayer(e){const seat=Number(e.currentTarget.dataset.seat);wx.showModal({title:"更换这位玩家？",content:"移出后可以扫码加入或填写新玩家。",success:r=>{if(r.confirm)this.command("remove-player",{seat});}});},
+  rematch(){return this.command("rematch").then(()=>{this.setData({qr:""});wx.pageScrollTo({scrollTop:0,duration:0});});},
   selectDealer() {
     const r = this.data.room;
     if (r.members.some(m => !m)) return error(Error("请先为所有座位添加成员"));

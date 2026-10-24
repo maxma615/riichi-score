@@ -1506,3 +1506,23 @@ footer {
 .drag-seat {touch-action:none;min-height:48px;min-width:48px;cursor:grab;}
 .order-seat.dragging {background:#d9cbb0;}
 .history-entry {border-bottom:1px solid #b8b1a0;padding-bottom:8px;}
+
+/* A completed session leads to its result and the next table. */
+.finished-summary {border-top:3px solid #963f30;}
+.ranking-row {display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #b8b1a066;}
+.rank-number {font:24px Georgia,serif;color:#963f30;}
+.ranking-row b {overflow-wrap:anywhere;}
+.ranking-row>span:not(.rank-number),.ranking-row strong {text-align:right;font-size:18px;}
+.ranking-row small {display:block;font-size:11px;font-weight:400;opacity:.65;margin-top:3px;}
+.rematch-button {width:100%;margin-top:20px;min-height:52px;font-size:17px;}
+.room-management .actions {display:flex;flex-direction:column;align-items:stretch;}
+.room-management .delete-button {color:#963f30;background:transparent;border-color:#963f3044;order:3;}
+.quiet-button {font-size:12px;padding:6px 10px;margin-top:8px;}
+.pre-game {padding:12px 0;border-block:1px solid #b8b1a066;margin-bottom:12px;}
+#seat-order {position:relative;padding:4px 0;margin:12px 0;}
+#seat-order .order-seat {position:relative;min-height:78px;box-sizing:border-box;border:1px solid #b8b1a0;border-radius:6px;background:#ede6d7;margin:8px 0;padding:12px;touch-action:none;cursor:grab;user-select:none;transition:transform 160ms ease;}
+#seat-order .order-number {flex:0 0 24px;font:22px Georgia,serif;opacity:.5;}
+#seat-order .drag-seat {display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 44px;font-size:25px;line-height:1;opacity:.65;}
+#seat-order .drag-seat small {font-size:11px;margin-top:5px;}
+#seat-order .dragging {z-index:3;background:#f7efde;box-shadow:0 12px 22px #171b1b33;border-color:#963f30;transition:none;cursor:grabbing;}
+@media(prefers-reduced-motion:reduce){#seat-order .order-seat{transition:none;}}

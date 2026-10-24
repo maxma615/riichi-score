@@ -271,7 +271,10 @@ for (const engine of [chromium, webkit])
         const source=page.locator(".drag-seat").nth(0),dest=page.locator(".order-seat").nth(1);
         const from=await source.boundingBox(),to=await dest.boundingBox();
         await page.mouse.move(from.x+from.width/2,from.y+from.height/2);await page.mouse.down();
-        await page.mouse.move(to.x+to.width/2,to.y+to.height/2,{steps:5});await page.mouse.up();
+        await page.mouse.move(to.x+to.width/2,to.y+to.height/2,{steps:5});
+        await expect(page.locator(".order-seat.dragging")).toHaveCount(1);
+        assert.ok(await page.locator(".order-seat.dragging").evaluate(el=>Math.abs(new DOMMatrix(getComputedStyle(el).transform).m42)>20));
+        await page.mouse.up();
         await expect(page.locator(".order-seat").first()).toContainText("测试南家");
         await page.locator('[data-up="1"]').click();
         await expect(page.locator(".order-seat").first()).toContainText("测试桌主");
@@ -481,18 +484,53 @@ for (const engine of [chromium, webkit])
         await page.locator(".history-game").first().click();
         await expect(page.getByRole("heading",{name:/牌局已结束/})).toBeVisible();
         await expect(page.getByRole("heading",{name:"逐局记录",exact:true})).toBeVisible();
-        await page
-          .getByRole("button", { name: "另开一桌", exact: true })
-          .click();
-        await page.locator("#confirm-new").click();
-        await expect(
-          page.getByRole("heading", { name: "最近的牌桌", exact: true }),
-        ).toBeVisible();
+        await expect(page.locator(".ranking-row")).toHaveCount(4);
+        await expect(page.locator("#room .card").last()).toHaveClass(/room-management/);
+        await page.screenshot({path:path.join(out,`${tag}-finished.png`),fullPage:true});
+        const previousId=await page.evaluate(()=>localStorage.getItem("riichi-room"));
+        await page.locator("#rematch").click();
+        await expect(page.locator("#record")).toBeDisabled();
+        await expect(page.locator("#room .score-grid")).toContainText("测试南家");
+        await expect(page.locator("#room .score-grid")).toContainText("测试西家");
+        await expect(page.locator("#room .score-grid")).toContainText("测试北家");
+        await expect(page.locator(".seat").first()).toContainText("25,000");
+        const nextId=await page.evaluate(()=>localStorage.getItem("riichi-room"));assert.notEqual(nextId,previousId);
+        await other.reload();
+        await expect(other.locator("#rematch")).toHaveText("进入下一场牌桌");
+        await other.locator("#rematch").click();
+        await expect.poll(()=>other.evaluate(()=>localStorage.getItem("riichi-room"))).toBe(nextId);
+        await page.locator('[data-remove="2"]').click();
+        await page.locator("#confirm-action").click();
+        await expect(page.locator("#modal")).not.toBeVisible();
+        await page.locator('[data-add="2"]').click();await page.locator("#player-name").fill("换入玩家");
+        await page.getByRole("button",{name:"保存",exact:true}).click();
+        await expect(page.locator("#modal")).not.toBeVisible();
+        await page.locator('[data-length="1"]').click();
+        await expect(page.locator('[data-length="1"]')).toHaveAttribute("aria-pressed","true");
+        await page.getByRole("button",{name:"选择起庄玩家",exact:true}).click();await page.locator('[data-dealer="1"]').click();
+        await expect(page.locator("#modal")).not.toBeVisible();
+        for(let i=0;i<4;i++){
+          await page.locator("#record").click();await page.locator('[data-result="draw"]').click();
+          await page.getByRole("button",{name:"确认记分",exact:true}).click();await expect(page.locator("#modal")).not.toBeVisible();
+        }
+        await expect(page.locator(".finished-summary")).toContainText("本场结算");
+        await expect(page.locator("#rematch")).toBeVisible();
+        await page.locator("#undo").click();await page.locator("#confirm-action").click();
+        await expect(page.locator("#record")).toBeVisible();
         await page.getByRole("button",{name:"我的",exact:true}).click();
-        await page.locator("[data-delete-history]").first().click();
+        await expect(page.locator("[data-delete-history]")).toHaveCount(0);
+        await expect(page.locator(".history-game")).toHaveCount(2);
+        await page.locator(".history-game").first().click();
+        await page.locator("#delete-room").click();
         await expect(page.locator("#modal")).toContainText("相关统计");
         await page.locator("#confirm-delete").click();
         await expect(page.locator("#modal")).not.toBeVisible();
+        await page.getByRole("button",{name:"我的",exact:true}).click();
+        await expect(page.locator(".history-game")).toHaveCount(1);
+        await page.locator(".history-game").first().click();
+        await page.locator("#delete-room").click();await page.locator("#confirm-delete").click();
+        await expect(page.locator("#modal")).not.toBeVisible();
+        await page.getByRole("button",{name:"我的",exact:true}).click();
         await expect(page.locator(".history-game")).toHaveCount(0);
         assert.deepEqual(errors, []);
         results.push({

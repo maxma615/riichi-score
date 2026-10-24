@@ -183,6 +183,7 @@ export function settle(state, event) {
   }
   next.scores = state.scores.map((s, i) => s + delta[i]);
   next.pot = pot;
+  if (state.rules.rounds && next.hand >= n * state.rules.rounds) next.finished = true;
   if (
     next.scores.reduce((a, b) => a + b, 0) + pot * 1000 !==
     n * state.rules.start

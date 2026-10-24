@@ -183,10 +183,11 @@ export class Store {
         ),
       }));
   }
-  create(u, { players = 4, kiriage = false, kazoe = true, chooseDealer = false } = {}) {
+  create(u, { players = 4, kiriage = false, kazoe = true, chooseDealer = false, rounds = 2 } = {}) {
     if (typeof kiriage !== "boolean" || typeof kazoe !== "boolean")
       throw new HttpError(400, "规则设置无效");
-    const rules = { ...defaults(players), kiriage, kazoe };
+    integer(rounds, 1, 2, "场长");
+    const rules = { ...defaults(players), kiriage, kazoe, rounds };
     const s = {
       id: randomUUID(),
       code: randomBytes(16).toString("hex"),
@@ -245,7 +246,8 @@ export class Store {
           .prepare("SELECT 1 FROM commands WHERE room=? AND nonce=?")
           .get(id, input.nonce)
       )
-        return this.public(s, u);
+        return input.action === "rematch" && s.nextRoomId ? this.get(s.nextRoomId, u) : this.public(s, u);
+      if(input.action === "rematch" && s.nextRoomId && this.db.prepare("SELECT 1 FROM rooms WHERE id=?").get(s.nextRoomId)) return this.get(s.nextRoomId,u);
       if (input.version !== s.version)
         throw new HttpError(409, "牌桌已更新，请刷新后再提交");
       if (input.action === "delete") {
@@ -253,7 +255,21 @@ export class Store {
         this.db.prepare("DELETE FROM rooms WHERE id=?").run(id);
         return {id, deleted:true};
       }
-      if (input.action === "reorder") {
+      if(input.action === "rematch") {
+        if(!s.finished) throw new HttpError(409,"请先结束当前牌局");
+        const created=this.create(u,{...s.rules,chooseDealer:true});
+        const next=this.raw(created.id);
+        next.members=structuredClone(s.members);next.rules={...structuredClone(s.rules),rounds:s.rules.rounds??2};
+        this.save(next);s.nextRoomId=next.id;
+      } else if(input.action === "set-length") {
+        if(s.finished || s.history.length) throw new HttpError(409,"开始记分后不能更改场长");
+        integer(input.rounds,1,2,"场长");s.rules.rounds=input.rounds;
+      } else if(input.action === "remove-player") {
+        if(s.finished || s.history.length) throw new HttpError(409,"开始记分后不能更换玩家");
+        integer(input.seat,0,s.rules.players-1,"座位");
+        if(s.members[input.seat]?.id===u.id) throw new HttpError(400,"请由另一位玩家更换你的座位成员");
+        s.members[input.seat]=null;s.dealerSelected=false;
+      } else if (input.action === "reorder") {
         if(s.finished || s.history.length) throw new HttpError(409,"开始记分后不能调整座位");
         const order=input.order;
         if(!Array.isArray(order)||order.length!==s.rules.players||new Set(order).size!==order.length||order.some(i=>!Number.isInteger(i)||i<0||i>=s.rules.players)) throw new HttpError(400,"座位顺序无效");
@@ -315,7 +331,7 @@ export class Store {
       s.version++;
       this.save(s);
       this.db.prepare("INSERT INTO commands VALUES(?,?)").run(id, input.nonce);
-      return this.public(s, u);
+      return input.action === "rematch" ? this.get(s.nextRoomId,u) : this.public(s, u);
     });
   }
   snapshot(s) {

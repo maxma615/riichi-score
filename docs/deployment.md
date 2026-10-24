@@ -200,3 +200,11 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 178项Node及187项规则检查通过，最后追加的定向检查12项通过；8组Chromium/WebKit手机／桌面浏览器流程通过，覆盖拖动、删除确认及历史刷新。权限、版本冲突、删除后重启持久化均有验证。
 
 持久镜像 yougui-riichi-score:management-20261025 / latest 保留完整运行源码与公开资源，未复制密钥或用户数据。仅重启记分服务，StartedAt=2026-10-24T17:31:16.200015315Z；有归未重启。健康接口成功，线上JS/CSS哈希与本地一致；容器内存SQLite合成检查自动入座、排序和删除通过。未删除或重新排序任何实际用户牌局。
+
+### 2026-10-25 整场结算与原班续桌
+
+部署src/store.js、src/scoring.js、src/settlement-view.js及public/app.js/style.css；更新前逐个核对运行文件与0031af9一致，保留运行镜像完整源码与公开资源。持久补丁镜像 yougui-riichi-score:session-flow-20261025 / latest，仅包含代码和公开资源，不包含密钥或数据卷。
+
+仅重启记分服务，StartedAt=2026-10-24T18:51:34.820112397Z（北京时间25日02:51）；有归仍为2026-10-18T08:23:55.08055454Z。健康接口成功，公开JS/CSS及共享计分／明细模块哈希与本地一致；内存SQLite合成检查autoFinish、sameMembers、sharedRematch通过，不读取、删除或重排实际牌局。
+
+小程序线下源码同步，7份WXML及5份WXSS在固定Linux编译器通过；尚未上传或真机验收。网页版8组浏览器完整流程通过，权限／持久化／版本冲突及重复续桌回归见acceptance.md。
