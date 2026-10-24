@@ -1,3 +1,4 @@
+import { mountAccountName } from "./account-name.js";
 import { roundStatus, settlementView } from "./settlement-view.js";
 import { searchYaku } from "./yaku.js";
 import { lookup } from "./lookup.js";
@@ -238,7 +239,7 @@ function renderRoom() {
       }),
     ) : null;
     $("#room").innerHTML =
-      `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">填写昵称，开桌或扫码入桌。</p><form id="entry"><div class="grid"><label>你的昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '<label>选择座位<select id="join-seat"><option value="1">初始南家</option><option value="2">初始西家</option><option value="3">初始北家（四人桌）</option></select></label>' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<div class="rule-options"><label class="rule-option"><input id="kiriage" type="checkbox"><span class="rule-copy"><span class="rule-name">切上满贯</span><span class="rule-note">4番30符 / 3番60符</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label><label class="rule-option"><input id="kazoe" type="checkbox" checked><span class="rule-copy"><span class="rule-name">累计役满</span><span class="rule-note">13番起</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label></div>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
+      `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">填写用户名，开桌或扫码入桌。</p><form id="entry"><div class="grid"><label>用户名 / 昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '<label>选择座位<select id="join-seat"><option value="1">初始南家</option><option value="2">初始西家</option><option value="3">初始北家（四人桌）</option></select></label>' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<div class="rule-options"><label class="rule-option"><input id="kiriage" type="checkbox"><span class="rule-copy"><span class="rule-name">切上满贯</span><span class="rule-note">4番30符 / 3番60符</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label><label class="rule-option"><input id="kazoe" type="checkbox" checked><span class="rule-copy"><span class="rule-name">累计役满</span><span class="rule-note">13番起</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label></div>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
     if (draft) for (const [id, value] of Object.entries(draft)) {
       const input = $("#" + id);
       if (!input || value === undefined || (id === "name" && user)) continue;
@@ -771,6 +772,7 @@ async function renderMe(
   if (!user) {
     $("#me").innerHTML =
       '<div class="card"><h2>我的牌谱</h2><p>开桌或扫码入桌后，查看每月记录。</p><button id="me-entry">进入牌桌</button></div>';
+    mountAccountName($("#me"), { api, changed: accountNameChanged });
     $("#me-entry").onclick = () => {
       tab("room");
       renderRoom();
@@ -796,7 +798,17 @@ async function renderMe(
       .join(
         "",
       )}</div><p class="monthly-summary">${esc(s.summary)}</p></div><div class="card"><h2>本月牌缘</h2><div class="fortune-grid"><div><h3>带福之人</h3><p>${s.best ? `${esc(s.best.name)} <strong class="positive">+${s.best.net.toLocaleString()}</strong>` : "还未遇到"}</p></div><div><h3>带负之人</h3><p>${s.worst ? `${esc(s.worst.name)} <strong class="negative">${s.worst.net.toLocaleString()}</strong>` : "还未遇到"}</p></div></div><p class="muted">与你同桌时的净收支</p></div><div class="card"><h2>同桌收支</h2>${s.best ? `<p>赢得最多 · ${esc(s.best.name)} <strong class="positive">+${s.best.net.toLocaleString()}</strong></p>` : ""}${s.worst ? `<p>输得最多 · ${esc(s.worst.name)} <strong class="negative">${s.worst.net.toLocaleString()}</strong></p>` : ""}${s.peers.map((p) => `<div class="line"><span>${esc(p.name)} · ${p.hands}局</span><strong class="${p.net >= 0 ? "positive" : "negative"}">${p.net >= 0 ? "+" : ""}${p.net.toLocaleString()}</strong></div>`).join("") || "<p>这个月还没有牌局</p>"}</div>`;
+  mountAccountName($("#me"), { name: p.name, api, changed: accountNameChanged });
   $("#stats-month").onchange = (e) => {
     if (e.target.value) task(() => renderMe(e.target.value));
   };
+}
+
+async function accountNameChanged(profile) {
+  user = { name: profile.name };
+  past = await api("/api/rooms");
+  const id = localStorage.getItem("riichi-room");
+  if (id && past.some(r => r.id === id)) remember(await api("/api/rooms/" + id));
+  else { room = null; localStorage.removeItem("riichi-room"); renderRoom(); }
+  await renderMe();
 }

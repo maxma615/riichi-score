@@ -31,13 +31,14 @@ export class Store {
   }
   updateProfile(u, name, avatar) {
     name = nickname(name);
-    const old = this.profile(u.id);
-    this.db
-      .prepare(
-        "INSERT INTO profiles(id,name,avatar) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,avatar=excluded.avatar",
-      )
-      .run(u.id, name, avatar ?? old?.avatar ?? "");
-    return this.profile(u.id);
+    return this.transaction(() => {
+      if (this.db.prepare("SELECT 1 FROM profiles WHERE name=? AND id<>? LIMIT 1").get(name, u.id))
+        throw new HttpError(409, "这个用户名已被使用，请换一个名字");
+      const old = this.profile(u.id);
+      this.db.prepare("INSERT INTO profiles(id,name,avatar) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,avatar=excluded.avatar")
+        .run(u.id, name, avatar ?? old?.avatar ?? "");
+      return this.profile(u.id);
+    });
   }
   wechatSession(appId, openid) {
     return this.transaction(() => {
@@ -104,13 +105,17 @@ export class Store {
   }
   session(name) {
     name = nickname(name);
-    const token = randomBytes(32).toString("hex"),
-      id = randomUUID();
-    this.db
-      .prepare("INSERT INTO sessions(token,id,name,expires) VALUES(?,?,?,?)")
-      .run(hash(token), id, name, Date.now() + 90 * 86400000);
-    this.updateProfile({ id }, name);
-    return { token, id, name };
+    return this.transaction(() => {
+      const matches = this.db.prepare("SELECT id FROM profiles WHERE name=? LIMIT 2").all(name);
+      if (matches.length > 1)
+        throw new HttpError(409, "历史账号存在同名，请在原浏览器修改名字后再登录");
+      const id = matches[0]?.id ?? randomUUID();
+      if (!matches.length) this.db.prepare("INSERT INTO profiles VALUES(?,?,?)").run(id, name, "");
+      const token = randomBytes(32).toString("hex");
+      this.db.prepare("INSERT INTO sessions(token,id,name,expires) VALUES(?,?,?,?)")
+        .run(hash(token), id, name, Date.now() + 90 * 86400000);
+      return { token, id, name };
+    });
   }
   transaction(fn) {
     this.db.exec("BEGIN IMMEDIATE");

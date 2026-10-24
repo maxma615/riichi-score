@@ -248,6 +248,7 @@ export function createApp({
         "/online/client.js": ["public/online/client.js", "text/javascript"],
         "/online/client.css": ["public/online/client.css", "text/css"],
         "/app.js": ["public/app.js", "text/javascript"],
+        "/account-name.js": ["public/account-name.js", "text/javascript"],
         "/style.css": ["public/style.css", "text/css"],
         "/art/ink-landscape.svg": [
           "public/art/ink-landscape.svg",

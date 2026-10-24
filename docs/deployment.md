@@ -178,3 +178,11 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 全体已入桌成员可使用所有牌桌命令（记分、撤回、结束、开局前选庄与填写玩家），仍通过成员校验、事务、版本和nonce控制并发；外部账号不能管理。记分首先点选和牌人，再选自摸／荣和，再点放铳人，符番与役满均为按钮，无下拉框，支持双响。微信源码同步，未上传或发布新版。
 
 源代码、公开 app.js/style.css 已更新到运行容器及 current，持久补丁镜像 yougui-riichi-score:winner-first-20261024 / latest。仅重启记分服务至 2026-10-24T15:17:22Z，有归未重启。健康接口通过，线上JS/CSS哈希与本地一致；内存SQLite合成检查 memberFinish=true、memberUndo=true，未读取或复制用户业务资料。
+
+### 2026-10-25 中文用户名身份上线
+
+网页支持以用户名／昵称登录，首次创建固定 UUID，同名登录创建新的会话而复用原账号。修改名字保留 UUID；历史牌桌、邀请名单与统计按 profiles 最新名字展示，未修改历史分数或合并账号。改名撞名返回 409；历史数据已存在多个同名账号时拒绝自动认领，需在原浏览器改名解除歧义。按用户明确选择，不设置密码。
+
+新增“我的 → 用户名登录／我的名字”表单及 account-name.js 路由。部署包含 src/store.js、src/server.js、public/app.js、public/account-name.js；保留已发布 3924c66 记分流程。源码与 current、运行容器同步，持久镜像 yougui-riichi-score:username-20261025 / latest，仅从源代码和公开静态文件构建，未复制数据卷或快照密钥。记分服务重启于 2026-10-25 00:23:26（北京时间），有归启动时间保持 2026-10-18T08:23:55Z。
+
+验证：175 Node + 187 规则测试通过；独立 Chromium 会话验证中文同名登录、改名后旧会话刷新及新浏览器恢复相同 ID；存储测试覆盖历史显示、统计、重名、重启持久化。生产健康接口与静态文件哈希通过，容器内仅使用内存 SQLite 验证 username identity and rename，不创建真实服务测试账号。app.js SHA256 067a97fce2fbfdb6929260df626ae1f323e7fa7e5bbcc9b8c14693d91382f986。
