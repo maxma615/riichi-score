@@ -154,3 +154,13 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 发现 `https://yougui.online/riichi/` 与 `/riichi/online/` 返回 302 到 IP。DNS/TLS 正常，根因是 Caddy 实际绑定的旧 release 文件仍包含 IP 跳转，与 current 路径的文件不同。已定位并原位更新绑定 inode 对应的 Caddyfile，将域名下的 `/riichi`、`/riichi/*` 恢复反向代理至 `yougui-riichi-score:3200`，旧 `/mahjong` 入口改为域名地址。配置验证后热加载，未重启有归或记分容器，未操作业务数据。
 
 验证：两个页面 GET 200，健康接口返回 ok；有归 `/home` 200。以后更新网关须同时核对容器实际挂载内容及运行配置，不能只写 current 路径。此次未新增子域名。
+
+### 2026-10-24 独立子域名入口
+
+公开入口为 https://riichi.yougui.online/ （302 到 /riichi/）；联机页面为 https://riichi.yougui.online/riichi/online/。DNS A 记录已由用户添加至 8.133.186.15，Caddy 自动签发 HTTPS 证书。旧 yougui.online 的记分及联机入口页面 GET/HEAD 跳转至新域名，旧 API、静态文件、Socket 路径保留，兼容既有微信客户端。
+
+本次采用网关别名，未更改运行进程 APP_ORIGIN=https://yougui.online 或 APP_BASE_PATH=/riichi，也未重启业务容器。新域名下仅当 Origin 精确等于 https://riichi.yougui.online 且路径匹配 /riichi 或 /riichi/* 时，代理向源站传递其配置的旧 Origin；其他 Origin 原样透传，由应用继续拒绝。不应无条件覆盖所有请求 Origin。浏览器 Cookie 按域名隔离，新域名可能需要重新登录；现有二维码仍生成旧域名地址，经入口跳转进入新域名。
+
+实际挂载旧 release Caddyfile 与 current 文件均已原位更新；current 文件的其他站点保持原样。新增站点根路径跳至 /riichi/，匹配路径代理至 yougui-riichi-score:3200，其余路径 404。微信客户端仍使用原合法域名，无需立即更改微信后台。
+
+验证：TLS 验证通过；新域名记分页、联机页、健康接口、旧域名健康接口 GET 200；新 Origin 登录空昵称请求进入业务校验并返回 400，非法 Origin 返回 403（未创建测试账户）；Socket.IO polling 握手新 Origin 200、非法 Origin 403。有归与记分容器 StartedAt 未变。未以真实微信账号完成扫码登录或实际多人对局验收。
