@@ -411,3 +411,4 @@ picker {
 .yaku-item .small {
   margin-top: 8rpx;
 }
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14rpx;}.choice-grid button{width:100%;min-height:84rpx;margin:0;}.fu-meld{border-bottom:1rpx solid #c0b29766;padding:16rpx 0;}

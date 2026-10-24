@@ -91,3 +91,20 @@ test('四麻半庄南四与旧桌兼容，续桌删除后可重新开桌',()=>{
   r=send('record',{event:{kind:'draw',tenpai:[],riichi:[]}});assert.equal(r.finished,false);assert.equal(r.hand,8);
  }finally{s.close();}
 });
+
+test('只读追踪后续桌：成员自动跟进、历史保留、移出或删除不跟进',()=>{
+ const s=new Store(':memory:');try{
+  const a=s.session('追踪甲'),b=s.session('追踪乙'),x=s.session('外部');
+  let old=s.create(a,{players:3});old=s.join(b,old.code);
+  old=s.command(a,old.id,{action:'finish',version:old.version,nonce:crypto.randomUUID()});
+  const next=s.command(a,old.id,{action:'rematch',version:old.version,nonce:crypto.randomUUID()});
+  assert.equal(s.current(old.id,b).id,next.id);assert.equal(s.get(old.id,b).id,old.id);
+  assert.throws(()=>s.current(old.id,x),e=>e.status===403);
+  s.command(a,next.id,{action:'remove-player',seat:1,version:next.version,nonce:crypto.randomUUID()});
+  assert.equal(s.current(old.id,b).id,old.id);assert.equal(s.current(old.id,a).id,next.id);
+  const raw=s.raw(next.id);raw.finished=true;raw.nextRoomId=old.id;s.save(raw);
+  assert.equal(s.current(old.id,a).id,next.id);
+  s.command(a,next.id,{action:'delete',version:raw.version,nonce:crypto.randomUUID()});
+  assert.equal(s.current(old.id,a).id,old.id);
+ }finally{s.close();}
+});

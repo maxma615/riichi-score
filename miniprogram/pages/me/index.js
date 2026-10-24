@@ -12,7 +12,9 @@ Page({
     this.load();
   },
   month(e) {
-    this.setData({ month: e.detail.value });
+    const [year,month]=this.data.month.split("-").map(Number);
+    const d=new Date(Date.UTC(year,month-1+Number(e.currentTarget.dataset.step),1));
+    this.setData({ month: d.toISOString().slice(0,7) });
     this.load();
   },
   async load() {
@@ -34,6 +36,7 @@ Page({
   },
   openHistory(e) {
     wx.setStorageSync("roomId", e.currentTarget.dataset.id);
+    wx.setStorageSync("roomMode","history");
     wx.switchTab({url:"/pages/room/index"});
   },
   profile() {

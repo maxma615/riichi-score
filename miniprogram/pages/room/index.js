@@ -23,7 +23,7 @@ Page({
     this.load();
     this.timer = setInterval(() => {
       if (this.data.room && !this.data.loading) this.refresh().catch(() => {});
-    }, 10000);
+    }, 2000);
   },
   onHide() {
     clearInterval(this.timer);
@@ -50,7 +50,7 @@ Page({
       const id = wx.getStorageSync("roomId");
       if (id) {
         try {
-          await this.openRoom(id);
+          await this.openRoom(id, wx.getStorageSync("roomMode")!=="history");
           return;
         } catch (e) {
           if (e.status !== 404 && e.status !== 403) throw e;
@@ -118,21 +118,30 @@ Page({
       })),
     });
   },
-  async refresh() {
-    const id = this.data.room?.id;
-    if(id) {
-      try{this.view(await api("/api/rooms/"+id));}
-      catch(e){if(e.status!==404)throw e;wx.removeStorageSync("roomId");this.setData({room:null});await this.load();}
-    }
-  },
-  async openRoom(id) {
-    const r = await api("/api/rooms/" + id);
-    wx.setStorageSync("roomId", id);
+  applyRoom(r,follow=wx.getStorageSync("roomMode")!=="history"){
+    if(this.data.room?.id!==r.id)this.setData({qr:""});
+    wx.setStorageSync("roomId",r.id);wx.setStorageSync("roomMode",follow?"live":"history");
     this.view(r);
   },
-  open(e) {
-    this.openRoom(e.currentTarget.dataset.id).catch(error);
+  async refresh() {
+    const id=this.data.room?.id,mode=wx.getStorageSync("roomMode");
+    if(!id)return;
+    try{
+      const r=await api("/api/rooms/"+id+(mode!=="history"?"?follow=1":""));
+      if(this.data.room?.id!==id||wx.getStorageSync("roomMode")!==mode)return;
+      this.applyRoom(r,mode!=="history");
+    }catch(e){
+      if(e.status!==404)throw e;
+      if(this.data.room?.id!==id)return;
+      wx.removeStorageSync("roomId");this.setData({room:null});await this.load();
+    }
   },
+  async openRoom(id,follow=true) {
+    const epoch=this.selectionEpoch=(this.selectionEpoch||0)+1;
+    const r=await api("/api/rooms/"+id+(follow?"?follow=1":""));
+    if(this.selectionEpoch===epoch)this.applyRoom(r,follow);
+  },
+  open(e) {this.openRoom(e.currentTarget.dataset.id,true).catch(error);},
   create(e) {
     if (this.data.loading) return;
     this.setData({ loading: true });
@@ -144,8 +153,7 @@ Page({
       kazoe: this.data.kazoe,
     })
       .then((r) => {
-        wx.setStorageSync("roomId", r.id);
-        this.view(r);
+        this.applyRoom(r,true);
       })
       .catch(error)
       .finally(() => this.setData({ loading: false }));
@@ -177,8 +185,7 @@ Page({
         seat: e.currentTarget.dataset.seat,
       });
       this.setData({ code: "", invite: null });
-      wx.setStorageSync("roomId", r.id);
-      this.view(r);
+      this.applyRoom(r,true);
     } catch (e) {
       error(e);
     } finally {
@@ -220,7 +227,8 @@ Page({
     })
       .then((r) => {
         if(r.deleted){wx.removeStorageSync("roomId");this.setData({room:null});return this.load();}
-        this.view(r);
+        this.applyRoom(r,action==="rematch"?true:wx.getStorageSync("roomMode")!=="history");
+        return r;
       })
       .catch((e) => {
         error(e);
@@ -276,8 +284,9 @@ Page({
   selectDealer() {
     const r = this.data.room;
     if (r.members.some(m => !m)) return error(Error("请先为所有座位添加成员"));
-    wx.showActionSheet({itemList:r.members.map(m=>m.name),success:res=>this.command("set-dealer",{seat:res.tapIndex})});
+    this.setData({choosingDealer:!this.data.choosingDealer});
   },
+  chooseDealerSeat(e){return this.command("set-dealer",{seat:Number(e.currentTarget.dataset.seat)}).then(r=>{if(r)this.setData({choosingDealer:false});});},
   undo() {
     wx.showModal({
       title: "撤回最近一局？",
@@ -295,8 +304,9 @@ Page({
     });
   },
   another() {
-    wx.removeStorageSync("roomId");
-    this.setData({ room: null, qr: "" });
+    this.selectionEpoch=(this.selectionEpoch||0)+1;
+    wx.removeStorageSync("roomId");wx.removeStorageSync("roomMode");
+    this.setData({ room: null, qr: "",code:"",invite:null,choosingDealer:false,sorting:false });
     this.load();
   },
   share() {

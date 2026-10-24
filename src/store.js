@@ -162,6 +162,20 @@ export class Store {
   get(id, u) {
     return this.public(this.raw(id), u);
   }
+  current(id, u) {
+    let room = this.raw(id);
+    this.member(room, u);
+    const seen = new Set([room.id]);
+    while (room.finished && room.nextRoomId && !seen.has(room.nextRoomId)) {
+      const row = this.db.prepare("SELECT state FROM rooms WHERE id=?").get(room.nextRoomId);
+      if (!row) break;
+      const next = JSON.parse(row.state);
+      if (!next.members.some(m => m?.id === u.id)) break;
+      seen.add(next.id);
+      room = next;
+    }
+    return this.public(room, u);
+  }
   list(u) {
     return this.db
       .prepare("SELECT state FROM rooms ORDER BY rowid DESC")

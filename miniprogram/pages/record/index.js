@@ -82,16 +82,6 @@ Page({
     this.setData({["winForms["+seat+"].yakuman"]:Number(value)});
     this.nonce=null;this.refresh();
   },
-  picker(e) {
-    const { key, seat } = e.currentTarget.dataset;
-    this.setData({
-      [seat === undefined ? key : "winForms[" + seat + "]." + key]: Number(
-        e.detail.value,
-      ),
-    });
-    this.nonce = null;
-    this.refresh();
-  },
   stepHan(e) {
     const { seat, step } = e.currentTarget.dataset;
     const han = Math.max(
@@ -114,11 +104,10 @@ Page({
     const riichi=this.data.riichi.includes(seat)?this.data.riichi.filter(s=>s!==seat):[...this.data.riichi,seat];
     this.setData({riichi,riichiFlags:this.data.names.map((_,i)=>riichi.includes(i))});this.nonce=null;this.refresh();
   },
-  check(e) {
-    const key = e.currentTarget.dataset.key;
-    this.setData({ [key]: e.detail.value.map(Number) });
-    this.nonce = null;
-    this.refresh();
+  toggleTenpai(e){
+    const seat=Number(e.currentTarget.dataset.seat);
+    const tenpai=this.data.tenpai.includes(seat)?this.data.tenpai.filter(s=>s!==seat):[...this.data.tenpai,seat];
+    this.setData({tenpai,tenpaiFlags:this.data.names.map((_,i)=>tenpai.includes(i))});this.nonce=null;this.refresh();
   },
   event() {
     const d = this.data;

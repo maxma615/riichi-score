@@ -46,7 +46,7 @@ Page({
   },
   type(e) {
     const i = e.currentTarget.dataset.index,
-      n = Number(e.detail.value);
+      n = Number(e.currentTarget.dataset.type);
     this.setData({
       ["form.melds[" + i + "].type"]: this.data.keys[n],
       ["form.melds[" + i + "].index"]: n,
@@ -56,7 +56,7 @@ Page({
   },
   terminal(e) {
     const i = e.currentTarget.dataset.index;
-    this.setData({ ["form.melds[" + i + "].terminal"]: e.detail.value });
+    this.setData({ ["form.melds[" + i + "].terminal"]: e.currentTarget.dataset.value });
     this.refresh();
   },
   refresh() {

@@ -1526,3 +1526,16 @@ footer {
 #seat-order .drag-seat small {font-size:11px;margin-top:5px;}
 #seat-order .dragging {z-index:3;background:#f7efde;box-shadow:0 12px 22px #171b1b33;border-color:#963f30;transition:none;cursor:grabbing;}
 @media(prefers-reduced-motion:reduce){#seat-order .order-seat{transition:none;}}
+
+/* Explicit, full-size choices throughout the scoring tools. */
+.entry-choices button {flex:1;min-width:130px;min-height:48px;}
+button.rule-option {width:100%;text-align:left;color:inherit;font:inherit;}
+.rule-option.is-on .rule-switch {color:#993e31;}
+.rule-option.is-on .switch-track {background:#993e31;}
+.rule-option.is-on .switch-track::before {transform:translateX(14px);}
+.player-toggle[aria-pressed="true"] {background:#963f30;color:#fff;border-color:#963f30;}
+.choice-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.choice-grid button {min-height:46px;}
+.fu-meld {padding:8px 0;border-bottom:1px solid #b8b1a066;}
+.fu-meld .choice-row {margin:10px 0;}
+.month-counter {margin:12px 0;max-width:320px;}

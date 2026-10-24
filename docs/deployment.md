@@ -208,3 +208,11 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 仅重启记分服务，StartedAt=2026-10-24T18:51:34.820112397Z（北京时间25日02:51）；有归仍为2026-10-18T08:23:55.08055454Z。健康接口成功，公开JS/CSS及共享计分／明细模块哈希与本地一致；内存SQLite合成检查autoFinish、sameMembers、sharedRematch通过，不读取、删除或重排实际牌局。
 
 小程序线下源码同步，7份WXML及5份WXSS在固定Linux编译器通过；尚未上传或真机验收。网页版8组浏览器完整流程通过，权限／持久化／版本冲突及重复续桌回归见acceptance.md。
+
+### 2026-10-25 自动续桌与全点选
+
+src/store.js新增只读current追踪，src/server.js普通牌桌GET支持follow=1；普通历史GET和二维码仍指向原桌。public/app.js/style.css接入自动追踪、前台恢复、首屏回主页和全按钮交互。发布前核对这四份线上文件与4dfdb33一致，保留完整运行源码和公开资源构建yougui-riichi-score:auto-follow-20261025 / latest，不包含环境文件和数据卷。
+
+仅重启记分服务，StartedAt=2026-10-24T19:08:16.197843109Z（北京时间25日03:08），有归仍为2026-10-18T08:23:55.08055454Z。线上健康成功，app.js SHA256 8bee40f82d2d43453ab4c84abb6d857f629f0279a4cf99652cac39b23a890f11，style.css SHA256 9f9d8994753bcb340be81a6f3ad697ca3047cb53b3cedbb4736643e3506dd440。内存SQLite合成检查follow、history、readOnly通过；未操作实际用户牌桌。
+
+小程序线下源码同步，模板／样式编译通过，未上传新版。发布后各成员需刷新网页加载新客户端，此后续桌自动跟进，不再要求每人点击或扫码。

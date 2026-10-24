@@ -46,16 +46,16 @@ for (const engine of [chromium, webkit])
         await page.locator("#entry").waitFor();
         await page.locator("#entry").evaluate((form) => { form.dataset.ruleDraftCheck = "pending"; });
         await page.locator("#name").fill("先填写的昵称");
-        await page.locator("#kiriage").check();
-        await page.locator("#kazoe").uncheck();
+        await page.locator('[data-entry-key="kiriage"]').click();
+        await page.locator('[data-entry-key="kazoe"]').click();
         releaseSession();
         await expect(page.locator("#entry")).not.toHaveAttribute("data-rule-draft-check", "pending");
         await expect(page.locator("#name")).toHaveValue("先填写的昵称");
-        await expect(page.locator("#kiriage")).toBeChecked();
-        await expect(page.locator("#kazoe")).not.toBeChecked();
+        await expect(page.locator('[data-entry-key="kiriage"]')).toHaveAttribute("aria-pressed","true");
+        await expect(page.locator('[data-entry-key="kazoe"]')).toHaveAttribute("aria-pressed","false");
         await page.locator("#name").fill("");
-        await page.locator("#kiriage").uncheck();
-        await page.locator("#kazoe").check();
+        await page.locator('[data-entry-key="kiriage"]').click();
+        await page.locator('[data-entry-key="kazoe"]').click();
         await expect(page.locator("#room")).toBeVisible();
         await expect(page.locator("#quick")).not.toBeVisible();
         assert.equal(
@@ -154,8 +154,8 @@ for (const engine of [chromium, webkit])
         await page
           .getByRole("button", { name: "添加刻子 / 杠子", exact: true })
           .click();
-        await page.locator('[data-meld="0"]').selectOption("closedKan");
-        await page.locator('[data-terminal="0"]').check();
+        await page.locator('[data-meld="0"][data-value="closedKan"]').click();
+        await page.locator('[data-terminal="0"][data-value="true"]').click();
         await expect(page.locator(".fu-result")).toContainText("60符");
         await page.locator("#add-meld").scrollIntoViewIfNeeded();
         await assertFuVisible();
@@ -437,8 +437,8 @@ for (const engine of [chromium, webkit])
         await expect(page.locator(".seat").nth(1)).toContainText("25,000");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
         await page.locator('[data-result="draw"]').click();
-        await page.locator('[name=tenpai][value="0"]').check();
-        await page.locator('[name=riichi][value="1"]').check();
+        await page.locator('[data-tenpai-seat="0"]').click();
+        await page.locator('[data-riichi-seat="1"]').click();
         await page
           .getByRole("button", { name: "确认记分", exact: true })
           .click();
@@ -462,6 +462,7 @@ for (const engine of [chromium, webkit])
         await expect(page.locator("#me")).toContainText("带福之人");
         await expect(page.locator("#me")).toContainText("带负之人");
         await expect(page.locator(".monthly-summary")).toContainText("放铳率");
+        await expect(page.locator('select,input[type="checkbox"],input[type="radio"],input[type="month"]')).toHaveCount(0);
         await page.screenshot({
           path: path.join(out, `${tag}-stats.png`),
           fullPage: true,
@@ -495,10 +496,22 @@ for (const engine of [chromium, webkit])
         await expect(page.locator("#room .score-grid")).toContainText("测试北家");
         await expect(page.locator(".seat").first()).toContainText("25,000");
         const nextId=await page.evaluate(()=>localStorage.getItem("riichi-room"));assert.notEqual(nextId,previousId);
+        await other.bringToFront();
+        await expect.poll(()=>other.evaluate(()=>localStorage.getItem("riichi-room")),{timeout:10000}).toBe(nextId);
+        await expect(other.locator("#record")).toBeDisabled();
+        await other.locator("#back-home").click();
+        await expect(other.locator("#entry")).toBeVisible();
+        assert.equal(await other.evaluate(()=>localStorage.getItem("riichi-room")),null);
+        await other.locator(`[data-open="${nextId}"]`).click();
+        await expect(other.locator("#record")).toBeDisabled();
+        await other.getByRole("button",{name:"我的",exact:true}).click();
+        await other.locator(`[data-history-room="${previousId}"]`).click();
+        await expect(other.locator(".finished-summary")).toBeVisible();
+        await expect.poll(()=>other.evaluate(()=>localStorage.getItem("riichi-room-mode"))).toBe("history");
         await other.reload();
-        await expect(other.locator("#rematch")).toHaveText("进入下一场牌桌");
-        await other.locator("#rematch").click();
-        await expect.poll(()=>other.evaluate(()=>localStorage.getItem("riichi-room"))).toBe(nextId);
+        await expect(other.locator(".finished-summary")).toBeVisible();
+        assert.equal(await other.evaluate(()=>localStorage.getItem("riichi-room")),previousId);
+        await page.bringToFront();
         await page.locator('[data-remove="2"]').click();
         await page.locator("#confirm-action").click();
         await expect(page.locator("#modal")).not.toBeVisible();

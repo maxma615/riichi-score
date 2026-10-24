@@ -105,7 +105,8 @@ export function createApp({
       );
       if (req.method === "GET" && match) {
         if (!user) throw new HttpError(401, "请填写昵称后加入");
-        const room = store.get(match[1], user);
+        const room = !match[2] && url.searchParams.get("follow") === "1"
+          ? store.current(match[1], user) : store.get(match[1], user);
         if (match[2] === "/wxcode") {
           store.get(match[1], user);
           const png = await wechat.qr(room.code);

@@ -325,3 +325,26 @@ test('小程序整行拖动实时让位、取消恢复、续桌清除旧二维�
  start();move();p.dragEnd();assert.deepEqual(Array.from(p.data.seatOrder,m=>m.name),['乙','甲','丙']);assert.equal(p.data.dragging,-1);
  let action;p.command=async x=>{action=x};p.data.qr='old';await p.rematch();assert.equal(action,'rematch');assert.equal(p.data.qr,'');assert.equal(scroll,true);
 });
+
+test('小程序自动追踪续桌，历史留在旧桌，回主页后旧请求不覆盖',async()=>{
+ const store=new Store(':memory:');try{
+ const a=store.session('小程序跟桌甲'),b=store.session('小程序跟桌乙');let old=store.create(a,{players:3});old=store.join(b,old.code);
+ old=store.command(a,old.id,{action:'finish',version:old.version,nonce:crypto.randomUUID()});const next=store.command(a,old.id,{action:'rematch',version:old.version,nonce:crypto.randomUUID()});
+ const storage=new Map([['roomId',old.id]]);let requested,resolve;
+ const p=page('room',{avatar:x=>x,error:e=>{throw e},api:async url=>{requested=url;return url.includes('follow=1')?store.current(old.id,b):store.get(old.id,b)}},{getStorageSync:k=>storage.get(k),setStorageSync:(k,v)=>storage.set(k,v),removeStorageSync:k=>storage.delete(k)});
+ p.data.room=store.get(old.id,b);await p.refresh();assert.equal(p.data.room.id,next.id);assert.equal(storage.get('roomId'),next.id);
+ await p.openRoom(old.id,false);assert.equal(storage.get('roomMode'),'history');await p.refresh();assert.equal(p.data.room.id,old.id);assert.ok(!requested.includes('follow'));
+ p.data.room=store.get(old.id,b);storage.set('roomMode','live');
+ const q=page('room',{api:()=>new Promise(r=>{resolve=r}),avatar:x=>x},{getStorageSync:k=>storage.get(k),setStorageSync:(k,v)=>storage.set(k,v),removeStorageSync:k=>storage.delete(k)});
+ q.data.room=store.get(old.id,b);const pending=q.refresh();q.load=()=>{};q.another();resolve(store.get(next.id,b));await pending;assert.equal(q.data.room,null);assert.equal(storage.has('roomId'),false);
+ }finally{store.close();}
+});
+
+test('小程序听牌与刻杠全部点选，多选取消及跨年月按钮',()=>{
+ const r=page('record',{});r.data.names=['甲','乙','丙'];r.refresh=()=>{};
+ for(const seat of [0,2,0])r.toggleTenpai({currentTarget:{dataset:{seat}}});
+ assert.deepEqual(Array.from(r.data.tenpai),[2]);assert.equal(r.data.tenpaiFlags[0],false);
+ const f=page('fu',{});f.onLoad();f.add();f.type({currentTarget:{dataset:{index:0,type:3}}});f.terminal({currentTarget:{dataset:{index:0,value:true}}});
+ assert.equal(f.data.form.melds[0].type,'closedKan');assert.equal(f.data.form.melds[0].terminal,true);assert.equal(f.data.result.fu,60);
+ const m=page('me',{});m.load=()=>{};m.data.month='2026-01';m.month({currentTarget:{dataset:{step:-1}}});assert.equal(m.data.month,'2025-12');m.month({currentTarget:{dataset:{step:1}}});assert.equal(m.data.month,'2026-01');
+});
