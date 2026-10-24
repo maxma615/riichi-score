@@ -1492,3 +1492,8 @@ footer {
 #record-fields .winner-picker button { min-height: 48px; font-size: 17px; overflow-wrap: anywhere; }
 #method-choice h3, #loser-choice h3 { margin: 14px 0 8px; }
 #method-choice .choice-row button { flex: 1; min-height: 44px; }
+
+.history-game {display:block;width:100%;text-align:left;margin:8px 0;padding:12px;}
+.history-game .line {margin:0 0 5px;gap:8px;flex-wrap:wrap;}
+.history-names,.history-meta {display:block;overflow-wrap:anywhere;}
+.history-meta {font-size:12px;opacity:.7;margin-top:5px;}

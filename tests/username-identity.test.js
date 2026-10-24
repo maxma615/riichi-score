@@ -41,3 +41,22 @@ test('历史同名账号不自动合并；改名可以解除歧义',()=>{
   assert.equal(s.session('重名').id,'old-b');
  }finally{s.close();}
 });
+
+test('历史列表覆盖超过30桌，按本人身份隔离，显示最终点数和最新名字',()=>{
+ const s=new Store(':memory:');try{
+  const a=s.session('历史甲'),b=s.session('历史乙'),c=s.session('历史丙'),outside=s.session('外部');
+  let r=s.create(a,{players:3});r=s.join(b,r.code,1);r=s.join(c,r.code,2);
+  r=s.command(b,r.id,{action:'record',version:r.version,nonce:'history-record',event:{kind:'win',method:'ron',loser:1,winners:[{seat:0,han:3,fu:30}],riichi:[]}});
+  r=s.command(c,r.id,{action:'finish',version:r.version,nonce:'history-finish'});
+  for(let i=0;i<31;i++)s.create(a,{players:3});
+  s.updateProfile(a,'历史新名字');
+  const rows=s.list(s.session('历史新名字'));
+  assert.equal(rows.length,32);
+  const h=rows.find(x=>x.id===r.id);assert.equal(h.finished,true);assert.equal(h.hands,1);
+  assert.equal(h.net,r.scores[0]-35000);assert.deepEqual(h.scores,r.scores);
+  assert.equal(h.names[0],'历史新名字');assert.ok(h.updatedAt);
+  assert.equal(s.list(b).length,1);assert.equal(s.list(b)[0].net,r.scores[1]-35000);
+  assert.deepEqual(s.list(outside),[]);
+  assert.throws(()=>s.get(r.id,outside),e=>e.status===403);
+ }finally{s.close();}
+});

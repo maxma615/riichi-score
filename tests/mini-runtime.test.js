@@ -295,3 +295,12 @@ test("荣和点选、切换放铳者与单人自摸保留独立符番", async ()
   assert.deepEqual(Array.from(p.data.winners), [3]);
   assert.ok(p.data.preview);
 });
+
+test("小程序我的历史列表能进入已结束牌桌", async()=>{
+ const storage=new Map();let switched='';
+ const p=page('me',{avatar:x=>x,error:e=>{throw e},api:async url=>url==='/api/profile'?{name:'历史用户',avatar:''}:url==='/api/rooms'?[{id:'history-room',players:3,finished:true,names:['甲','乙','丙'],net:1200,hands:4}]:{peers:[]}},
+ {setStorageSync:(k,v)=>storage.set(k,v),switchTab:o=>{switched=o.url}});
+ p.onLoad();await p.load();assert.equal(p.data.games[0].namesText,'甲 / 乙 / 丙');
+ p.openHistory({currentTarget:{dataset:{id:'history-room'}}});
+ assert.equal(storage.get('roomId'),'history-room');assert.equal(switched,'/pages/room/index');
+});

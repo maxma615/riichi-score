@@ -464,6 +464,13 @@ for (const engine of [chromium, webkit])
         await expect(
           page.getByRole("heading", { name: /牌局已结束/ }),
         ).toBeVisible();
+        await page.getByRole("button",{name:"我的",exact:true}).click();
+        await expect(page.getByRole("heading",{name:"对局历史记录",exact:true})).toBeVisible();
+        await expect(page.locator(".history-game").first()).toContainText("已结束");
+        await expect(page.locator(".history-game").first()).toContainText("测试南家");
+        await page.locator(".history-game").first().click();
+        await expect(page.getByRole("heading",{name:/牌局已结束/})).toBeVisible();
+        await expect(page.getByRole("heading",{name:"逐局记录",exact:true})).toBeVisible();
         await page
           .getByRole("button", { name: "另开一桌", exact: true })
           .click();

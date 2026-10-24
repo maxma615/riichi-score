@@ -779,9 +779,10 @@ async function renderMe(
     };
     return;
   }
-  const [p, s] = await Promise.all([
+  const [p, s, games] = await Promise.all([
     api("/api/profile"),
     api("/api/stats?month=" + month),
+    api("/api/rooms"),
   ]);
   $("#me").innerHTML =
     `<div class="card"><h2>${esc(p.name)} · 我的牌谱</h2><label>月份<input id="stats-month" type="month" value="${month}"></label><div class="score-grid">${[
@@ -799,6 +800,14 @@ async function renderMe(
         "",
       )}</div><p class="monthly-summary">${esc(s.summary)}</p></div><div class="card"><h2>本月牌缘</h2><div class="fortune-grid"><div><h3>带福之人</h3><p>${s.best ? `${esc(s.best.name)} <strong class="positive">+${s.best.net.toLocaleString()}</strong>` : "还未遇到"}</p></div><div><h3>带负之人</h3><p>${s.worst ? `${esc(s.worst.name)} <strong class="negative">${s.worst.net.toLocaleString()}</strong>` : "还未遇到"}</p></div></div><p class="muted">与你同桌时的净收支</p></div><div class="card"><h2>同桌收支</h2>${s.best ? `<p>赢得最多 · ${esc(s.best.name)} <strong class="positive">+${s.best.net.toLocaleString()}</strong></p>` : ""}${s.worst ? `<p>输得最多 · ${esc(s.worst.name)} <strong class="negative">${s.worst.net.toLocaleString()}</strong></p>` : ""}${s.peers.map((p) => `<div class="line"><span>${esc(p.name)} · ${p.hands}局</span><strong class="${p.net >= 0 ? "positive" : "negative"}">${p.net >= 0 ? "+" : ""}${p.net.toLocaleString()}</strong></div>`).join("") || "<p>这个月还没有牌局</p>"}</div>`;
   mountAccountName($("#me"), { name: p.name, api, changed: accountNameChanged });
+  const historyCard = document.createElement("section");
+  historyCard.className = "card game-history";
+  historyCard.innerHTML = `<h2>对局历史记录</h2>${games.map(g=>`<button class="history-game" data-history-room="${esc(g.id)}"><span class="line"><b>${g.players}人桌 · ${g.finished?"已结束":"进行中"}</b><strong class="${g.net>=0?"positive":"negative"}">${g.net>0?"+":""}${g.net.toLocaleString()} 点</strong></span><span class="history-names">${esc(g.names.join(" / "))}</span><span class="history-meta">${g.updatedAt?esc(new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",month:"2-digit",day:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date(g.updatedAt)))+" · ":""}${g.hands}局记录 · 查看牌谱 →</span></button>`).join("") || '<p class="empty">还没有对局记录，开桌或扫码入桌后会显示在这里。</p>'}`;
+  $("#me").append(historyCard);
+  historyCard.querySelectorAll("[data-history-room]").forEach(b=>b.onclick=()=>task(async()=>{
+    remember(await api("/api/rooms/"+b.dataset.historyRoom));
+    tab("room");
+  }));
   $("#stats-month").onchange = (e) => {
     if (e.target.value) task(() => renderMe(e.target.value));
   };

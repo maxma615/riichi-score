@@ -168,12 +168,16 @@ export class Store {
       .all()
       .map((r) => JSON.parse(r.state))
       .filter((s) => s.members.some((m) => m?.id === u.id))
-      .slice(0, 30)
       .map((s) => ({
         id: s.id,
         players: s.rules.players,
         hand: s.hand,
         finished: s.finished,
+        scores: [...s.scores],
+        mySeat: s.members.findIndex(m => m?.id === u.id),
+        net: s.scores[s.members.findIndex(m => m?.id === u.id)] - s.rules.start,
+        hands: s.history.filter(h => h.kind !== "finish").length,
+        updatedAt: s.history.at(-1)?.createdAt ?? s.createdAt ?? null,
         names: s.members.map((m) =>
           m ? this.profile(m.id)?.name ?? m.name : "空位",
         ),
@@ -187,6 +191,7 @@ export class Store {
       id: randomUUID(),
       code: randomBytes(16).toString("hex"),
       owner: u.id,
+      createdAt: new Date().toISOString(),
       rules,
       version: 1,
       members: Array(players).fill(null),
