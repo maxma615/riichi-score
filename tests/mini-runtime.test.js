@@ -304,3 +304,13 @@ test("小程序我的历史列表能进入已结束牌桌", async()=>{
  p.openHistory({currentTarget:{dataset:{id:'history-room'}}});
  assert.equal(storage.get('roomId'),'history-room');assert.equal(switched,'/pages/room/index');
 });
+
+test('小程序座位排序保留版本并重设起庄；立直整块点选',async()=>{
+ const p=page('room',{});p.data.room={version:9,members:[{name:'甲'},{name:'乙'},{name:'丙'}]};
+ p.sortSeats();p.sortUp({currentTarget:{dataset:{index:2}}});
+ let sent;p.command=async(action,fields)=>{sent={action,...fields};};p.saveOrder();await Promise.resolve();
+ assert.equal(sent.action,'reorder');assert.equal(sent.version,9);assert.deepEqual(Array.from(sent.order),[0,2,1]);
+ const q=page('record',{});q.data.names=['甲','乙','丙'];q.refresh=()=>{};
+ q.toggleRiichi({currentTarget:{dataset:{seat:1}}});assert.deepEqual(Array.from(q.data.riichi),[1]);assert.equal(q.data.riichiFlags[1],true);
+ q.toggleRiichi({currentTarget:{dataset:{seat:1}}});assert.equal(q.data.riichi.length,0);assert.equal(q.data.riichiFlags[1],false);
+});

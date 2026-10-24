@@ -239,7 +239,7 @@ function renderRoom() {
       }),
     ) : null;
     $("#room").innerHTML =
-      `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">填写用户名，开桌或扫码入桌。</p><form id="entry"><div class="grid"><label>用户名 / 昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '<label>选择座位<select id="join-seat"><option value="1">初始南家</option><option value="2">初始西家</option><option value="3">初始北家（四人桌）</option></select></label>' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<div class="rule-options"><label class="rule-option"><input id="kiriage" type="checkbox"><span class="rule-copy"><span class="rule-name">切上满贯</span><span class="rule-note">4番30符 / 3番60符</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label><label class="rule-option"><input id="kazoe" type="checkbox" checked><span class="rule-copy"><span class="rule-name">累计役满</span><span class="rule-note">13番起</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label></div>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
+      `<div class="card"><h2>${join ? "加入朋友的牌桌" : "开一张线下牌桌"}</h2><p class="muted">填写用户名，开桌或扫码入桌。</p><form id="entry"><div class="grid"><label>用户名 / 昵称<input id="name" maxlength="24" required value="${esc(user?.name ?? "")}" ${user ? "readonly" : ""}></label>${join ? '' : '<label>桌型<select id="players"><option value="4">四人日麻 · 25000 起点</option><option value="3">三人日麻 · 35000 起点</option></select></label>'}</div>${join ? "" : '<div class="rule-options"><label class="rule-option"><input id="kiriage" type="checkbox"><span class="rule-copy"><span class="rule-name">切上满贯</span><span class="rule-note">4番30符 / 3番60符</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label><label class="rule-option"><input id="kazoe" type="checkbox" checked><span class="rule-copy"><span class="rule-name">累计役满</span><span class="rule-note">13番起</span></span><span class="rule-switch"><span class="rule-on">开启</span><span class="rule-off">关闭</span><span class="switch-track"></span></span></label></div>'}<div class="actions"><button class="primary" data-submit>${join ? "加入牌桌" : "创建牌桌"}</button></div></form></div>`;
     if (draft) for (const [id, value] of Object.entries(draft)) {
       const input = $("#" + id);
       if (!input || value === undefined || (id === "name" && user)) continue;
@@ -257,7 +257,6 @@ function renderRoom() {
           join
             ? await api("/api/join", {
                 code: join,
-                seat: Number($("#join-seat").value),
               })
             : await api("/api/rooms", {
                 players: Number($("#players").value),
@@ -296,7 +295,7 @@ function renderRoom() {
   const n = room.rules.players;
   const status = roundStatus(room);
   $("#room").innerHTML =
-    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} </h2></div><button id="share">扫码入桌</button></div><div class="round-status"><strong>${room.honba}<small> 本场</small></strong><div><b>${esc(status.label)}</b><span>${room.dealerSelected === false ? "待选择起庄玩家" : "庄家 · " + esc(status.dealerName)}</span></div></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealerSelected !== false && room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealerSelected !== false && room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div><div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div></div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
+    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} </h2></div><button id="share">扫码入桌</button></div><div class="round-status"><strong>${room.honba}<small> 本场</small></strong><div><b>${esc(status.label)}</b><span>${room.dealerSelected === false ? "待选择起庄玩家" : "庄家 · " + esc(status.dealerName)}</span></div></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealerSelected !== false && room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealerSelected !== false && room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div><div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}<button id="delete-room">删除牌局</button></div></div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
       room.history.length
         ? `<div class="scroll"><table><thead><tr><th>局 / 本场</th><th>结果</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${[
             ...room.history,
@@ -309,6 +308,11 @@ function renderRoom() {
             .join("")}</tbody></table></div>`
         : '<p class="muted">每局结束后记一次。累计点数与供托分开显示。</p>'
     }</div><button id="new-room">另开一桌</button>`;
+  $("#delete-room").onclick=()=>deleteGame(room);
+  if(!room.finished&&!room.history.length){
+    const sort=document.createElement("button");sort.id="sort-seats";sort.textContent="调整座位顺序";
+    $("#room .actions").prepend(sort);sort.onclick=openSeatOrder;
+  }
   $("#share").onclick = () => {
     modal({
       title: "邀请朋友入桌",
@@ -427,6 +431,33 @@ function confirmAction(title, text, action) {
       $("#modal").close();
     });
 }
+function deleteGame(target) {
+  modal({title:"删除这张牌局？",body:`<p>${target.history.length?"整桌逐局记录和相关统计将一并删除，所有成员都将看不到这张桌。":"这张空桌将从所有成员的牌桌列表中移除。"}删除后不能恢复。</p><button id="confirm-delete" data-submit>删除牌局</button>`});
+  $("#confirm-delete").onclick=()=>task(async()=>{
+    await api("/api/rooms/"+target.id+"/events",{action:"delete",version:target.version,nonce:crypto.randomUUID()});
+    if(room?.id===target.id){room=null;localStorage.removeItem("riichi-room");}
+    past=await api("/api/rooms");renderRoom();await renderMe();$("#modal").close();
+  });
+}
+function openSeatOrder(){
+  const version=room.version, members=[...room.members];let order=members.map((_,i)=>i), dragging=null;
+  modal({title:"调整座位顺序",body:'<p>按轮转方向拖动排序，保存后再选择起庄玩家。</p><div id="seat-order"></div><button id="save-seat-order" data-submit>保存顺序</button>'});
+  const draw=()=>{
+    $("#seat-order").innerHTML=order.map((seat,i)=>`<div class="order-seat" data-position="${i}"><span>${esc(members[seat]?.name||"空位")}</span><button type="button" class="drag-seat" aria-label="拖动${esc(members[seat]?.name||"空位")}">☰</button><button type="button" data-up="${i}" ${i===0?'disabled':''} aria-label="上移${esc(members[seat]?.name||"空位")}">↑</button></div>`).join("");
+    $("#seat-order").querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.up);[order[i-1],order[i]]=[order[i],order[i-1]];draw();});
+    $("#seat-order").querySelectorAll(".drag-seat").forEach(b=>{
+      b.onpointerdown=e=>{e.preventDefault();dragging=Number(b.parentElement.dataset.position);b.setPointerCapture(e.pointerId);b.parentElement.classList.add("dragging");};
+      b.onpointerup=e=>{
+        if(dragging===null)return;
+        const rows=[...$("#seat-order").children];const to=rows.findIndex(row=>{const r=row.getBoundingClientRect();return e.clientY>=r.top&&e.clientY<=r.bottom;});
+        if(to>=0&&to!==dragging){const [seat]=order.splice(dragging,1);order.splice(to,0,seat);}
+        dragging=null;draw();
+      };
+      b.onpointercancel=()=>{dragging=null;draw();};
+    });
+  };draw();
+  $("#save-seat-order").onclick=()=>task(async()=>{await command({action:"reorder",order},version);$("#modal").close();});
+}
 function openRecord() {
   const recordVersion = room.version;
   ronWinners = new Set();
@@ -434,7 +465,7 @@ function openRecord() {
   recordKind = "win";
   modal({
     title: `${roundLabel(room.hand, room.rules.players)} · 记一局`,
-    body: `<div class="record-status"><b>${room.honba} 本场</b><span>${esc(roundStatus(room).label)} · 庄家 ${esc(roundStatus(room).dealerName)}</span></div><form id="record-form"><div class="choice-row result-types"><button type="button" data-result="win">和牌</button><button type="button" data-result="draw">荒牌流局</button><button type="button" data-result="abort">途中流局</button></div><div id="record-fields"></div><div class="divider"><p class="muted">本局立直 · 每人1000点</p><div class="player-checks">${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="riichi" value="${s}">${esc(seatName(s))}</label>`).join("")}</div></div><div id="preview"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
+    body: `<div class="record-status"><b>${room.honba} 本场</b><span>${esc(roundStatus(room).label)} · 庄家 ${esc(roundStatus(room).dealerName)}</span></div><form id="record-form"><div class="choice-row result-types"><button type="button" data-result="win">和牌</button><button type="button" data-result="draw">荒牌流局</button><button type="button" data-result="abort">途中流局</button></div><div id="record-fields"></div><div class="divider"><p class="muted">本局立直 · 每人1000点</p><div class="player-checks">${room.members.map((m, s) => `<label class="check player-toggle"><input type="checkbox" name="riichi" value="${s}"><span>${esc(seatName(s))}</span></label>`).join("")}</div></div><div id="preview"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
   });
   document.querySelectorAll("[data-result]").forEach(b=>b.onclick=()=>{
     recordKind=b.dataset.result;
@@ -628,7 +659,9 @@ setInterval(async () => {
   try {
     const latest = await api(`/api/rooms/${room.id}`);
     if (latest.version !== room.version) remember(latest);
-  } catch {}
+  } catch(e) {
+    if(e.status===404){room=null;localStorage.removeItem("riichi-room");past=await api("/api/rooms");renderRoom();}
+  }
 }, 5000);
 
 let fuForm = {
@@ -802,8 +835,9 @@ async function renderMe(
   mountAccountName($("#me"), { name: p.name, api, changed: accountNameChanged });
   const historyCard = document.createElement("section");
   historyCard.className = "card game-history";
-  historyCard.innerHTML = `<h2>对局历史记录</h2>${games.map(g=>`<button class="history-game" data-history-room="${esc(g.id)}"><span class="line"><b>${g.players}人桌 · ${g.finished?"已结束":"进行中"}</b><strong class="${g.net>=0?"positive":"negative"}">${g.net>0?"+":""}${g.net.toLocaleString()} 点</strong></span><span class="history-names">${esc(g.names.join(" / "))}</span><span class="history-meta">${g.updatedAt?esc(new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",month:"2-digit",day:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date(g.updatedAt)))+" · ":""}${g.hands}局记录 · 查看牌谱 →</span></button>`).join("") || '<p class="empty">还没有对局记录，开桌或扫码入桌后会显示在这里。</p>'}`;
+  historyCard.innerHTML = `<h2>对局历史记录</h2>${games.map(g=>`<div class="history-entry"><button class="history-game" data-history-room="${esc(g.id)}"><span class="line"><b>${g.players}人桌 · ${g.finished?"已结束":"进行中"}</b><strong class="${g.net>=0?"positive":"negative"}">${g.net>0?"+":""}${g.net.toLocaleString()} 点</strong></span><span class="history-names">${esc(g.names.join(" / "))}</span><span class="history-meta">${g.updatedAt?esc(new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",month:"2-digit",day:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date(g.updatedAt)))+" · ":""}${g.hands}局记录 · 查看牌谱 →</span></button><button data-delete-history="${esc(g.id)}" aria-label="删除这张牌局">删除</button></div>`).join("") || '<p class="empty">还没有对局记录，开桌或扫码入桌后会显示在这里。</p>'}`;
   $("#me").append(historyCard);
+  historyCard.querySelectorAll("[data-delete-history]").forEach(b=>b.onclick=()=>task(async()=>deleteGame(await api("/api/rooms/"+b.dataset.deleteHistory))));
   historyCard.querySelectorAll("[data-history-room]").forEach(b=>b.onclick=()=>task(async()=>{
     remember(await api("/api/rooms/"+b.dataset.historyRoom));
     tab("room");

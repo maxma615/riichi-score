@@ -109,6 +109,11 @@ Page({
     this.nonce = null;
     this.refresh();
   },
+  toggleRiichi(e){
+    const seat=Number(e.currentTarget.dataset.seat);
+    const riichi=this.data.riichi.includes(seat)?this.data.riichi.filter(s=>s!==seat):[...this.data.riichi,seat];
+    this.setData({riichi,riichiFlags:this.data.names.map((_,i)=>riichi.includes(i))});this.nonce=null;this.refresh();
+  },
   check(e) {
     const key = e.currentTarget.dataset.key;
     this.setData({ [key]: e.detail.value.map(Number) });

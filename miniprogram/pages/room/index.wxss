@@ -11,3 +11,5 @@
 .is-on .rule-switch { color: #993e31; }
 .is-on .switch-track { background: #993e31; }
 .is-on .switch-knob { transform: translateX(28rpx); }
+
+.sort-overlay{position:fixed;inset:0;background:#0008;z-index:90;display:flex;align-items:center;padding:28rpx;}.sort-overlay>.card{width:100%;}.order-seat{display:flex;align-items:center;gap:12rpx;}.order-seat text{flex:1;}.order-seat button{margin:6rpx;min-width:80rpx;}

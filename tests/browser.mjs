@@ -267,6 +267,16 @@ for (const engine of [chromium, webkit])
           await page.getByRole("button", { name: "保存", exact: true }).click();
           await expect(page.locator("#modal")).not.toBeVisible();
         }
+        await page.locator("#sort-seats").click();
+        const source=page.locator(".drag-seat").nth(0),dest=page.locator(".order-seat").nth(1);
+        const from=await source.boundingBox(),to=await dest.boundingBox();
+        await page.mouse.move(from.x+from.width/2,from.y+from.height/2);await page.mouse.down();
+        await page.mouse.move(to.x+to.width/2,to.y+to.height/2,{steps:5});await page.mouse.up();
+        await expect(page.locator(".order-seat").first()).toContainText("测试南家");
+        await page.locator('[data-up="1"]').click();
+        await expect(page.locator(".order-seat").first()).toContainText("测试桌主");
+        await page.locator("#save-seat-order").click();
+        await expect(page.locator("#modal")).not.toBeVisible();
         await page.getByRole("button",{name:"选择起庄玩家",exact:true}).click();
         await page.locator('[data-dealer="0"]').click();
         await expect(page.locator("#modal")).not.toBeVisible();
@@ -478,6 +488,12 @@ for (const engine of [chromium, webkit])
         await expect(
           page.getByRole("heading", { name: "最近的牌桌", exact: true }),
         ).toBeVisible();
+        await page.getByRole("button",{name:"我的",exact:true}).click();
+        await page.locator("[data-delete-history]").first().click();
+        await expect(page.locator("#modal")).toContainText("相关统计");
+        await page.locator("#confirm-delete").click();
+        await expect(page.locator("#modal")).not.toBeVisible();
+        await expect(page.locator(".history-game")).toHaveCount(0);
         assert.deepEqual(errors, []);
         results.push({
           tag,

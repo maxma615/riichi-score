@@ -56,7 +56,7 @@ Page({
           wx.removeStorageSync("roomId");
         }
       }
-      this.setData({ rooms: await api("/api/rooms") });
+      this.setData({ room: null, rooms: await api("/api/rooms") });
     } catch (e) {
       error(e);
     } finally {
@@ -118,7 +118,10 @@ Page({
   },
   async refresh() {
     const id = this.data.room?.id;
-    if (id) this.view(await api("/api/rooms/" + id));
+    if(id) {
+      try{this.view(await api("/api/rooms/"+id));}
+      catch(e){if(e.status!==404)throw e;wx.removeStorageSync("roomId");this.setData({room:null});await this.load();}
+    }
   },
   async openRoom(id) {
     const r = await api("/api/rooms/" + id);
@@ -212,13 +215,45 @@ Page({
       version: this.data.room.version,
       ...fields,
     })
-      .then((r) => this.view(r))
+      .then((r) => {
+        if(r.deleted){wx.removeStorageSync("roomId");this.setData({room:null});return this.load();}
+        this.view(r);
+      })
       .catch((e) => {
         error(e);
         if (e.status === 409) this.refresh();
       })
       .finally(() => this.setData({ loading: false }));
   },
+  deleteRoom() {
+    wx.showModal({title:"删除这张牌局？",content:"所有成员的该桌记录和相关统计将一并删除，删除后不能恢复。",confirmText:"删除",success:r=>{if(r.confirm)this.command("delete");}});
+  },
+  sortSeats() {
+    const r=this.data.room;
+    this.sortVersion=r.version;
+    this.setData({seatOrder:r.members.map((m,seat)=>({seat,name:m?.name||"空位"})),sorting:true});
+  },
+  noop(){},
+  dragStart(e) {
+    this.dragIndex=Number(e.currentTarget.dataset.index);
+    wx.createSelectorQuery().in(this).selectAll(".order-seat").boundingClientRect(rows=>{this.dragRects=rows;}).exec();
+  },
+  dragEnd(e) {
+    const y=e.changedTouches[0]?.clientY;
+    const to=this.dragRects?.findIndex(r=>y>=r.top&&y<=r.bottom);
+    if(Number.isInteger(to)&&to>=0&&Number.isInteger(this.dragIndex)){
+      const order=[...this.data.seatOrder];const [m]=order.splice(this.dragIndex,1);order.splice(to,0,m);this.setData({seatOrder:order});
+    }
+    this.dragIndex=null;this.dragRects=null;
+  },
+  sortUp(e) {
+    const i=Number(e.currentTarget.dataset.index);if(i<1)return;
+    const order=[...this.data.seatOrder];[order[i-1],order[i]]=[order[i],order[i-1]];this.setData({seatOrder:order});
+  },
+  saveOrder() {
+    this.command("reorder",{order:this.data.seatOrder.map(m=>m.seat),version:this.sortVersion}).then(()=>this.setData({sorting:false}));
+  },
+  cancelOrder(){this.setData({sorting:false});},
   selectDealer() {
     const r = this.data.room;
     if (r.members.some(m => !m)) return error(Error("请先为所有座位添加成员"));

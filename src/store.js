@@ -220,6 +220,8 @@ export class Store {
       if (!row) throw new HttpError(404, "邀请不存在");
       const s = this.raw(row.id);
       if (s.members.some((m) => m?.id === u.id)) return this.public(s, u);
+      if (seat === undefined) seat = s.members.findIndex(m => !m);
+      if (seat < 0) throw new HttpError(409, "牌桌已满");
       integer(seat, 0, s.rules.players - 1, "座位");
       if (s.finished) throw new HttpError(409, "牌局已结束");
       if (s.members[seat]) throw new HttpError(409, "座位已被占用");
@@ -246,7 +248,18 @@ export class Store {
         return this.public(s, u);
       if (input.version !== s.version)
         throw new HttpError(409, "牌桌已更新，请刷新后再提交");
-      if (input.action === "undo") {
+      if (input.action === "delete") {
+        this.db.prepare("DELETE FROM commands WHERE room=?").run(id);
+        this.db.prepare("DELETE FROM rooms WHERE id=?").run(id);
+        return {id, deleted:true};
+      }
+      if (input.action === "reorder") {
+        if(s.finished || s.history.length) throw new HttpError(409,"开始记分后不能调整座位");
+        const order=input.order;
+        if(!Array.isArray(order)||order.length!==s.rules.players||new Set(order).size!==order.length||order.some(i=>!Number.isInteger(i)||i<0||i>=s.rules.players)) throw new HttpError(400,"座位顺序无效");
+        s.members=order.map(i=>s.members[i]);s.scores=order.map(i=>s.scores[i]);
+        s.dealer=0;s.dealerSelected=false;
+      } else if (input.action === "undo") {
         const last = s.history.pop();
         if (!last) throw new HttpError(409, "没有可撤回的记录");
         Object.assign(s, last.before);
