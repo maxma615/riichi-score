@@ -148,3 +148,9 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 源07a07be已上线：切上满贯／累计役满采用纸页内紧凑朱砂开关，整行可点；首次身份请求结束时保留已填昵称、桌型与规则，避免重建表单还原默认值。原生同步按钮与状态样式，正式微信发布仍未执行。
 
 本地242项常规及8组完整浏览器流程通过，浏览器增加受控延迟身份请求回归。Linux实际运行镜像内97项服务检查及107项规则通过。发布后六张业务表摘要一致；有归容器ID及启动时间未变，256MiB／0.25CPU、普通用户、独立卷、回环端口与禁备份标记再次核对。证据在旧工具工作目录.local/ecs-deploy/late-response-remote-captures/late-response-07a07be-switch-*。
+
+### 2026-10-24 域名跳回 IP 的修复
+
+发现 `https://yougui.online/riichi/` 与 `/riichi/online/` 返回 302 到 IP。DNS/TLS 正常，根因是 Caddy 实际绑定的旧 release 文件仍包含 IP 跳转，与 current 路径的文件不同。已定位并原位更新绑定 inode 对应的 Caddyfile，将域名下的 `/riichi`、`/riichi/*` 恢复反向代理至 `yougui-riichi-score:3200`，旧 `/mahjong` 入口改为域名地址。配置验证后热加载，未重启有归或记分容器，未操作业务数据。
+
+验证：两个页面 GET 200，健康接口返回 ok；有归 `/home` 200。以后更新网关须同时核对容器实际挂载内容及运行配置，不能只写 current 路径。此次未新增子域名。
