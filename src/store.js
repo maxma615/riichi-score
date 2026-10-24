@@ -223,8 +223,6 @@ export class Store {
     return this.transaction(() => {
       let s = this.raw(id);
       this.member(s, u);
-      if (input.action !== "record" && s.owner !== u.id)
-        throw new HttpError(403, "只有桌主可以管理牌桌");
       if (
         typeof input.nonce !== "string" ||
         !/^[a-zA-Z0-9-]{8,80}$/.test(input.nonce)

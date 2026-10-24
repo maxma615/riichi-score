@@ -32,7 +32,7 @@ test("成员权限、座位并发、持久化、幂等、版本与撤回", () =>
     assert.equal(store.join(b, r.code, 2).mySeat, 1);
     assert.throws(
       () =>
-        store.command(b, id, {
+        store.command(foreign, id, {
           action: "finish",
           version: r.version,
           nonce: "b-command1",
@@ -164,7 +164,11 @@ test("所有成员可记分，起庄需选择，重复与冲突提交仍受保�
   assert.equal(r.history.length,1);
   assert.equal(store.command(b,r.id,input).version,r.version);
   assert.throws(()=>store.command(c,r.id,{...input,nonce:"other-record-1"}),e=>e.status===409);
-  assert.throws(()=>store.command(b,r.id,{action:"finish",nonce:"finish-other-1",version:r.version}),e=>e.status===403);
+  r=store.command(b,r.id,{action:"finish",nonce:"finish-other-1",version:r.version});
+  assert.equal(r.finished,true);
+  r=store.command(c,r.id,{action:"undo",nonce:"undo-other-1",version:r.version});
+  assert.equal(r.finished,false);
+  assert.throws(()=>store.command(other,r.id,{action:"finish",nonce:"foreign-finish-1",version:r.version}),e=>e.status===403);
   assert.throws(()=>store.command(a,r.id,{action:"set-dealer",seat:2,nonce:"dealer-again-1",version:r.version}),e=>e.status===409);
   assert.equal(store.get(r.id,c).history.length,1);
  } finally {store.db.close();rmSync(dir,{recursive:true,force:true});}

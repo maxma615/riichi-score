@@ -172,3 +172,9 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 173 Node 测试及 187 规则测试通过；八组 Chromium/WebKit × 手机/桌面 × 根/前缀浏览器检查通过，覆盖成员入口、选择庄家、旧表单冲突；追加存储测试覆盖非成员拒绝、成员记分、版本冲突、重复提交、管理权限、座位旋转。微信页面仅完成源码同步及 JS 语法检查，未上传／发布新版、未完成真机验证。
 
 生产服务仅重启 yougui-riichi-score，启动时间 2026-10-24T13:53:09Z；有归仍为 2026-10-18T08:23:55Z。运行容器、current 源码同步补丁；基于原镜像及现有公开静态文件构建持久化补丁镜像 yougui-riichi-score:shared-score-20261024 并更新 latest，未快照运行环境或数据卷。线上 app.js SHA256 eef6df186f673af61ca0af3f754c47f69e2a37de61453759aa7479fb19aa5bf2，健康接口成功；运行容器内使用内存 SQLite 合成数据验证 memberRecord=true，未读取或复制用户牌桌数据。
+
+### 2026-10-24 和牌优先、全成员管理
+
+全体已入桌成员可使用所有牌桌命令（记分、撤回、结束、开局前选庄与填写玩家），仍通过成员校验、事务、版本和nonce控制并发；外部账号不能管理。记分首先点选和牌人，再选自摸／荣和，再点放铳人，符番与役满均为按钮，无下拉框，支持双响。微信源码同步，未上传或发布新版。
+
+源代码、公开 app.js/style.css 已更新到运行容器及 current，持久补丁镜像 yougui-riichi-score:winner-first-20261024 / latest。仅重启记分服务至 2026-10-24T15:17:22Z，有归未重启。健康接口通过，线上JS/CSS哈希与本地一致；内存SQLite合成检查 memberFinish=true、memberUndo=true，未读取或复制用户业务资料。

@@ -18,6 +18,8 @@ const $ = (s) => document.querySelector(s),
         })[c],
     );
 let ronWinners = new Set();
+let recordLoser = -1;
+let recordKind = "win";
 let quick = {
     fu: 30,
     han: 1,
@@ -293,7 +295,7 @@ function renderRoom() {
   const n = room.rules.players;
   const status = roundStatus(room);
   $("#room").innerHTML =
-    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} </h2></div><button id="share">扫码入桌</button></div><div class="round-status"><strong>${room.honba}<small> 本场</small></strong><div><b>${esc(status.label)}</b><span>${room.dealerSelected === false ? "待选择起庄玩家" : "庄家 · " + esc(status.dealerName)}</span></div></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealerSelected !== false && room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealerSelected !== false && room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] && room.isOwner ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div>${!room.finished && !room.isOwner ? '<button id="record" class="primary">记一局</button>' : ""}${room.isOwner ? `<div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div>` : ""}</div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
+    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} </h2></div><button id="share">扫码入桌</button></div><div class="round-status"><strong>${room.honba}<small> 本场</small></strong><div><b>${esc(status.label)}</b><span>${room.dealerSelected === false ? "待选择起庄玩家" : "庄家 · " + esc(status.dealerName)}</span></div></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealerSelected !== false && room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealerSelected !== false && room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div><div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div></div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
       room.history.length
         ? `<div class="scroll"><table><thead><tr><th>局 / 本场</th><th>结果</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${[
             ...room.history,
@@ -341,7 +343,7 @@ function renderRoom() {
           };
         }),
     );
-  if (room.isOwner && !room.finished && !room.history.length) {
+  if (!room.finished && !room.history.length) {
     const b = document.createElement("button");
     b.textContent = room.dealerSelected === false ? "选择起庄玩家" : "更改起庄玩家";
     $("#room .actions").prepend(b);
@@ -426,11 +428,17 @@ function confirmAction(title, text, action) {
 }
 function openRecord() {
   const recordVersion = room.version;
+  ronWinners = new Set();
+  recordLoser = -1;
+  recordKind = "win";
   modal({
     title: `${roundLabel(room.hand, room.rules.players)} · 记一局`,
-    body: `<div class="record-status"><b>${room.honba} 本场</b><span>${esc(roundStatus(room).label)} · 庄家 ${esc(roundStatus(room).dealerName)}</span></div><form id="record-form"><label>结果<select id="kind"><option value="tsumo">自摸</option><option value="ron">荣和（可多人）</option><option value="draw">荒牌流局</option><option value="abort">途中流局</option></select></label><div id="record-fields"></div><div class="divider"><p class="muted">本局立直 · 每人1000点</p><div class="player-checks">${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="riichi" value="${s}">${esc(seatName(s))}</label>`).join("")}</div></div><div id="preview"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
+    body: `<div class="record-status"><b>${room.honba} 本场</b><span>${esc(roundStatus(room).label)} · 庄家 ${esc(roundStatus(room).dealerName)}</span></div><form id="record-form"><div class="choice-row result-types"><button type="button" data-result="win">和牌</button><button type="button" data-result="draw">荒牌流局</button><button type="button" data-result="abort">途中流局</button></div><div id="record-fields"></div><div class="divider"><p class="muted">本局立直 · 每人1000点</p><div class="player-checks">${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="riichi" value="${s}">${esc(seatName(s))}</label>`).join("")}</div></div><div id="preview"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
   });
-  $("#kind").onchange = recordFields;
+  document.querySelectorAll("[data-result]").forEach(b=>b.onclick=()=>{
+    recordKind=b.dataset.result;
+    recordFields();
+  });
   $("#record-form").oninput = previewEvent;
   recordFields();
   $("#record-form").onsubmit = (e) => {
@@ -442,10 +450,10 @@ function openRecord() {
   };
 }
 function winnerInputs(s, selectable = false) {
-  return `<div class="winner divider" data-seat="${s}" data-han="3" data-fu="30" ${selectable ? "hidden" : ""}>${selectable ? `<h3>${esc(seatName(s))} · 荣和</h3>` : ""}<div class="record-label">番数</div><div class="counter record-counter"><button type="button" data-han-step="-1" aria-label="减少一番">−</button><output class="han">3 番</output><button type="button" data-han-step="1" aria-label="增加一番">＋</button></div><div class="record-label">符数</div><div class="fu-choices">${FU.map((f) => `<button type="button" data-fu-choice="${f}" aria-pressed="${f === 30}" class="${f === 30 ? "selected" : ""}">${f}符</button>`).join("")}</div><label>役满<select class="yakuman"><option value="0">普通符番</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}倍役满</option>`).join("")}</select></label></div>`;
+  return `<div class="winner divider" data-seat="${s}" data-han="3" data-fu="30" ${selectable ? "hidden" : ""}>${selectable ? `<h3>${esc(seatName(s))} · 荣和</h3>` : ""}<div class="record-label">番数</div><div class="counter record-counter"><button type="button" data-han-step="-1" aria-label="减少一番">−</button><output class="han">3 番</output><button type="button" data-han-step="1" aria-label="增加一番">＋</button></div><div class="record-label">符数</div><div class="fu-choices">${FU.map((f) => `<button type="button" data-fu-choice="${f}" aria-pressed="${f === 30}" class="${f === 30 ? "selected" : ""}">${f}符</button>`).join("")}</div><div class="record-label">役满</div><input class="yakuman" type="hidden" value="0"><div class="fu-choices">${[0,1,2,3,4,5,6].map(n=>`<button type="button" data-yakuman-choice="${n}" aria-pressed="${n===0}" class="${n===0?'selected':''}">${n===0?'普通符番':n===1?'役满':n+'倍役满'}</button>`).join("")}</div></div>`;
 }
 function refreshWinnerControls() {
-  const method = $("#kind").value;
+  const method = recordKind;
   if (!["tsumo", "ron"].includes(method)) return;
   $("#record-fields")
     .querySelectorAll(".winner")
@@ -462,6 +470,11 @@ function refreshWinnerControls() {
       };
       if (!valid(fu)) el.dataset.fu = "30";
       el.querySelector(".han").textContent = `${han} 番`;
+      el.querySelectorAll("[data-yakuman-choice]").forEach(b=>{
+        const selected=b.dataset.yakumanChoice===el.querySelector(".yakuman").value;
+        b.classList.toggle("selected",selected);b.setAttribute("aria-pressed",String(selected));
+        b.onclick=()=>{el.querySelector(".yakuman").value=b.dataset.yakumanChoice;refreshWinnerControls();previewEvent();};
+      });
       el.querySelectorAll("[data-han-step]").forEach(
         (b) =>
           (b.disabled = Number(b.dataset.hanStep) < 0 ? han <= 1 : han >= 100),
@@ -490,45 +503,54 @@ function refreshWinnerControls() {
     });
 }
 function recordFields() {
-  const kind = $("#kind").value;
-  ronWinners = new Set();
-  $("#record-fields").innerHTML =
-    kind === "tsumo"
-      ? `<label>自摸玩家${selectSeats("tsumo-seat")}</label>${winnerInputs(0)}`
-      : kind === "ron"
-        ? `<label>放铳玩家${selectSeats("loser")}</label><h3>谁荣和了？</h3><div class="choice-row winner-picker">${room.members.map((m, s) => `<button type="button" data-winner-seat="${s}" aria-pressed="false">${esc(seatName(s))} 荣和</button>`).join("")}</div>${room.members.map((m, s) => winnerInputs(s, true)).join("")}`
-        : kind === "draw"
-          ? `<p class="muted">勾选流局时听牌的玩家</p>${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="tenpai" value="${s}">${esc(seatName(s))}</label>`).join("")}`
-          : '<p class="muted">途中流局不交换点数，保留供托、庄家并增加一本场。</p>';
-  if (kind === "ron") {
-    const sync = () => {
-      const loser = Number($("#loser").value);
-      ronWinners.delete(loser);
-      document.querySelectorAll("[data-winner-seat]").forEach((b) => {
-        const seat = Number(b.dataset.winnerSeat),
-          selected = ronWinners.has(seat);
-        b.disabled = seat === loser || (!selected && ronWinners.size >= 2);
-        b.classList.toggle("selected", selected);
-        b.setAttribute("aria-pressed", String(selected));
-        document.querySelector(`.winner[data-seat="${seat}"]`).hidden =
-          !selected;
-      });
-      previewEvent();
-    };
-    $("#loser").onchange = sync;
-    document.querySelectorAll("[data-winner-seat]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          const seat = Number(b.dataset.winnerSeat);
-          if (ronWinners.has(seat)) ronWinners.delete(seat);
-          else ronWinners.add(seat);
-          sync();
-        }),
-    );
-    sync();
-  }
-  refreshWinnerControls();
-  previewEvent();
+  const kind = recordKind;
+  const forms = new Map([...document.querySelectorAll(".winner")].map(el=>[Number(el.dataset.seat), {han:el.dataset.han,fu:el.dataset.fu,yakuman:el.querySelector(".yakuman").value}]));
+  const win = ["win","tsumo","ron"].includes(kind);
+  document.querySelectorAll("[data-result]").forEach(b=>{
+    const selected=b.dataset.result===(win?"win":kind);
+    b.classList.toggle("selected",selected);b.setAttribute("aria-pressed",String(selected));
+  });
+  $("#record-fields").innerHTML = win
+    ? `<h2 class="record-question">谁和牌了？</h2><div class="choice-row winner-picker">${room.members.map((m,s)=>`<button type="button" data-winner-seat="${s}" aria-pressed="false">${esc(seatName(s))}</button>`).join("")}</div><div id="method-choice"><h3>怎么和的？</h3><div class="choice-row"><button type="button" data-method="tsumo">自摸</button><button type="button" data-method="ron">荣和</button></div></div><div id="loser-choice"><h3>谁放铳了？</h3><div class="choice-row winner-picker">${room.members.map((m,s)=>`<button type="button" data-loser-seat="${s}">${esc(seatName(s))}</button>`).join("")}</div></div><div id="winning-details">${room.members.map((m,s)=>winnerInputs(s,true)).join("")}</div>`
+    : kind === "draw"
+      ? `<h2 class="record-question">谁听牌了？</h2>${room.members.map((m,s)=>`<label class="check"><input type="checkbox" name="tenpai" value="${s}">${esc(seatName(s))}</label>`).join("")}`
+      : '<h2 class="record-question">途中流局</h2><p>保留供托与庄家，增加一本场。</p>';
+  if (win) {
+    forms.forEach((v,seat)=>{const el=document.querySelector(`.winner[data-seat="${seat}"]`);el.dataset.han=v.han;el.dataset.fu=v.fu;el.querySelector(".yakuman").value=v.yakuman;});
+    document.querySelectorAll("[data-winner-seat]").forEach(b=>b.onclick=()=>{
+      const seat=Number(b.dataset.winnerSeat);
+      if(ronWinners.has(seat))ronWinners.delete(seat);else ronWinners.add(seat);
+      if(ronWinners.has(recordLoser))recordLoser=-1;
+      if(ronWinners.size>1 && recordKind==="tsumo") recordKind="ron";
+      syncRecordChoices();
+    });
+    document.querySelectorAll("[data-method]").forEach(b=>b.onclick=()=>{recordKind=b.dataset.method;syncRecordChoices();});
+    document.querySelectorAll("[data-loser-seat]").forEach(b=>b.onclick=()=>{recordLoser=Number(b.dataset.loserSeat);syncRecordChoices();});
+    syncRecordChoices();
+  } else previewEvent();
+}
+function syncRecordChoices() {
+  const method=recordKind;
+  document.querySelectorAll("[data-winner-seat]").forEach(b=>{
+    const seat=Number(b.dataset.winnerSeat),selected=ronWinners.has(seat);
+    b.disabled=!selected&&ronWinners.size>=2;
+    b.classList.toggle("selected",selected);b.setAttribute("aria-pressed",String(selected));
+    const form=document.querySelector(`.winner[data-seat="${seat}"]`);
+    form.hidden=!selected;
+    form.querySelector("h3").textContent=seatName(seat)+(method==="tsumo"?" · 自摸":" · 荣和");
+  });
+  $("#method-choice").hidden=!ronWinners.size;
+  document.querySelectorAll("[data-method]").forEach(b=>{
+    b.disabled=b.dataset.method==="tsumo"&&ronWinners.size>1;
+    b.classList.toggle("selected",b.dataset.method===method);b.setAttribute("aria-pressed",String(b.dataset.method===method));
+  });
+  $("#loser-choice").hidden=method!=="ron"||!ronWinners.size;
+  document.querySelectorAll("[data-loser-seat]").forEach(b=>{
+    const seat=Number(b.dataset.loserSeat);
+    b.disabled=ronWinners.has(seat);b.classList.toggle("selected",seat===recordLoser);b.setAttribute("aria-pressed",String(seat===recordLoser));
+  });
+  $("#winning-details").hidden=!ronWinners.size||method==="win"||(method==="ron"&&recordLoser<0);
+  refreshWinnerControls();previewEvent();
 }
 function previewEvent() {
   try {
@@ -543,7 +565,7 @@ function previewEvent() {
   }
 }
 function readEvent() {
-  const kind = $("#kind").value,
+  const kind = recordKind,
     riichi = [...document.querySelectorAll("[name=riichi]:checked")].map((x) =>
       Number(x.value),
     );
@@ -556,13 +578,14 @@ function readEvent() {
       ),
     };
   if (kind === "abort") return { kind, riichi };
+  if (!ronWinners.size) throw Error("请选择和牌玩家");
+  if (kind === "win") throw Error("请选择自摸或荣和");
+  if (kind === "tsumo" && ronWinners.size !== 1) throw Error("自摸只能选择一人");
+  if (kind === "ron" && recordLoser < 0) throw Error("请选择放铳玩家");
   const winners = [...document.querySelectorAll(".winner")]
-    .filter((el) => kind === "tsumo" || ronWinners.has(Number(el.dataset.seat)))
+    .filter((el) => ronWinners.has(Number(el.dataset.seat)))
     .map((el) => ({
-      seat:
-        kind === "tsumo"
-          ? Number($("#tsumo-seat").value)
-          : Number(el.dataset.seat),
+      seat: Number(el.dataset.seat),
       han: Number(el.dataset.han),
       fu: Number(el.dataset.fu),
       yakuman: Number(el.querySelector(".yakuman").value),
@@ -572,7 +595,7 @@ function readEvent() {
     method: kind,
     winners,
     riichi,
-    ...(kind === "ron" ? { loser: Number($("#loser").value) } : {}),
+    ...(kind === "ron" ? { loser: recordLoser } : {}),
   };
 }
 renderQuick();

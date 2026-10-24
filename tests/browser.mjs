@@ -276,30 +276,29 @@ for (const engine of [chromium, webkit])
         await expect(other.locator("#record-form")).toBeVisible();
         await expect(page.locator(".round-status")).toContainText("首次坐庄");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
-        await page.locator("#kind").selectOption("ron");
-        await expect(page.locator(".winner:visible")).toHaveCount(0);
-        await expect(page.locator('[data-winner-seat="0"]')).toBeDisabled();
+        await expect(page.getByRole("heading",{name:"谁和牌了？"})).toBeVisible();
+        await expect(page.locator("#record-form select")).toHaveCount(0);
+        await expect(page.locator("#method-choice")).not.toBeVisible();
         await page.locator('[data-winner-seat="1"]').click();
-        await page
-          .locator('.winner[data-seat="1"] [data-han-step="1"]')
-          .click();
         await page.locator('[data-winner-seat="2"]').click();
+        await expect(page.locator('[data-method="tsumo"]')).toBeDisabled();
+        await page.locator('[data-method="ron"]').click();
+        await expect(page.locator('[data-loser-seat="1"]')).toBeDisabled();
+        await expect(page.locator('[data-loser-seat="2"]')).toBeDisabled();
+        await page.locator('[data-loser-seat="0"]').click();
         await expect(page.locator(".winner:visible")).toHaveCount(2);
+        await page.locator('.winner[data-seat="1"] [data-han-step="1"]').click();
         await expect(page.locator('[data-winner-seat="3"]')).toBeDisabled();
         await expect(page.locator("#preview")).toContainText("本局收支");
-        await page.screenshot({
-          path: path.join(out, `${tag}-winner-picker.png`),
-        });
+        await page.screenshot({path:path.join(out,`${tag}-winner-picker.png`)});
         await page.locator('[data-winner-seat="1"]').click();
-        await expect(page.locator('.winner[data-seat="1"]')).not.toBeVisible();
         await page.locator('[data-winner-seat="1"]').click();
-        await expect(page.locator('.winner[data-seat="1"] .han')).toContainText(
-          "4 番",
-        );
-        await page.locator("#loser").selectOption("1");
-        await expect(page.locator('.winner[data-seat="1"]')).not.toBeVisible();
-        await expect(page.locator(".winner:visible")).toHaveCount(1);
-        await page.locator("#kind").selectOption("tsumo");
+        await expect(page.locator('.winner[data-seat="1"] .han')).toContainText("4 番");
+        await page.locator('[data-winner-seat="1"]').click();
+        await page.locator('[data-winner-seat="2"]').click();
+        await page.locator('[data-winner-seat="0"]').click();
+        await expect(page.locator("#winning-details")).not.toBeVisible();
+        await page.locator('[data-method="tsumo"]').click();
         await expect(page.locator(".record-status")).toContainText("0 本场");
         await expect(
           page.locator("#record-fields input[type=number]"),
@@ -308,9 +307,9 @@ for (const engine of [chromium, webkit])
         await page
           .getByRole("button", { name: "增加一番", exact: true })
           .click();
-        await expect(page.locator(".winner .han")).toContainText("4 番");
-        await page.locator('[data-fu-choice="40"]').click();
-        await expect(page.locator('[data-fu-choice="40"]')).toHaveAttribute(
+        await expect(page.locator(".winner:visible .han")).toContainText("4 番");
+        await page.locator('.winner:visible [data-fu-choice="40"]').click();
+        await expect(page.locator('.winner:visible [data-fu-choice="40"]')).toHaveAttribute(
           "aria-pressed",
           "true",
         );
@@ -322,7 +321,7 @@ for (const engine of [chromium, webkit])
         await page
           .getByRole("button", { name: "减少一番", exact: true })
           .click();
-        await page.locator('[data-fu-choice="30"]').click();
+        await page.locator('.winner:visible [data-fu-choice="30"]').click();
         await expect(page.locator("#preview .payment-table")).toContainText(
           "基础点数",
         );
@@ -340,6 +339,8 @@ for (const engine of [chromium, webkit])
           page.getByRole("heading", { name: /东1局/ }),
         ).toBeVisible();
         await page.getByRole("button", { name: "记一局", exact: true }).click();
+        await page.locator('[data-winner-seat="0"]').click();
+        await page.locator('[data-method="tsumo"]').click();
         await expect(
           page
             .locator("#preview .payment-table tr")
@@ -367,7 +368,8 @@ for (const engine of [chromium, webkit])
         }
         await expect(page.locator(".round-status")).toContainText("首次坐庄");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
-        await page.locator("#tsumo-seat").selectOption("1");
+        await page.locator('[data-winner-seat="1"]').click();
+        await page.locator('[data-method="tsumo"]').click();
         await expect(
           page.locator("#preview .line").filter({ hasText: "测试南家" }),
         ).toContainText("+4,000");
@@ -382,12 +384,14 @@ for (const engine of [chromium, webkit])
         await other.reload();
         await expect(other.locator(".seat").nth(1)).toContainText("29,000");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
+        await page.locator('[data-winner-seat="0"]').click();
+        await page.locator('[data-method="tsumo"]').click();
         const secondTab = await host.newPage();
         await secondTab.goto(entry);
         await secondTab
           .getByRole("button", { name: "记一局", exact: true })
           .click();
-        await secondTab.locator("#kind").selectOption("abort");
+        await secondTab.locator('[data-result="abort"]').click();
         await secondTab
           .getByRole("button", { name: "确认记分", exact: true })
           .click();
@@ -419,7 +423,7 @@ for (const engine of [chromium, webkit])
         ).toBeVisible();
         await expect(page.locator(".seat").nth(1)).toContainText("25,000");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
-        await page.locator("#kind").selectOption("draw");
+        await page.locator('[data-result="draw"]').click();
         await page.locator('[name=tenpai][value="0"]').check();
         await page.locator('[name=riichi][value="1"]').check();
         await page
@@ -452,13 +456,10 @@ for (const engine of [chromium, webkit])
         await page
           .getByRole("button", { name: "线下牌桌", exact: true })
           .click();
-        await page
-          .getByRole("button", { name: "结束牌局", exact: true })
-          .click();
-        await page.getByRole("button", { name: "确认", exact: true }).click();
-        await expect(
-          page.getByRole("heading", { name: /牌局已结束/ }),
-        ).toBeVisible();
+        await other.reload();
+        await other.getByRole("button",{name:"结束牌局",exact:true}).click();
+        await other.getByRole("button",{name:"确认",exact:true}).click();
+        await expect(other.getByRole("heading",{name:/牌局已结束/})).toBeVisible();
         await page.reload();
         await expect(
           page.getByRole("heading", { name: /牌局已结束/ }),

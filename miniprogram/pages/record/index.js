@@ -5,7 +5,7 @@ Page({
   data: {
     room: null,
     kind: "win",
-    method: "tsumo",
+    method: "",
     fu: FU,
     yakumans: [
       "普通符番",
@@ -18,10 +18,10 @@ Page({
     ],
     han: 3,
     fuIndex: 2,
-    winners: [0],
+    winners: [],
     winForms: [],
     winnerFlags: [],
-    loser: 1,
+    loser: -1,
     riichi: [],
     tenpai: [],
     yakuman: 0,
@@ -53,6 +53,7 @@ Page({
     }
   },
   choose(e) {
+    if(e.currentTarget.dataset.key==="method"&&e.currentTarget.dataset.value==="tsumo"&&this.data.winners.length>1)return;
     this.setData({
       [e.currentTarget.dataset.key]: e.currentTarget.dataset.value,
     });
@@ -62,16 +63,24 @@ Page({
   selectWinner(e) {
     const seat = Number(e.currentTarget.dataset.seat),
       d = this.data;
-    if (d.method === "ron" && seat === d.loser) return;
     let winners;
-    if (d.method === "tsumo") winners = [seat];
-    else if (d.winners.includes(seat))
-      winners = d.winners.filter((s) => s !== seat);
-    else if (d.winners.length < 2) winners = [...d.winners, seat];
+    if (d.winners.includes(seat)) winners=d.winners.filter(s=>s!==seat);
+    else if(d.winners.length<2) winners=[...d.winners,seat];
     else return;
-    this.setData({ winners });
+    this.setData({winners,loser:winners.includes(d.loser)?-1:d.loser,
+      method:winners.length>1&&d.method==="tsumo"?"ron":d.method});
     this.nonce = null;
     this.refresh();
+  },
+  selectLoser(e) {
+    const loser=Number(e.currentTarget.dataset.seat);
+    if(this.data.winners.includes(loser))return;
+    this.setData({loser});this.nonce=null;this.refresh();
+  },
+  chooseYakuman(e) {
+    const {seat,value}=e.currentTarget.dataset;
+    this.setData({["winForms["+seat+"].yakuman"]:Number(value)});
+    this.nonce=null;this.refresh();
   },
   picker(e) {
     const { key, seat } = e.currentTarget.dataset;
@@ -108,6 +117,11 @@ Page({
   },
   event() {
     const d = this.data;
+    if(d.kind==="win") {
+      if(!d.winners.length)throw Error("请选择和牌玩家");
+      if(!d.method)throw Error("请选择自摸或荣和");
+      if(d.method==="ron"&&d.loser<0)throw Error("请选择放铳玩家");
+    }
     return {
       kind: d.kind,
       method: d.method,
@@ -124,11 +138,6 @@ Page({
   },
   refresh() {
     const method = this.data.method;
-    let winners = this.data.winners;
-    if (method === "tsumo" && winners.length > 1) winners = winners.slice(0, 1);
-    if (method === "ron")
-      winners = winners.filter((s) => s !== Number(this.data.loser));
-    this.setData({ winners });
     const fuChoices = this.data.winForms.map((form, seat) => {
       const valid = (fu) => {
         try {

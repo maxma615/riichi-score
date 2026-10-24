@@ -1485,3 +1485,10 @@ footer {
 .rule-option input:checked ~ .rule-switch .switch-track::before { transform: translateX(14px); }
 .rule-option input:focus-visible ~ .rule-switch .switch-track { outline: 2px solid #993e31; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .switch-track, .switch-track::before { transition: none; } }
+
+/* Winner-first scoring, with comfortable mobile tap targets. */
+.record-question { font-size: 24px; margin: 14px 0 10px; }
+#record-fields .winner-picker { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+#record-fields .winner-picker button { min-height: 48px; font-size: 17px; overflow-wrap: anywhere; }
+#method-choice h3, #loser-choice h3 { margin: 14px 0 8px; }
+#method-choice .choice-row button { flex: 1; min-height: 44px; }

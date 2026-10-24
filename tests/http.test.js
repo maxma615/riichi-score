@@ -56,11 +56,11 @@ test("真实HTTP身份、来源、跨桌隔离与二维码邀请", async () => {
       (
         await post(
           `/api/rooms/${id}/events`,
-          { action: "finish", version: r.version, nonce: "unapproved-command" },
+          { action: "finish", version: r.version, nonce: "member-finish-command" },
           cookieB,
         )
       ).status,
-      403,
+      200,
     );
     const qr = await fetch(base + `/api/rooms/${id}/qr`, {
       headers: { Cookie: cookie },

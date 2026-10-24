@@ -199,6 +199,8 @@ test("小程序本场加减边界和记分支付明细", async () => {
   const record = page("record", { api: async () => r });
   record.id = "test";
   await record.load();
+  record.selectWinner({currentTarget:{dataset:{seat:0}}});
+  record.choose({currentTarget:{dataset:{key:"method",value:"tsumo"}}});
   assert.equal(record.data.status.honba, 2);
   assert.equal(record.data.status.repeats, 0);
   assert.equal(record.data.details.rows[1].base, 2000);
@@ -224,6 +226,9 @@ test("小程序记分番数加减、符数点选、下限与弱网nonce更新", 
   const p = page("record", { api: async () => r });
   p.id = "test";
   await p.load();
+  assert.equal(p.data.preview,null);
+  p.selectWinner({currentTarget:{dataset:{seat:0}}});
+  p.choose({currentTarget:{dataset:{key:"method",value:"tsumo"}}});
   const step = (n) =>
     p.stepHan({ currentTarget: { dataset: { seat: 0, step: n } } });
   const fu = (index) =>
@@ -278,10 +283,15 @@ test("荣和点选、切换放铳者与单人自摸保留独立符番", async ()
   p.selectWinner({ currentTarget: { dataset: { seat: 1 } } });
   p.selectWinner({ currentTarget: { dataset: { seat: 1 } } });
   assert.equal(p.data.winForms[1].han, 4);
-  p.choose({ currentTarget: { dataset: { key: "loser", value: 1 } } });
-  assert.deepEqual(Array.from(p.data.winners), [2]);
-  p.choose({ currentTarget: { dataset: { key: "method", value: "tsumo" } } });
-  p.selectWinner({ currentTarget: { dataset: { seat: 3 } } });
+  p.selectLoser({currentTarget:{dataset:{seat:1}}});
+  assert.deepEqual(Array.from(p.data.winners), [2,1]);
+  assert.equal(p.data.loser,0);
+  p.choose({currentTarget:{dataset:{key:"method",value:"tsumo"}}});
+  assert.equal(p.data.method,"ron");
+  p.selectWinner({currentTarget:{dataset:{seat:1}}});
+  p.selectWinner({currentTarget:{dataset:{seat:2}}});
+  p.selectWinner({currentTarget:{dataset:{seat:3}}});
+  p.choose({currentTarget:{dataset:{key:"method",value:"tsumo"}}});
   assert.deepEqual(Array.from(p.data.winners), [3]);
   assert.ok(p.data.preview);
 });
