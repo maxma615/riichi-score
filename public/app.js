@@ -211,7 +211,7 @@ const roundLabel = (hand, n) =>
   `${["东", "南", "西", "北"][Math.floor(hand / n) % 4]}${(hand % n) + 1}局${hand >= n * 4 ? `（第${Math.floor(hand / (n * 4)) + 1}场）` : ""}`;
 const seatName = (s) => room?.members[s]?.name ?? `座位 ${s + 1}`;
 function selectSeats(id, chosen = 0) {
-  return `<select id="${id}">${room.members.map((m, s) => `<option value="${s}" ${s === chosen ? "selected" : ""}>${esc(seatName(s))}${room.dealer === s ? "（庄）" : ""}</option>`).join("")}</select>`;
+  return `<select id="${id}">${room.members.map((m, s) => `<option value="${s}" ${s === chosen ? "selected" : ""}>${esc(seatName(s))}${room.dealerSelected !== false && room.dealer === s ? "（庄）" : ""}</option>`).join("")}</select>`;
 }
 function modal(html) {
   delete $("#modal").dataset.stale;
@@ -258,6 +258,7 @@ function renderRoom() {
               })
             : await api("/api/rooms", {
                 players: Number($("#players").value),
+                chooseDealer: true,
                 kiriage: $("#kiriage").checked,
                 kazoe: $("#kazoe").checked,
               }),
@@ -292,7 +293,7 @@ function renderRoom() {
   const n = room.rules.players;
   const status = roundStatus(room);
   $("#room").innerHTML =
-    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} </h2></div><button id="share">扫码入桌</button></div><div class="round-status"><strong>${room.honba}<small> 本场</small></strong><div><b>${esc(status.label)}</b><span>庄家 · ${esc(status.dealerName)}</span></div></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}${room.isOwner ? " · 你是桌主" : " · 由桌主记分"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] && room.isOwner ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div>${room.isOwner ? `<div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div>` : ""}</div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
+    `<div class="card"><div class="row"><div><p class="eyebrow">${n === 4 ? "四人日麻" : "三人日麻 · 自摸损"}</p><h2>${room.finished ? "牌局已结束" : roundLabel(room.hand, n)} </h2></div><button id="share">扫码入桌</button></div><div class="round-status"><strong>${room.honba}<small> 本场</small></strong><div><b>${esc(status.label)}</b><span>${room.dealerSelected === false ? "待选择起庄玩家" : "庄家 · " + esc(status.dealerName)}</span></div></div><p class="muted">供托 ${room.pot} 根 · ${room.rules.kiriage ? "切上满贯" : "不切上满贯"} · ${room.rules.kazoe ? "累计役满" : "13番起三倍满"}</p><div class="score-grid">${room.scores.map((score, s) => `<div class="seat ${room.dealerSelected !== false && room.dealer === s ? "dealer" : ""}"><p>${esc(seatName(s))}${room.dealerSelected !== false && room.dealer === s ? '<span class="badge">庄</span>' : ""}${s === room.mySeat ? " · 你" : ""}</p><strong>${score.toLocaleString()}</strong><span class="${score >= room.rules.start ? "positive" : "negative"}">${score - room.rules.start >= 0 ? "+" : ""}${(score - room.rules.start).toLocaleString()}</span>${!room.members[s] && room.isOwner ? `<button data-add="${s}">填写玩家</button>` : ""}</div>`).join("")}</div>${!room.finished && !room.isOwner ? '<button id="record" class="primary">记一局</button>' : ""}${room.isOwner ? `<div class="actions">${room.finished ? "" : '<button id="record" class="primary">记一局</button>'}${room.history.length ? '<button id="undo">撤回最近记录</button>' : ""}${room.finished ? "" : '<button id="finish">结束牌局</button>'}</div>` : ""}</div><div class="card"><h2>每圈收支</h2><div class="scroll"><table><thead><tr><th>圈</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${circleRows()}</tbody></table></div></div><div class="card"><h2>逐局记录</h2>${
       room.history.length
         ? `<div class="scroll"><table><thead><tr><th>局 / 本场</th><th>结果</th>${room.members.map((m, s) => `<th>${esc(seatName(s))}</th>`).join("")}</tr></thead><tbody>${[
             ...room.history,
@@ -340,7 +341,22 @@ function renderRoom() {
           };
         }),
     );
-  if ($("#record")) $("#record").onclick = () => openRecord();
+  if (room.isOwner && !room.finished && !room.history.length) {
+    const b = document.createElement("button");
+    b.textContent = room.dealerSelected === false ? "选择起庄玩家" : "更改起庄玩家";
+    $("#room .actions").prepend(b);
+    b.onclick = () => {
+      modal({title:"选择起庄玩家",body:room.members.map((m,i)=>m?`<button data-dealer="${i}">${esc(m.name)}</button>`:"").join("")});
+      $("#modal").querySelectorAll("[data-dealer]").forEach(el=>el.onclick=()=>task(async()=>{
+        await command({action:"set-dealer",seat:Number(el.dataset.dealer)});
+        $("#modal").close();
+      }));
+    };
+  }
+  if ($("#record")) {
+    $("#record").disabled = room.dealerSelected === false;
+    $("#record").onclick = () => openRecord();
+  }
   if ($("#undo"))
     $("#undo").onclick = () =>
       confirmAction(
@@ -388,11 +404,11 @@ function circleRows() {
       .join("") || "<tr><td>尚无记录</td></tr>"
   );
 }
-async function command(body) {
+async function command(body, version = room.version) {
   remember(
     await api(`/api/rooms/${room.id}/events`, {
       ...body,
-      version: room.version,
+      version,
       nonce: crypto.randomUUID(),
     }),
   );
@@ -409,6 +425,7 @@ function confirmAction(title, text, action) {
     });
 }
 function openRecord() {
+  const recordVersion = room.version;
   modal({
     title: `${roundLabel(room.hand, room.rules.players)} · 记一局`,
     body: `<div class="record-status"><b>${room.honba} 本场</b><span>${esc(roundStatus(room).label)} · 庄家 ${esc(roundStatus(room).dealerName)}</span></div><form id="record-form"><label>结果<select id="kind"><option value="tsumo">自摸</option><option value="ron">荣和（可多人）</option><option value="draw">荒牌流局</option><option value="abort">途中流局</option></select></label><div id="record-fields"></div><div class="divider"><p class="muted">本局立直 · 每人1000点</p><div class="player-checks">${room.members.map((m, s) => `<label class="check"><input type="checkbox" name="riichi" value="${s}">${esc(seatName(s))}</label>`).join("")}</div></div><div id="preview"></div><div class="actions"><button class="primary" data-submit>确认记分</button></div></form>`,
@@ -419,7 +436,7 @@ function openRecord() {
   $("#record-form").onsubmit = (e) => {
     e.preventDefault();
     task(async () => {
-      await command({ action: "record", event: readEvent() });
+      await command({ action: "record", event: readEvent() }, recordVersion);
       $("#modal").close();
     });
   };

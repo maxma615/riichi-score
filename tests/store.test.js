@@ -59,7 +59,7 @@ test("成员权限、座位并发、持久化、幂等、版本与撤回", () =>
         riichi: [0],
       },
     };
-    r = store.command(a, id, input);
+    r = store.command(b, id, input);
     assert.deepEqual(r.scores, [32000, 39000, 34000]);
     const version = r.version;
     assert.equal(store.command(a, id, input).version, version);
@@ -145,4 +145,27 @@ test("失败事务不更改状态与未占座规则", () => {
     store.close();
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("所有成员可记分，起庄需选择，重复与冲突提交仍受保护", () => {
+ const dir=mkdtempSync(path.join(testRoot,"shared-score-"));
+ const store=new Store(path.join(dir,"data.sqlite"));
+ try {
+  const a=store.session("甲"),b=store.session("乙"),c=store.session("丙"),other=store.session("外人");
+  let r=store.create(a,{players:3,chooseDealer:true});
+  r=store.join(b,r.code,1);r=store.join(c,r.code,2);
+  const record={action:"record",nonce:"shared-record-1",version:r.version,event:{kind:"draw",tenpai:[],riichi:[]}};
+  assert.throws(()=>store.command(b,r.id,record),e=>e.status===409);
+  assert.throws(()=>store.command(other,r.id,record),e=>e.status===403);
+  r=store.command(a,r.id,{action:"set-dealer",seat:1,version:r.version,nonce:"select-dealer-1"});
+  assert.equal(r.members[0].name,"乙");assert.equal(r.mySeat,2);assert.equal(r.dealerSelected,true);
+  const input={...record,version:r.version};
+  r=store.command(b,r.id,input);
+  assert.equal(r.history.length,1);
+  assert.equal(store.command(b,r.id,input).version,r.version);
+  assert.throws(()=>store.command(c,r.id,{...input,nonce:"other-record-1"}),e=>e.status===409);
+  assert.throws(()=>store.command(b,r.id,{action:"finish",nonce:"finish-other-1",version:r.version}),e=>e.status===403);
+  assert.throws(()=>store.command(a,r.id,{action:"set-dealer",seat:2,nonce:"dealer-again-1",version:r.version}),e=>e.status===409);
+  assert.equal(store.get(r.id,c).history.length,1);
+ } finally {store.db.close();rmSync(dir,{recursive:true,force:true});}
 });

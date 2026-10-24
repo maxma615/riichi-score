@@ -250,15 +250,7 @@ for (const engine of [chromium, webkit])
         await other
           .getByRole("button", { name: "加入牌桌", exact: true })
           .click();
-        await expect(
-          other.getByText("由桌主记分", { exact: false }),
-        ).toBeVisible();
-        assert.equal(
-          await other
-            .getByRole("button", { name: "记一局", exact: true })
-            .count(),
-          0,
-        );
+        await expect(other.getByRole("button", {name:"记一局",exact:true})).toBeDisabled();
         await page.reload();
         await expect(
           page.getByText("测试南家", { exact: false }).first(),
@@ -275,6 +267,13 @@ for (const engine of [chromium, webkit])
           await page.getByRole("button", { name: "保存", exact: true }).click();
           await expect(page.locator("#modal")).not.toBeVisible();
         }
+        await page.getByRole("button",{name:"选择起庄玩家",exact:true}).click();
+        await page.locator('[data-dealer="0"]').click();
+        await expect(page.locator("#modal")).not.toBeVisible();
+        await other.reload();
+        await expect(other.getByRole("button",{name:"记一局",exact:true})).toBeEnabled();
+        await other.getByRole("button",{name:"记一局",exact:true}).click();
+        await expect(other.locator("#record-form")).toBeVisible();
         await expect(page.locator(".round-status")).toContainText("首次坐庄");
         await page.getByRole("button", { name: "记一局", exact: true }).click();
         await page.locator("#kind").selectOption("ron");

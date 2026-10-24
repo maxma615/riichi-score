@@ -164,3 +164,11 @@ reverse_proxy @riichi_score yougui-riichi-score:3200
 实际挂载旧 release Caddyfile 与 current 文件均已原位更新；current 文件的其他站点保持原样。新增站点根路径跳至 /riichi/，匹配路径代理至 yougui-riichi-score:3200，其余路径 404。微信客户端仍使用原合法域名，无需立即更改微信后台。
 
 验证：TLS 验证通过；新域名记分页、联机页、健康接口、旧域名健康接口 GET 200；新 Origin 登录空昵称请求进入业务校验并返回 400，非法 Origin 返回 403（未创建测试账户）；Socket.IO polling 握手新 Origin 200、非法 Origin 403。有归与记分容器 StartedAt 未变。未以真实微信账号完成扫码登录或实际多人对局验收。
+
+### 2026-10-24 共享记分与明确选择起庄
+
+已部署 src/store.js 与 public/app.js，记分 action=record 允许全部已加入成员，其他管理操作保持桌主权限；既有牌桌无需数据迁移。新网页／小程序创建时传 chooseDealer=true，首次记分前桌主明确选择起庄玩家；整体旋转座位使起庄为东家，不改变成员与分数对应。旧客户端未传该字段时保持兼容。进行中牌桌不修改庄家或历史。
+
+173 Node 测试及 187 规则测试通过；八组 Chromium/WebKit × 手机/桌面 × 根/前缀浏览器检查通过，覆盖成员入口、选择庄家、旧表单冲突；追加存储测试覆盖非成员拒绝、成员记分、版本冲突、重复提交、管理权限、座位旋转。微信页面仅完成源码同步及 JS 语法检查，未上传／发布新版、未完成真机验证。
+
+生产服务仅重启 yougui-riichi-score，启动时间 2026-10-24T13:53:09Z；有归仍为 2026-10-18T08:23:55Z。运行容器、current 源码同步补丁；基于原镜像及现有公开静态文件构建持久化补丁镜像 yougui-riichi-score:shared-score-20261024 并更新 latest，未快照运行环境或数据卷。线上 app.js SHA256 eef6df186f673af61ca0af3f754c47f69e2a37de61453759aa7479fb19aa5bf2，健康接口成功；运行容器内使用内存 SQLite 合成数据验证 memberRecord=true，未读取或复制用户牌桌数据。

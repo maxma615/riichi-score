@@ -35,7 +35,7 @@ Page({
   async load() {
     try {
       const room = await api("/api/rooms/" + this.id);
-      if (!room.isOwner) throw Error("由桌主记分");
+      if (room.dealerSelected === false) throw Error("请先选择起庄玩家");
       this.setData({
         room,
         status: roundStatus(room),

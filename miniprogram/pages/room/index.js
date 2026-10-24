@@ -72,7 +72,7 @@ Page({
       score: r.scores[seat],
       delta: r.scores[seat] - r.rules.start,
       empty: !m,
-      dealer: seat === r.dealer,
+      dealer: r.dealerSelected !== false && seat === r.dealer,
     }));
     const history = r.history
       .filter((h) => h.kind !== "finish")
@@ -133,6 +133,7 @@ Page({
     this.setData({ loading: true });
     api("/api/rooms", "POST", {
       players: e.currentTarget.dataset.players,
+      chooseDealer: true,
       kiriage: this.data.kiriage,
       kazoe: this.data.kazoe,
     })
@@ -217,6 +218,11 @@ Page({
         if (e.status === 409) this.refresh();
       })
       .finally(() => this.setData({ loading: false }));
+  },
+  selectDealer() {
+    const r = this.data.room;
+    if (r.members.some(m => !m)) return error(Error("请先为所有座位添加成员"));
+    wx.showActionSheet({itemList:r.members.map(m=>m.name),success:res=>this.command("set-dealer",{seat:res.tapIndex})});
   },
   undo() {
     wx.showModal({

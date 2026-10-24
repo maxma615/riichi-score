@@ -174,7 +174,7 @@ export class Store {
         ),
       }));
   }
-  create(u, { players = 4, kiriage = false, kazoe = true } = {}) {
+  create(u, { players = 4, kiriage = false, kazoe = true, chooseDealer = false } = {}) {
     if (typeof kiriage !== "boolean" || typeof kazoe !== "boolean")
       throw new HttpError(400, "规则设置无效");
     const rules = { ...defaults(players), kiriage, kazoe };
@@ -187,6 +187,7 @@ export class Store {
       members: Array(players).fill(null),
       scores: Array(players).fill(rules.start),
       dealer: 0,
+      dealerSelected: !chooseDealer,
       hand: 0,
       honba: 0,
       pot: 0,
@@ -222,7 +223,8 @@ export class Store {
     return this.transaction(() => {
       let s = this.raw(id);
       this.member(s, u);
-      if (s.owner !== u.id) throw new HttpError(403, "只有桌主可以记分");
+      if (input.action !== "record" && s.owner !== u.id)
+        throw new HttpError(403, "只有桌主可以管理牌桌");
       if (
         typeof input.nonce !== "string" ||
         !/^[a-zA-Z0-9-]{8,80}$/.test(input.nonce)
@@ -257,6 +259,7 @@ export class Store {
         if (s.finished) throw new HttpError(409, "牌局已结束");
         if (s.members.some((m) => !m))
           throw new HttpError(409, "请先为所有座位添加成员");
+        if (s.dealerSelected === false) throw new HttpError(409, "请先选择起庄玩家");
         const before = this.snapshot(s),
           { next, delta, description } = settle(s, input.event);
         s = next;
@@ -270,6 +273,15 @@ export class Store {
           hand: before.hand,
           honba: before.honba,
         });
+      } else if (input.action === "set-dealer") {
+        if (s.finished || s.history.length) throw new HttpError(409, "开始记分后不能更改起庄玩家");
+        integer(input.seat, 0, s.rules.players - 1, "座位");
+        if (s.members.some(m => !m)) throw new HttpError(409, "请先为所有座位添加成员");
+        // 起庄玩家为东家；按原座位顺序整体旋转，账号和点数始终对应。
+        s.members = [...s.members.slice(input.seat), ...s.members.slice(0, input.seat)];
+        s.scores = [...s.scores.slice(input.seat), ...s.scores.slice(0, input.seat)];
+        s.dealer = 0;
+        s.dealerSelected = true;
       } else if (input.action === "add-player") {
         if (s.history.length) throw new HttpError(409, "开始记分后不能改座位");
         integer(input.seat, 0, s.rules.players - 1, "座位");
