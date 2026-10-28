@@ -1,0 +1,18 @@
+Ma Shan Zheng — Settlement calligraphy glyph subset
+
+Copyright 2018 The Ma Shan Zheng Project Authors
+Official project: https://github.com/googlefonts/mashanzheng
+Source: https://github.com/google/fonts/tree/main/ofl/mashanzheng
+Source font SHA-256: 6d2546bb189c732a8ca29af9e22457b152387d158aa459e4ac2ce1e51788b7fb
+Subset WOFF2 SHA-256: ad280cdb942f998637f237b0da9b5a3eacf3217924b7ac2966157e7c16a24e9a
+
+This subset extends the original declaration subset with the glyphs used by
+the settlement and final-ranking ceremony banners (点数结算, 流满贯, 满贯,
+跳满, 倍满, 三倍满, 役满, 途中流局, 荒牌流局, 最终名次, 九种九牌 and
+the digits 0-9). The original mahjong-brush.woff2 stays byte-identical so the
+archived native asset manifest keeps validating.
+
+The distributed glyph subset remains under SIL Open Font License 1.1.
+The full license accompanies this notice in Ma-Shan-Zheng-OFL.txt.
+Generated with fontTools 4.65.0 pyftsubset (--flavor=woff2), without
+modifying glyph outlines.

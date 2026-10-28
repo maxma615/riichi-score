@@ -12,6 +12,20 @@ export const NAGASHI_TITLE_MS = 2500;
 export const YAKU_START_MS = 300;
 export const YAKU_STEP_MS = 600;
 export const yakuRevealAt = (index: number) => YAKU_START_MS + index * YAKU_STEP_MS;
+/** Display-only 満貫-and-above banner label. The engine already fixes the base
+ * points at these han thresholds for every fu (and 数え役満 is always on here),
+ * so the label never re-derives scoring; the 合计 line keeps the exact han. */
+export const pointTierLabel = (han: number | string | undefined, yakumanCount: number) => {
+  if (yakumanCount > 0) return `${yakumanCount > 1 ? `${yakumanCount}倍` : ""}役满`;
+  const value = typeof han === "number" ? han : Number(han);
+  if (!Number.isFinite(value)) return null;
+  if (value >= 13) return "役满";
+  if (value >= 11) return "三倍满";
+  if (value >= 8) return "倍满";
+  if (value >= 6) return "跳满";
+  if (value >= 5) return "满贯";
+  return null;
+};
 export const detailValueAt = (settlement: Settlement) => settlement.drawInfo?.kind === "nagashi" ? 1800 : yakuRevealAt(settlement.yaku.length);
 export function confirmationAt(flow: SettlementFlow, settlement: Settlement) {
   return flow.stage === "draw" ? drawSummaryAt(settlement) + 1000 : flow.stage === "detail" ? settlement.drawInfo?.kind === "nagashi" ? 2800 : detailValueAt(settlement) + 600 : flow.delta.some(delta => delta !== 0) ? 4500 : 1200;

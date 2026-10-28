@@ -58,13 +58,10 @@ a {
   --mahjong-cloth-b: #172925;
 }
 
-@font-face {
-  font-family: MahjongBrush;
-  src: url("./assets/fonts/mahjong-brush.woff2") format("woff2");
-  font-display: swap;
-}
+/* One brush identity: the settlement subset extends the frozen declaration
+   subset, so both faces resolve from --font-brush without a third download. */
 :root {
-  --font-brush: MahjongBrush, serif;
+  --font-brush: "Yougui Settlement Brush", "Yougui Mahjong Brush", serif;
 }
 
 /* Paper lobby and entry use the same ink/cinnabar language as offline scoring. */

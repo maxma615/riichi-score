@@ -1,4 +1,7 @@
-/* Ma Shan Zheng, SIL OFL 1.1; locally served so declarations need no font CDN. */
+/* Ma Shan Zheng, SIL OFL 1.1; locally served so declarations need no font CDN.
+   Two subsets of the same OFL original: mahjong-brush.woff2 keeps the frozen
+   declaration glyph set (the archived native asset manifest pins its hash) and
+   mahjong-brush-settlement.woff2 adds the settlement/final-table banner glyphs. */
 @font-face {
   font-family: "Yougui Mahjong Brush";
   src: url("./assets/fonts/mahjong-brush.woff2") format("woff2");
@@ -39,17 +42,213 @@
 
 .mahjong-game .mahjong-player__riichi { font-size: 16px; }
 
-/* The hand result keeps the same brush identity as its on-table declaration.
-   Yaku, fu/han, names and score transfers stay in the readable body face. */
-.mahjong-game .mahjong-settlement-panel__heading .mahjong-settlement-panel__win-title {
-  font-family: "Yougui Mahjong Brush", serif;
+/* —— 结算仪式 —— Settlement ceremony.
+   The extended subset (SIL OFL Ma Shan Zheng, see licenses/) covers the
+   banner glyphs 点数结算 / 流满贯 / 满贯 / 跳满 / 倍满 / 三倍满 / 役满 /
+   途中流局 / 荒牌流局 / 最终名次 and digits. Bodies stay in the body face. */
+@font-face {
+  font-family: "Yougui Settlement Brush";
+  src: url("./assets/fonts/mahjong-brush-settlement.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Titles: 和牌 gold leaf, 点数结算/流满贯 vermillion, 流局 ink wash.
+   The win-title variant must stay AFTER this rule — equal specificity,
+   source order decides. */
+.mahjong-game .mahjong-settlement-panel__heading .mahjong-settlement-panel__title {
+  margin: 2px 0 4px;
+  font-family: "Yougui Settlement Brush", "Yougui Mahjong Brush", serif;
   font-weight: 400;
   font-style: normal;
   font-synthesis: none;
-  font-size: clamp(22px, 6cqh, 32px);
-  letter-spacing: -.035em;
-  color: #fff0c9;
-  -webkit-text-stroke: 1px #322114;
+  font-size: clamp(24px, 6.6cqh, 40px);
+  line-height: 1.15;
+  letter-spacing: -.04em;
+  color: #d9e2df;
+  -webkit-text-stroke: 1.5px #14232b;
   paint-order: stroke fill;
-  text-shadow: 1px 2px 0 #091723, 0 0 8px #efb86b60;
+  text-shadow: 1px 2px 0 #0a141c, 0 0 12px #0a1826b3;
+}
+
+/* The hand result keeps the same brush identity as its on-table declaration.
+   Yaku, fu/han, names and score transfers stay in the readable body face. */
+.mahjong-game .mahjong-settlement-panel__heading .mahjong-settlement-panel__win-title {
+  font-family: "Yougui Settlement Brush", "Yougui Mahjong Brush", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: none;
+  font-size: clamp(28px, 7.4cqh, 46px);
+  line-height: 1.12;
+  letter-spacing: -.04em;
+  color: #f8e2a4;
+  -webkit-text-stroke: 2px #433014;
+  paint-order: stroke fill;
+  text-shadow: 2px 3px 0 #140d05, 0 0 14px #efb86b66, 0 0 34px #efb86b2b;
+}
+
+.mahjong-game .mahjong-settlement-panel.is-scores .mahjong-settlement-panel__title,
+.mahjong-game .mahjong-settlement-panel.is-nagashi .mahjong-settlement-panel__title {
+  color: #ff9d7d;
+  -webkit-text-stroke: 2px #4a1d12;
+  text-shadow: 1px 2px 0 #240d08, 0 0 16px #e2553a4d, 0 0 36px #e2553a2b;
+}
+
+.mahjong-game .mahjong-settlement-panel .mahjong-kicker { color: #d8b77b; }
+
+.mahjong-game .mahjong-settlement-panel__winner { color: #f0e6cd; }
+
+.mahjong-game .mahjong-settlement-panel__actions small { color: #c2beb0; }
+
+/* 満貫以上：one big brush stamp beside the exact 番/符 line. */
+.mahjong-game .mahjong-settlement-panel__tier,
+.mahjong-game .mahjong-settlement-panel__mangan {
+  display: inline-block;
+  font-family: "Yougui Settlement Brush", "Yougui Mahjong Brush", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: none;
+  line-height: 1.05;
+  letter-spacing: -.05em;
+  color: #ffb287;
+  -webkit-text-stroke: 2.5px #4a1d12;
+  paint-order: stroke fill;
+  text-shadow: 2px 3px 0 #240d08, 0 0 18px #e2553a59, 0 0 42px #e2553a33;
+}
+
+.mahjong-game .mahjong-settlement-panel__tier {
+  margin: 4px 0 2px;
+  font-size: clamp(34px, 9cqh, 58px);
+  transform-origin: 30% 74%;
+}
+
+.mahjong-game .mahjong-settlement-panel__tier.is-yakuman {
+  color: #ffd98f;
+  -webkit-text-stroke: 3px #4a2b0e;
+  text-shadow: 2px 4px 0 #241304, 0 0 22px #efb86b80, 0 0 52px #e2553a4d, 0 0 78px #efb86b33;
+  font-size: clamp(38px, 10.5cqh, 68px);
+}
+
+.mahjong-game .mahjong-settlement-panel__mangan {
+  margin: 6px 0 2px;
+  font-size: clamp(24px, 5.6cqh, 36px);
+  transform-origin: 30% 74%;
+}
+
+/* The climax value keeps tabular digits; only its paint becomes gold leaf. */
+.mahjong-game .mahjong-settlement-panel__value b {
+  color: #f2cf83;
+  font-size: clamp(24px, 5.2cqw, 36px);
+  font-weight: 700;
+  letter-spacing: .01em;
+  text-shadow: 0 2px 0 #23150a, 0 0 22px #d8a95540;
+}
+
+.mahjong-game .mahjong-settlement-panel__summary > p > strong {
+  color: #eccf8e;
+  font-size: clamp(15px, 2.4cqw, 19px);
+}
+
+/* Seat deltas: gains lift on gold, losses settle into ink wash. */
+.mahjong-game .mahjong-settlement-panel__delta > span { border-radius: 8px; }
+.mahjong-game .mahjong-settlement-panel__delta > span:has(> b.is-positive) {
+  box-shadow: inset 3px 0 #e8b264;
+  background: linear-gradient(135deg, rgb(216 169 85 / 14%), rgb(255 255 255 / 3%));
+}
+.mahjong-game .mahjong-settlement-panel__delta > span:has(> b.is-negative) {
+  box-shadow: inset 3px 0 #5d7185;
+  background: linear-gradient(135deg, rgb(66 85 104 / 18%), rgb(255 255 255 / 3%));
+}
+.mahjong-game .mahjong-settlement-panel__delta b.is-positive {
+  color: #f4c886;
+  text-shadow: 0 1px 0 #3a2708;
+}
+.mahjong-game .mahjong-settlement-panel__delta b.is-negative { color: #aebfd2; }
+.mahjong-game .mahjong-settlement-panel.is-scores [data-settlement-seat]:has(> b.is-positive) .mahjong-settlement-panel__balance-after strong { color: #f4c886; }
+.mahjong-game .mahjong-settlement-panel.is-scores [data-settlement-seat]:has(> b.is-negative) .mahjong-settlement-panel__balance-after strong { color: #b8c6d6; }
+
+/* A quiet gold hairline crowns the floating result card. */
+.mahjong-game:not(.is-finished) > .mahjong-settlement-panel {
+  box-shadow: 0 26px 70px #050d1780, inset 0 1px 0 #d8b77b2e;
+}
+
+/* 途中流局 cause reads as one solemn ink banner. */
+.mahjong-game .mahjong-draw-cause {
+  margin: 6px 0 2px;
+  font-family: "Yougui Settlement Brush", "Yougui Mahjong Brush", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: none;
+  font-size: clamp(30px, 8cqh, 48px);
+  line-height: 1.12;
+  letter-spacing: -.05em;
+  color: #dee7e3;
+  -webkit-text-stroke: 2px #14232b;
+  paint-order: stroke fill;
+  text-shadow: 2px 3px 0 #0a141c, 0 0 16px #0a1826b3;
+}
+
+@keyframes mahjong-tier-stamp {
+  from { opacity: 0; transform: scale(1.7) rotate(-5deg); }
+  60% { opacity: 1; transform: scale(.96) rotate(1deg); }
+  to { opacity: 1; transform: none; }
+}
+
+.mahjong-game .mahjong-settlement-panel.is-detail .mahjong-settlement-panel__tier.is-revealed,
+.mahjong-game .mahjong-settlement-panel.is-detail .mahjong-settlement-panel__mangan.is-revealed {
+  animation: mahjong-tier-stamp 520ms cubic-bezier(.16, .8, .26, 1) both;
+}
+
+/* —— 终局仪式 —— Final table: brush title, vermillion 名次, gold places. */
+.mahjong-game .mahjong-ranking__heading h1 {
+  margin: 6px 0 12px;
+  font-family: "Yougui Settlement Brush", "Yougui Mahjong Brush", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: none;
+  font-size: clamp(30px, calc(7 * var(--mahjong-dvh, 1dvh)), 54px);
+  line-height: 1.12;
+  letter-spacing: -.05em;
+  color: #f4dda2;
+  -webkit-text-stroke: 2px #3f2c0f;
+  paint-order: stroke fill;
+  text-shadow: 2px 3px 0 #14100a, 0 0 18px #e6b66b59, 0 0 40px #e6b66b2e;
+}
+
+.mahjong-game .mahjong-ranking__heading h1 em { color: #ff9d7d; }
+
+.mahjong-game .mahjong-ranking .mahjong-kicker { color: #d8b77b; }
+
+.mahjong-game .mahjong-ranking__row > span {
+  font-family: "Yougui Settlement Brush", "Yougui Mahjong Brush", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: none;
+  font-size: clamp(24px, calc(4.6 * var(--mahjong-dvh, 1dvh)), 40px);
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  color: #e6cf95;
+  text-shadow: 0 1px 0 #14100a, 0 0 12px #e6b66b33;
+}
+
+.mahjong-game .mahjong-ranking__row:first-child {
+  box-shadow: inset 3px 0 #d8b77b;
+  background: linear-gradient(90deg, rgb(216 183 120 / 22%), #21344720);
+}
+
+.mahjong-game .mahjong-ranking__row:first-child > span {
+  color: #ffd98f;
+  text-shadow: 0 1px 0 #14100a, 0 0 16px #efb86b59;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mahjong-game .mahjong-settlement-panel.is-detail .mahjong-settlement-panel__tier.is-revealed,
+  .mahjong-game .mahjong-settlement-panel.is-detail .mahjong-settlement-panel__mangan.is-revealed { animation: none; }
+}
+
+/* Short landscape keeps the ceremony but honors the compact ranking grid. */
+@media (max-height: 450px) and (orientation: landscape), (max-width: 450px) and (orientation: portrait) and (pointer: coarse) {
+  .mahjong-game .mahjong-ranking__heading h1 { font-size: clamp(24px, calc(5 * var(--mahjong-dvh, 1dvh)), 34px); }
+  .mahjong-game .mahjong-ranking__row > span { font-size: clamp(20px, calc(3.4 * var(--mahjong-dvh, 1dvh)), 30px); }
 }
