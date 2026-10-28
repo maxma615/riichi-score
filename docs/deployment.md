@@ -1,5 +1,38 @@
 # 独立日麻记分：上海 ECS 部署
 
+## 2026-10-28 记分站去掉联机（APP_MODE=score）
+
+公开入口仍为 **https://riichi.yougui.online/riichi/**（`yougui.online/riichi` 302 至此）。本轮：
+
+- 记分首页移除「联机牌桌」入口；`APP_MODE=score` 时 `/online`、`/api/online` 与联机 Socket 返回 **410**，文案指向日后的 `https://mahjong.yougui.online/`。
+- **未** 部署联机容器、**未** 新增 `mahjong.yougui.online` Caddy 站点；DNS 由用户稍后自行添加。
+- Compose 已预留 `online` 服务（`profiles: [online]`，独立卷 `online_data`）。启用前勿 `down -v`。
+
+记分容器环境保持 `APP_ORIGIN=https://yougui.online`、`APP_BASE_PATH=/riichi`（兼容微信），并设 `APP_MODE=score`、`ONLINE_PUBLIC_ORIGIN=https://mahjong.yougui.online`。
+
+### 日后启用 mahjong.yougui.online 清单
+
+1. 阿里云 DNS：`mahjong.yougui.online` A 记录 → `8.133.186.15`。
+2. 在绑定的 Caddyfile（核对 `docker inspect yougui-caddy-1` 挂载 inode，勿只改未挂载的 current）增加：
+
+```caddyfile
+mahjong.yougui.online {
+  encode zstd gzip
+  header {
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+  reverse_proxy yougui-riichi-online:3200
+}
+```
+
+3. 将旧入口跳到新站（示例）：`/riichi/online`、`/riichi/online/*` → `https://mahjong.yougui.online/online/`；`/mahjong` → `https://mahjong.yougui.online/`。
+4. 发布目录 `.env` 为联机准备：`ONLINE_APP_ORIGIN=https://mahjong.yougui.online`；然后  
+   `docker compose -p yougui-riichi -f compose.yml -f compose.ecs.yml --profile online up -d --no-build`（先 build 镜像）。联机根路径会 308 到 `/online/`。
+5. 校验：`https://mahjong.yougui.online/`、`/online/`、`/api/health`；记分站仍无联机入口；有归容器 ID 不变。
+
+---
+
 ## 2026-10-18 真实三维牌桌前端更新
 
 网页前端源3103c97已上线，current为/srv/riichi-score/releases/3103c97。以前端补丁方式替换client.js与client.css，并以原运行镜像生成yougui-riichi-score:3103c97／latest，镜像标识为sha256:d2017bcae550cceba2044ea6de27d1fa02935e65bb08e74e8bb656df85d54aa1。现有麻将容器ID和启动时间、全部有归容器ID及0.25CPU／256MiB限制与更新前相同，没有结束现有牌局。

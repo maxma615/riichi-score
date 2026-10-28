@@ -7,6 +7,8 @@ services:
     environment:
       APP_ORIGIN: ${APP_ORIGIN:-http://127.0.0.1:3200}
       APP_BASE_PATH: ${APP_BASE_PATH:-}
+      APP_MODE: ${APP_MODE:-both}
+      ONLINE_PUBLIC_ORIGIN: ${ONLINE_PUBLIC_ORIGIN:-https://mahjong.yougui.online}
       WECHAT_APP_ID: ${WECHAT_APP_ID:-}
       WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
       WECHAT_ENV_VERSION: ${WECHAT_ENV_VERSION:-release}
@@ -31,5 +33,42 @@ services:
     logging:
       driver: json-file
       options: { max-size: "5m", max-file: "2" }
+
+  # 日后 mahjong.yougui.online：docker compose --profile online up -d
+  # 本轮不部署；DNS／Caddy 站点由运维另行启用。
+  online:
+    profiles: ["online"]
+    build: .
+    init: true
+    restart: unless-stopped
+    ports: ["127.0.0.1:3201:3200"]
+    environment:
+      APP_ORIGIN: ${ONLINE_APP_ORIGIN:-http://127.0.0.1:3201}
+      APP_BASE_PATH: ${ONLINE_APP_BASE_PATH:-}
+      APP_MODE: online
+      ONLINE_PUBLIC_ORIGIN: ${ONLINE_PUBLIC_ORIGIN:-https://mahjong.yougui.online}
+    volumes: ["online_data:/data"]
+    cpus: 0.25
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 64
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3200/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options: { max-size: "5m", max-file: "2" }
+
 volumes:
   score_data:
+  online_data:

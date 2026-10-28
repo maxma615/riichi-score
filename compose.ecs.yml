@@ -1,7 +1,16 @@
 # 已有 Caddy 通过私有 Docker 网络访问；3200 仅绑定服务器回环。
+# 本轮只跑 score（APP_MODE=score）。联机容器用 profile online，暂不启用。
 services:
   score:
     container_name: yougui-riichi-score
+    environment:
+      APP_MODE: score
+    networks:
+      - default
+      - gateway
+  online:
+    profiles: ["online"]
+    container_name: yougui-riichi-online
     networks:
       - default
       - gateway

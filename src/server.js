@@ -16,14 +16,22 @@ export function createApp({
   basePath = "",
   wechat = new Wechat(),
   onlineOptions = {},
+  mode = "both",
+  onlinePublicOrigin = "https://mahjong.yougui.online",
 } = {}) {
   origin = new URL(origin).origin;
   if (basePath && !/^\/[a-z0-9-]+$/.test(basePath))
     throw new Error("Invalid basePath");
+  if (!["score", "online", "both"].includes(mode))
+    throw new Error("Invalid APP_MODE");
+  onlinePublicOrigin = String(onlinePublicOrigin || "https://mahjong.yougui.online").replace(/\/$/, "");
+  const onlineEnabled = mode !== "score";
+  const scorePagesEnabled = mode !== "online";
   mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   const store = new Store(path.join(dataDir, "score.sqlite"));
   const limits = new Map();
-  const online = new OnlineManager(onlineOptions);
+  const online = onlineEnabled ? new OnlineManager(onlineOptions) : null;
+  const retiredOnlineMessage = `联机牌桌已下线，稍后将迁移至 ${onlinePublicOrigin}/`;
   const server = http.createServer(async (req, res) => {
     try {
       res.setHeader("X-Content-Type-Options", "nosniff");
@@ -65,6 +73,7 @@ export function createApp({
       if (req.method === "GET" && url.pathname === "/api/session")
         return json({ user: user ? { name: user.name } : null });
       if (req.method === "GET" && url.pathname === "/api/online") {
+        if (!onlineEnabled) throw new HttpError(410, retiredOnlineMessage);
         if (!user) throw new HttpError(401, "请先填写昵称");
         return json(await online.view(user.id, {touch:true}));
       }
@@ -221,8 +230,10 @@ export function createApp({
           return json({ user: { name: s.name } }, 201);
         }
         if (!user) throw new HttpError(401, "请先填写昵称");
-        if (url.pathname === "/api/online")
+        if (url.pathname === "/api/online") {
+          if (!onlineEnabled) throw new HttpError(410, retiredOnlineMessage);
           return json(await online.execute(user, input));
+        }
         if (url.pathname === "/api/rooms")
           return json(store.create(user, input), 201);
         if (url.pathname === "/api/join")
@@ -232,16 +243,23 @@ export function createApp({
         throw new HttpError(404, "接口不存在");
       }
       if (req.method !== "GET") throw new HttpError(405, "方法不支持");
-      if (url.pathname === "/online") {
-        res.writeHead(308, {Location:basePath + "/online/"});return res.end();
+      if (!scorePagesEnabled && (url.pathname === "/" || url.pathname === "")) {
+        res.writeHead(308, { Location: (basePath || "") + "/online/" });
+        return res.end();
       }
-      if (/^\/online\/(?:assets|licenses)\/[a-zA-Z0-9_./-]+$/.test(url.pathname)) {
-        const file = path.resolve(root,"public", "."+url.pathname);
-        const allowed = path.join(root,"public","online") + path.sep;
-        const types = {".svg":"image/svg+xml", ".webp":"image/webp", ".png":"image/png", ".wav":"audio/wav", ".woff2":"font/woff2", ".json":"application/json", ".txt":"text/plain", ".md":"text/plain"};
-        const type = types[path.extname(file)];
-        if (!file.startsWith(allowed) || !type || !existsSync(file)) throw new HttpError(404,"文件不存在");
-        res.writeHead(200,{"Content-Type":type});return res.end(readFileSync(file));
+      if (url.pathname === "/online" || url.pathname.startsWith("/online/")) {
+        if (!onlineEnabled) throw new HttpError(410, retiredOnlineMessage);
+        if (url.pathname === "/online") {
+          res.writeHead(308, {Location:basePath + "/online/"});return res.end();
+        }
+        if (/^\/online\/(?:assets|licenses)\/[a-zA-Z0-9_./-]+$/.test(url.pathname)) {
+          const file = path.resolve(root,"public", "."+url.pathname);
+          const allowed = path.join(root,"public","online") + path.sep;
+          const types = {".svg":"image/svg+xml", ".webp":"image/webp", ".png":"image/png", ".wav":"audio/wav", ".woff2":"font/woff2", ".json":"application/json", ".txt":"text/plain", ".md":"text/plain"};
+          const type = types[path.extname(file)];
+          if (!file.startsWith(allowed) || !type || !existsSync(file)) throw new HttpError(404,"文件不存在");
+          res.writeHead(200,{"Content-Type":type});return res.end(readFileSync(file));
+        }
       }
       const files = {
         "/": ["public/index.html", "text/html"],
@@ -261,6 +279,23 @@ export function createApp({
         "/yaku.js": ["src/yaku.js", "text/javascript"],
         "/fu.js": ["src/fu.js", "text/javascript"],
       };
+      if (!onlineEnabled) {
+        delete files["/online/"];
+        delete files["/online/client.js"];
+        delete files["/online/client.css"];
+      }
+      if (!scorePagesEnabled) {
+        delete files["/"];
+        delete files["/app.js"];
+        delete files["/account-name.js"];
+        delete files["/style.css"];
+        delete files["/art/ink-landscape.svg"];
+        delete files["/scoring.js"];
+        delete files["/settlement-view.js"];
+        delete files["/lookup.js"];
+        delete files["/yaku.js"];
+        delete files["/fu.js"];
+      }
       if (!files[url.pathname]) throw new HttpError(404, "页面不存在");
       const [file, type] = files[url.pathname];
       res.writeHead(200, { "Content-Type": `${type}; charset=utf-8` });
@@ -282,22 +317,31 @@ export function createApp({
       );
     }
   });
-  const sockets = attachOnlineSockets(server,online,store,{origin,basePath});
-  server.on("close", () => {void sockets.close();void online.close();store.close();});
-  return { server, store, online };
+  const sockets = onlineEnabled
+    ? attachOnlineSockets(server, online, store, { origin, basePath })
+    : { close: async () => {} };
+  server.on("close", () => {
+    void sockets.close();
+    if (online) void online.close();
+    store.close();
+  });
+  return { server, store, online, mode };
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT ?? 3200),
     origin = process.env.APP_ORIGIN ?? `http://127.0.0.1:${port}`;
+  const mode = process.env.APP_MODE ?? "both";
   const { server } = createApp({
     dataDir: process.env.DATA_DIR
       ? path.resolve(process.env.DATA_DIR)
       : undefined,
     origin,
     basePath: process.env.APP_BASE_PATH ?? "",
+    mode,
+    onlinePublicOrigin: process.env.ONLINE_PUBLIC_ORIGIN,
   });
   server.listen(port, process.env.HOST ?? "127.0.0.1", () =>
-    console.log(`日麻记分 ${origin}${process.env.APP_BASE_PATH ?? ""}/`),
+    console.log(`日麻记分[${mode}] ${origin}${process.env.APP_BASE_PATH ?? ""}/`),
   );
   for (const signal of ["SIGINT", "SIGTERM"])
     process.on(signal, () => server.close(() => process.exit(0)));
