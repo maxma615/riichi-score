@@ -1512,8 +1512,12 @@ footer {
 .ranking-row {display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #b8b1a066;}
 .rank-number {font:24px Georgia,serif;color:#963f30;}
 .ranking-row b {overflow-wrap:anywhere;}
-.ranking-row>span:not(.rank-number),.ranking-row strong {text-align:right;font-size:18px;}
+.ranking-row>span:not(.rank-number),.ranking-row strong {text-align:right;font-size:18px;font-variant-numeric:tabular-nums;}
 .ranking-row small {display:block;font-size:11px;font-weight:400;opacity:.65;margin-top:3px;}
+.ranking-row:first-child {background:linear-gradient(90deg,#963f3014,transparent);}
+.ranking-row:first-child b {font-weight:700;}
+.line b, .line strong {font-variant-numeric:tabular-nums;}
+.payment-table b {font-variant-numeric:tabular-nums;}
 .rematch-button {width:100%;margin-top:20px;min-height:52px;font-size:17px;}
 .room-management .actions {display:flex;flex-direction:column;align-items:stretch;}
 .room-management .delete-button {color:#963f30;background:transparent;border-color:#963f3044;order:3;}

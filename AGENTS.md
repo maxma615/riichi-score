@@ -6,4 +6,4 @@
 
 网页与原生微信小程序同步线下记分业务语义和紧凑水墨UI。维护共享纯函数时运行npm run sync:mini；该命令只生成线下工具代码。miniprogram/是实际微信发布目录，不得放入联机页面／入口／API调用、三维运行时或打牌资源。历史原生联机源、资源和回归在archive/native-online/，无AppID、发布入口或独立上线计划；重建必须使用sync:archive:*，禁止写回记分小程序。
 
-运行npm test及必要的浏览器／平台编译验证；当前小程序备案审核中，预览不等于审核或发布。网站联机在https://yougui.online/riichi/online/继续使用；本次不修改服务器业务或数据库、不重启有归。所有更新提交并推送maxma615/riichi-score，凭据不入库。
+运行npm test及必要的浏览器／平台编译验证；当前小程序备案审核中，预览不等于审核或发布。记分站（riichi.yougui.online）以 APP_MODE=score 去掉联机；联机日后部署 mahjong.yougui.online（本轮不上线）。不修改有归业务或数据库、不重启有归。所有更新提交并推送maxma615/riichi-score，凭据不入库。

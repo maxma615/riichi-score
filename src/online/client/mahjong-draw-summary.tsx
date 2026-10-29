@@ -2,10 +2,11 @@ import type {GameView, RoomView} from "../domain/types";
 import {winningHand} from "./mahjong-winning-hand";
 import {TileFace} from "./mahjong-tile";
 import {MahjongMeld} from "./mahjong-meld";
+import {mahjongTerm} from "../../yaku.js";
 
 export function MahjongDrawSummary({game, room}: {game:GameView;room:RoomView}) {
   const result=game.settlement!, draw=result.drawInfo!;
-  if (draw.kind === "abort") return <p className="mahjong-draw-cause">{result.name}</p>;
+  if (draw.kind === "abort") return <p className="mahjong-draw-cause">{mahjongTerm(result.name)}</p>;
   return <div className="mahjong-draw-summary" aria-label="各席听牌状态">
     {game.players.slice().sort((a,b)=>a.seat-b.seat).map(player=>{
       const publicHand=draw.revealedHands.find(h=>h.seat===player.seat);
